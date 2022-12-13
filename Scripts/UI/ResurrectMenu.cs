@@ -31,8 +31,8 @@ public class ResurrectMenu : MonoBehaviour
         _timer.fillAmount = 1;
         _timer.DOFillAmount(0, SkipTime).SetEase(Ease.Linear).SetUpdate(true).OnComplete(() =>
         {
+            _run.ShowLoseMenu();
             ChangeMenuVisible(false);
-            _run.EndRun();
         });
     }
 
@@ -52,7 +52,7 @@ public class ResurrectMenu : MonoBehaviour
         
         _skip.onClick.AddListener(() =>
         {
-            _run.EndRun();
+            _run.ShowLoseMenu();
             ChangeMenuVisible(false);
             _timer.DOKill();
         });

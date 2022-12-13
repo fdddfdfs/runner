@@ -6,22 +6,44 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public abstract class Item : MonoBehaviour
 {
+    private const float ActivateTime = 10;
+    private const float DeactivateTime = 30;
+    
     private MeshRenderer _meshRenderer;
     private BoxCollider _boxCollider;
+    private bool _isAutoShowing;
 
-    private readonly WaitForSeconds _waiter = new(10);
-    
-    public virtual void Init()
+    private WaitForSeconds _activateWaiter;
+    private WaitForSeconds _deactivateWaiter;
+
+    protected void Init(bool isAutoShowing = true, bool isAutoHiding = true)
     {
         _meshRenderer = GetComponent<MeshRenderer>();
         _boxCollider = GetComponent<BoxCollider>();
+        _isAutoShowing = isAutoShowing;
+
+        if (isAutoHiding)
+        {
+            _deactivateWaiter ??= new WaitForSeconds(DeactivateTime);
+
+            Coroutines.StartRoutine(DeactivateItem());
+        }
     }
     
     public virtual void PickupItem(ThirdPersonController player)
     {
-        ChangeItemVisible(false);
+        if (_isAutoShowing)
+        {
+            ChangeItemVisible(false);
 
-        Coroutines.StartRoutine(ActivateItem());
+            _activateWaiter ??= new WaitForSeconds(ActivateTime);
+            
+            Coroutines.StartRoutine(ActivateItem());
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     protected void ChangeColliderActive(bool state)
@@ -31,12 +53,17 @@ public abstract class Item : MonoBehaviour
 
     private IEnumerator ActivateItem()
     {
-        yield return _waiter;
+        yield return _activateWaiter;
         
         ChangeItemVisible(true);
     }
 
-    protected void ChangeItemVisible(bool state)
+    private IEnumerator DeactivateItem()
+    {
+        yield return _activateWaiter;
+    }
+
+    private void ChangeItemVisible(bool state)
     {
         _meshRenderer.enabled = state;
         _boxCollider.enabled = state;

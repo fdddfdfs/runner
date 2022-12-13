@@ -24,7 +24,7 @@ namespace StarterAssets
         [SerializeField] private Level _level;
         [SerializeField] private ActiveItemsUI _activeItemsUI;
         [SerializeField] private Run _run;
-        
+
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
         public float MoveSpeed = 2.0f;
@@ -145,6 +145,8 @@ namespace StarterAssets
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
 
+        public CharacterController Controller => _controller;
+
         public void EndRoll()
         {
             _controller.height *= 4f;
@@ -241,14 +243,14 @@ namespace StarterAssets
                 },
                 {
                     typeof(FlyGravity),
-                    new FlyGravity(Gravity, JumpHeight * 10)
+                    new FlyGravity(Gravity, JumpHeight * 10, SprintSpeed, this, _runProgress)
                 }
             };
 
             _gravitable = _gravitables[typeof(DefaultGravity)];
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (_isPause)
             {
@@ -260,11 +262,12 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            CameraRotation();
         }
 
         private void LateUpdate()
         {
-            CameraRotation();
+            //CameraRotation();
         }
 
         private void BoardActive()
@@ -342,7 +345,7 @@ namespace StarterAssets
                 currentHorizontalSpeed > targetSpeed + speedOffset)
             {
                 _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
+                    Time.fixedDeltaTime * SpeedChangeRate);
 
                 _speed = Mathf.Round(_speed * 1000f) / 1000f;
             }
@@ -351,7 +354,7 @@ namespace StarterAssets
                 _speed = targetSpeed;
             }
 
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
+            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
             Vector3 inputDirection = inputMove.normalized;
@@ -373,10 +376,10 @@ namespace StarterAssets
 
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
-            _runProgress.AddScore(Time.deltaTime);
+            _runProgress.AddScore(Time.fixedDeltaTime);
             
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            _controller.Move(targetDirection.normalized * (_speed * Time.fixedDeltaTime) +
+                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime);
 
             if (_hasAnimator)
             {
@@ -433,7 +436,7 @@ namespace StarterAssets
                 _isMovingX = true;
                 _movingXDir = dir;
                 _previousMovingDestination = _movingDestination;
-                _movingDestination = Mathf.RoundToInt(transform.localPosition.x + 3 * dir);
+                _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Level.ColumnOffset * dir);
             }
         }
 
@@ -441,7 +444,7 @@ namespace StarterAssets
         {
             if (!Grounded && _roll)
             {
-                _verticalVelocity += Gravity * Time.deltaTime * 3;
+                _verticalVelocity += Gravity * Time.fixedDeltaTime * 3;
             }
             else if (_roll)
             {

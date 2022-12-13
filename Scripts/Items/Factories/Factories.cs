@@ -20,7 +20,7 @@ public class Factories : MonoBehaviour
     {  
         _itemFactories = new Dictionary<ItemType, Factory<Item>>
         {
-            [ItemType.Money] = new MoneyFactory<Item>(_runProgress),
+            [ItemType.Money] = new MoneyFactory<Item>(_runProgress, true, false),
             [ItemType.Magnet] = new MagnetFactory<Item>(_activeItemsUI),
             [ItemType.HighJump] = new HighJumpFactory<Item>(_player, _activeItemsUI),
             [ItemType.RandomBoost] = new RandomItemFactory<Item>(this),

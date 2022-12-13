@@ -18,6 +18,8 @@ public sealed class RunProgress : MonoBehaviour
 
     public float Score => _score;
 
+    public int Money => _money;
+
     public void AddScore(float value)
     {
         _score += value;

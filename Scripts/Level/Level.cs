@@ -34,6 +34,11 @@ public sealed class Level : MonoBehaviour, IPauseable
 
     private record SetLevelBlock(GameObject Block, float SizeZ);
 
+    public static float GetClosestColumn(float positionX)
+    {
+        return positionX < -ColumnOffset / 2f ? -ColumnOffset : positionX < ColumnOffset / 2f ? 0 : ColumnOffset;
+    }
+
     public void Pause()
     {
         _isPause = true;

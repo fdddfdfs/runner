@@ -13,9 +13,9 @@ public class Money : Item
     private Vector3 _startPosition;
     private RunProgress _runProgress;
     
-    public void Init(RunProgress runProgress)
+    public void Init(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
     {
-        base.Init();
+        base.Init(isAutoActivating, isAutoHiding);
         
         _runProgress = runProgress;
     }

@@ -10,7 +10,9 @@ public class Run : MonoBehaviour
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private Level _level;
     [SerializeField] private ResurrectMenu _resurrectMenu;
-
+    [SerializeField] private LoseMenu _loseMenu;
+    [SerializeField] private MainMenu _mainMenu;
+    
     public void StartRun()
     {
         _runProgress.StartRun();
@@ -23,6 +25,11 @@ public class Run : MonoBehaviour
         Time.timeScale = 0;
         
         _resurrectMenu.ShowMenu(_runProgress.Score);
+    }
+
+    public void ShowLoseMenu()
+    {
+        _loseMenu.ShowLoseMenu((int)_runProgress.Score, _runProgress.Money);
     }
 
     public void Resurrect()
@@ -41,5 +48,11 @@ public class Run : MonoBehaviour
         _runProgress.EndRun();
         _player.EndRun();
         _level.EndRun();
+    }
+
+    public void BackToMenu()
+    {
+        EndRun();
+        _mainMenu.ShowMainMenu();
     }
 }

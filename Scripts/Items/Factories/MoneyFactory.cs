@@ -3,10 +3,14 @@ using UnityEngine;
 public sealed class MoneyFactory<T> : Factory<T> where T: Item
 {
     private readonly RunProgress _runProgress;
+    private readonly bool _isAutoHiding;
+    private readonly bool _isAutoActivating;
 
-    public MoneyFactory(RunProgress runProgress)
+    public MoneyFactory(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
     {
         _runProgress = runProgress;
+        _isAutoActivating = isAutoActivating;
+        _isAutoHiding = isAutoHiding;
     }
 
     protected override string PrefabName => "Money";
@@ -15,7 +19,7 @@ public sealed class MoneyFactory<T> : Factory<T> where T: Item
     {
         GameObject moneyObject = Object.Instantiate(_prefab);
         Money money = moneyObject.AddComponent<Money>();
-        money.Init(_runProgress);
+        money.Init(_runProgress, _isAutoActivating, _isAutoHiding);
 
         return money as T;
     }

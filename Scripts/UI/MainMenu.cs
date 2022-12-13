@@ -11,6 +11,13 @@ public class MainMenu : MonoBehaviour
 
     private bool _isRun;
 
+    public void ShowMainMenu()
+    {
+        _upgradeMenu.gameObject.SetActive(true);
+        _startText.gameObject.SetActive(true);
+        _isRun = false;
+    }
+
     private void Awake()
     {
         _startText.text = "Press F to start run";
