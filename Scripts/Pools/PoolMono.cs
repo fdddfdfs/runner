@@ -15,7 +15,11 @@ public class PoolMono<T> where T: MonoBehaviour
     private GameObject _prefab;
     private int _poolSize;
 
-    public PoolMono(GameObject prefab, Transform parent = null,bool isExpandable = false, int startPoolSize = DefaultStartCount)
+    public PoolMono(
+        GameObject prefab,
+        Transform parent = null,
+        bool isExpandable = false,
+        int startPoolSize = DefaultStartCount)
     {
         _pool = new List<T>();
 
@@ -25,6 +29,19 @@ public class PoolMono<T> where T: MonoBehaviour
         _isExpandable = isExpandable;
         
         InitializePool();
+    }
+
+    public PoolMono(List<T> spawnedPrefabs)
+    {
+        for (int i = 0; i < spawnedPrefabs.Count; i++)
+        {
+            spawnedPrefabs[i].gameObject.SetActive(false);
+        }
+
+        _pool = spawnedPrefabs;
+
+        _poolSize = spawnedPrefabs.Count;
+        _isExpandable = false;
     }
 
     public T GetItem()

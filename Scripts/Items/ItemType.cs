@@ -9,4 +9,5 @@ public enum ItemType
     Board,
     Immune,
     Fly,
+    DoubleScore,
 }

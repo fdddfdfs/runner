@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class DoubleMoneyFactory<T> : Factory<T> where T: Item
+public sealed class DoubleMoneyFactory<T> : Factory<T> where T: Item
 {
     private readonly RunProgress _runProgress;
     private readonly ActiveItemsUI _activeItemsUI;

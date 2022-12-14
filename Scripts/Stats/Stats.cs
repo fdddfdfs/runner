@@ -16,6 +16,7 @@ public class Stats : MonoBehaviour
     private int _immuneLevel;
     private int _flyLevel;
     private int _boardCount;
+    private int _doubleScoreLevel;
 
     public int Money
     {
@@ -100,6 +101,16 @@ public class Stats : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    
+    public int DoubleScoreLevel
+    {
+        get => _doubleScoreLevel;
+        set
+        {
+            _doubleScoreLevel = value;
+            Prefs.SaveVariable(_doubleScoreLevel, nameof(_doubleScoreLevel));
+        }
+    }
 
     private void Initialize()
     {
@@ -110,5 +121,6 @@ public class Stats : MonoBehaviour
         Prefs.LoadVariable(out _immuneLevel, nameof(_immuneLevel), StartLevel);
         Prefs.LoadVariable(out _flyLevel, nameof(_flyLevel), StartLevel);
         Prefs.LoadVariable(out _boardCount, nameof(_boardCount), StartBoardsCount);
+        Prefs.LoadVariable(out _doubleScoreLevel, nameof(_boardCount), StartLevel);
     }
 }

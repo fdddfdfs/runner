@@ -7,9 +7,9 @@ public class DefaultGravity : IGravitable
     private readonly float _jumpTimeout;
     private readonly float _terminalVelocity;
     private readonly float _gravity;
-    private readonly float _jumpHeight;
-    
-    private readonly StarterAssetsInputs _input;
+
+    private readonly ThirdPersonController _player;
+    private readonly MovingInput _movingInput;
     
     private readonly bool _hasAnimator;
     private readonly Animator _animator;
@@ -25,18 +25,18 @@ public class DefaultGravity : IGravitable
         float jumpTimeout,
         float terminalVelocity,
         float gravity,
-        float jumpHeight,
-        StarterAssetsInputs input,
+        MovingInput movingInput,
+        ThirdPersonController player,
         Animator animator = null,
         int animIDJump = 0,
         int animIDFreeFall = 0)
     {
         _fallTimeout = fallTimeout;
         _jumpTimeout = jumpTimeout;
-        _jumpHeight = jumpHeight;
         _terminalVelocity = terminalVelocity;
         _gravity = gravity;
-        _input = input;
+        _movingInput = movingInput;
+        _player = player;
         
         if (animator == null) return;
         _animator = animator;
@@ -65,9 +65,9 @@ public class DefaultGravity : IGravitable
                 _verticalVelocity = -2f;
             }
 
-            if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+            if (_movingInput.IsJumpPressed && _jumpTimeoutDelta <= 0.0f)
             {
-                _verticalVelocity = Mathf.Sqrt(_jumpHeight * -2f * _gravity);
+                _verticalVelocity = Mathf.Sqrt(_player.JumpHeight * -2f * _gravity);
 
                 if (_hasAnimator)
                 {
@@ -95,8 +95,6 @@ public class DefaultGravity : IGravitable
                     _animator.SetBool(_animIDFreeFall, true);
                 }
             }
-
-            _input.jump = false;
         }
 
         if (_verticalVelocity < _terminalVelocity)

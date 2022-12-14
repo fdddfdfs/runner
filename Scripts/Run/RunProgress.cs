@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public sealed class RunProgress : MonoBehaviour
 {
     public const int DefaultMoneyMultiplier = 1;
+    public const int DefaultScoreMultiplier = 1;
     
     [SerializeField] private TMPro.TMP_Text _scoreText;
     [SerializeField] private TMPro.TMP_Text _moneyText;
@@ -15,6 +16,7 @@ public sealed class RunProgress : MonoBehaviour
     private float _score;
     private int _money;
     private int _moneyMultiplier = DefaultMoneyMultiplier;
+    private int _scoreMultiplier = DefaultScoreMultiplier;
 
     public float Score => _score;
 
@@ -22,7 +24,7 @@ public sealed class RunProgress : MonoBehaviour
 
     public void AddScore(float value)
     {
-        _score += value;
+        _score += value * _scoreMultiplier;
         _scoreText.text = _score.ToString(CultureInfo.InvariantCulture);
     }
 
@@ -35,6 +37,11 @@ public sealed class RunProgress : MonoBehaviour
     public void ChangeMoneyMultiplier(int multiplier = DefaultMoneyMultiplier)
     {
         _moneyMultiplier = multiplier;
+    }
+
+    public void ChangeScoreMultiplier(int multiplier = DefaultScoreMultiplier)
+    {
+        _scoreMultiplier = multiplier;
     }
 
     public void StartRun()

@@ -16,7 +16,7 @@ namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
-    [RequireComponent(typeof(PlayerInput))]
+    [RequireComponent(typeof(MovingInput))]
 #endif
     public class ThirdPersonController : MonoBehaviour, IPauseable
     {
@@ -141,6 +141,8 @@ namespace StarterAssets
         private bool _isPause;
         private Vector3 _startPosition;
 
+        private MovingInput _movingInput;
+
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
@@ -190,6 +192,8 @@ namespace StarterAssets
 
         private void Awake()
         {
+            _movingInput = new MovingInput();
+            
             _startPosition = transform.position;
             _isPause = true;
             
@@ -235,8 +239,8 @@ namespace StarterAssets
                         JumpTimeout,
                         _terminalVelocity,
                         Gravity,
-                        JumpHeight,
-                        _input,
+                        _movingInput,
+                        this,
                         _animator,
                         _animIDJump,
                         _animIDFreeFall)
@@ -265,9 +269,19 @@ namespace StarterAssets
             CameraRotation();
         }
 
+        private void Update()
+        {
+            CheckForMovingInput();
+        }
+
         private void LateUpdate()
         {
             //CameraRotation();
+        }
+
+        private void CheckForMovingInput()
+        {
+            _movingInput.Update();
         }
 
         private void BoardActive()
@@ -391,8 +405,8 @@ namespace StarterAssets
         private int CheckForMovingX()
         {
             int dir = 0;
-            CheckForInput(Keyboard.current.aKey.wasPressedThisFrame, -1, ref dir);
-            CheckForInput(Keyboard.current.dKey.wasPressedThisFrame, 1, ref dir);
+            CheckForInput(_movingInput.IsLeftPressed, -1, ref dir);
+            CheckForInput(_movingInput.IsRightPressed, 1, ref dir);
 
             if (_isMovingX && Mathf.Abs(transform.localPosition.x - _movingDestination) > 0.2f)
             {
@@ -440,6 +454,7 @@ namespace StarterAssets
             }
         }
 
+        //TODO: move it to gravity coz that`s doesnt work
         private void Roll()
         {
             if (!Grounded && _roll)
@@ -456,7 +471,7 @@ namespace StarterAssets
                 return;
             }
             
-            if (Keyboard.current.sKey.wasPressedThisFrame)
+            if (_movingInput.IsRollPressed)
             {
                 //_animator.SetTrigger(_animIDRoll);
                 _animator.SetBool(_animIDJump, false);

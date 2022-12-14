@@ -30,9 +30,9 @@ public sealed class Level : MonoBehaviour, IPauseable
 
     private bool _isPause;
 
-    private record LevelBlocksPools(GameObjectPool BlockPool, float SizeZ);
+    private record LevelBlocksPools(PoolMono<Block> BlockPool, float SizeZ);
 
-    private record SetLevelBlock(GameObject Block, float SizeZ);
+    private record SetLevelBlock(Block Block, float SizeZ);
 
     public static float GetClosestColumn(float positionX)
     {
@@ -58,7 +58,8 @@ public sealed class Level : MonoBehaviour, IPauseable
         
         _lastBlockPosition = SetNewBlocks(_firstBlock.Block.transform.position.z, _lastBlockPosition);
             
-        _firstBlock.Block.SetActive(false);
+        _firstBlock.Block.gameObject.SetActive(false);
+        _firstBlock.Block.HideObstacle();
         _firstBlock = _blocksPositions.Dequeue();
     }
 
@@ -74,7 +75,7 @@ public sealed class Level : MonoBehaviour, IPauseable
     {
         while (_blocksPositions.Count != 0)
         {
-            _blocksPositions.Dequeue().Block.SetActive(false);
+            _blocksPositions.Dequeue().Block.gameObject.SetActive(false);
         }
     }
     
@@ -87,24 +88,27 @@ public sealed class Level : MonoBehaviour, IPauseable
 
     private void Start()
     {
-        _itemsFactoryPools = new Dictionary<ItemType, FactoryPool<Item>>();
+        /*_itemsFactoryPools = new Dictionary<ItemType, FactoryPool<Item>>();
         foreach (var factories in _factories.ItemFactories.AsEnumerable())
         {
             _itemsFactoryPools[factories.Key] = new FactoryPool<Item>(factories.Value, null, true);
-        }
+        }*/
 
         _blocks = new Dictionary<int, LevelBlocksPools>();
         for (int i = 0; i < _levelBlocks.Count; i++)
         {
             float endPosition = 0;
-            List<GameObject> generatedBlocks = new();
+            List<Block> generatedBlocks = new();
             for (int j = 0; j < BaseBlocksGenerationCount; j++)
             {
+                List<Obstacle> createdObstacles;
                 GameObject parent = new($"LevelBlockParent_{_levelBlocks[i].name}+{j}");
-                endPosition  = GenerateBlock(_levelBlocks[i], parent.transform);
-                generatedBlocks.Add(parent);
+                Block block = parent.AddComponent<Block>();
+                (endPosition, createdObstacles) = GenerateBlock(_levelBlocks[i], parent.transform);
+                block.Init(createdObstacles, _factories);
+                generatedBlocks.Add(block);
             }
-            _blocks.Add(i, new LevelBlocksPools(new GameObjectPool(generatedBlocks), endPosition));
+            _blocks.Add(i, new LevelBlocksPools(new PoolMono<Block>(generatedBlocks), endPosition));
         }
 
         _blocksPositions = new Queue<SetLevelBlock>();
@@ -139,59 +143,69 @@ public sealed class Level : MonoBehaviour, IPauseable
 
     private SetLevelBlock SetBlock(int blockId, float positionZ)
     {
-        GameObject block = _blocks[blockId].BlockPool.GetItem();
+        Block block = _blocks[blockId].BlockPool.GetItem();
         block.transform.localPosition = new Vector3(0, BaseYPosition, positionZ);
-        for (int i = 0; i < block.transform.childCount; i++)
-        {
-            block.transform.GetChild(i).gameObject.SetActive(true);
-        }
 
         return new SetLevelBlock(block, _blocks[blockId].SizeZ);
     }
 
-    private float GenerateBlock(LevelBlock pickedBlock, Transform parent)
+    private (float, List<Obstacle>) GenerateBlock(LevelBlock pickedBlock, Transform parent)
     {
         float blockEndPosition = 0;
+        List<Obstacle> createdObstacles = new();
 
         for (int i = 0; i < pickedBlock.Line.Count; i++)
         {
             float currentPosition = blockEndPosition;
             float lineEndPosition = EmptyFieldHeight;
-            float y1, y2, y3;
+            Obstacle newObstacle;
 
-            (y1, lineEndPosition) = SpawnObstacle(
+            (newObstacle, lineEndPosition) = SpawnObstacle(
                 pickedBlock.Line[i].Obstacle1,
                 parent,
                 -ColumnOffset,
                 currentPosition,
                 lineEndPosition);
+            if (newObstacle != null)
+            {
+                createdObstacles.Add(newObstacle);
+            }
 
-            (y2, lineEndPosition) = SpawnObstacle(
+            (newObstacle, lineEndPosition) = SpawnObstacle(
                 pickedBlock.Line[i].Obstacle2,
                 parent,
                 0,
                 currentPosition,
                 lineEndPosition);
-            (y3, lineEndPosition) = SpawnObstacle(
+            if (newObstacle != null)
+            {
+                createdObstacles.Add(newObstacle);
+            }
+            
+            (newObstacle, lineEndPosition) = SpawnObstacle(
                 pickedBlock.Line[i].Obstacle3,
                 parent,
                 ColumnOffset,
                 currentPosition,
                 lineEndPosition);
+            if (newObstacle != null)
+            {
+                createdObstacles.Add(newObstacle);
+            }
 
-            Vector3 leftItemPosition = new Vector3(-ColumnOffset, y1, currentPosition);
+            /*Vector3 leftItemPosition = new Vector3(-ColumnOffset, y1, currentPosition);
             SpawnItemOnBlock(leftItemPosition ,lineEndPosition, parent, pickedBlock.Line[i].ItemType1);
 
             Vector3 centerItemPosition = new Vector3(0, y2, currentPosition);
             SpawnItemOnBlock(centerItemPosition, lineEndPosition, parent, pickedBlock.Line[i].ItemType2);
 
             Vector3 rightItemPosition = new Vector3(ColumnOffset, y3, currentPosition);
-            SpawnItemOnBlock(rightItemPosition, lineEndPosition, parent, pickedBlock.Line[i].ItemType3);
+            SpawnItemOnBlock(rightItemPosition, lineEndPosition, parent, pickedBlock.Line[i].ItemType3);*/
 
             blockEndPosition += lineEndPosition;
         }
 
-        return blockEndPosition;
+        return (blockEndPosition, createdObstacles);
     }
 
     private void SpawnItemOnBlock(Vector3 position, float blockSizeZ, Transform parent, ItemType itemType)
@@ -211,7 +225,7 @@ public sealed class Level : MonoBehaviour, IPauseable
         }
     }
 
-    private (float y, float z) SpawnObstacle(
+    private (Obstacle obstacle, float z) SpawnObstacle(
         GameObject obstaclePrefab,
         Transform parent,
         float spawnPosX,
@@ -220,16 +234,18 @@ public sealed class Level : MonoBehaviour, IPauseable
     {
         if (obstaclePrefab != null)
         {
-            GameObject obstacle = InstantiateObstacle(
+            GameObject createdObstacle = InstantiateObstacle(
                 obstaclePrefab,
                 parent,
                 spawnPosX,
                 spawnPosZ);
 
-            return CheckForUpdateEndPosition(obstacle, endPosition);
+            Obstacle obstacle = createdObstacle.GetComponent<Obstacle>();
+
+            return (obstacle, CheckForUpdateEndPosition(createdObstacle, endPosition));
         }
 
-        return (BaseYPosition / 4, endPosition);
+        return (null, endPosition);
     }
 
     private GameObject InstantiateObstacle(GameObject prefab, Transform parent,float spawnPosX, float spawnPosZ)
@@ -240,12 +256,12 @@ public sealed class Level : MonoBehaviour, IPauseable
         return obstacle;
     }
 
-    private (float y,float z) CheckForUpdateEndPosition(GameObject obstacle, float currentMaxSize)
+    private float CheckForUpdateEndPosition(GameObject obstacle, float currentMaxSize)
     {
         BoxCollider boxCollider = obstacle.GetComponent<BoxCollider>();
         Vector3 size = boxCollider.size;
         
-        return (size.y, size.z < currentMaxSize ? currentMaxSize : size.z);
+        return size.z < currentMaxSize ? currentMaxSize : size.z;
     }
 
     private int GetBlockID()

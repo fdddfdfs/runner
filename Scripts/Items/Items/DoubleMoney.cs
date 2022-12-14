@@ -1,4 +1,4 @@
-﻿public class DoubleMoney : ActivatableItem<DoubleMoney>
+﻿public sealed class DoubleMoney : ActivatableItem<DoubleMoney>
 {
     private RunProgress _runProgress;
     private ActiveItemsUI _activeItemsUI;

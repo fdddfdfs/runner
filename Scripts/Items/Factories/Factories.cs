@@ -1,12 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using StarterAssets;
-using Unity.VisualScripting;
 using UnityEngine;
 
-public class Factories : MonoBehaviour
+public sealed class Factories : MonoBehaviour
 {
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
@@ -27,6 +23,7 @@ public class Factories : MonoBehaviour
             [ItemType.DoubleMoney] = new DoubleMoneyFactory<Item>(_runProgress, _activeItemsUI),
             [ItemType.Immune] = new ImmuneFactory<Item>(_activeItemsUI),
             [ItemType.Fly] = new FlyFactory<Item>(_activeItemsUI),
+            [ItemType.DoubleScore] = new DoubleScoreFactory<Item>(_runProgress,_activeItemsUI),
         };
     }
 }

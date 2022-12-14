@@ -20,9 +20,9 @@ public class HighJump : ActivatableItem<HighJump>
 
     public override void PickupItem(ThirdPersonController player)
     {
-        base.PickupItem(player);
-
         _player = player;
+        
+        base.PickupItem(player);
     }
 
     protected override float ActiveTime => 10;

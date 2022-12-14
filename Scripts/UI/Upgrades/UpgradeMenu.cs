@@ -26,6 +26,7 @@ public class UpgradeMenu : MonoBehaviour
             { ItemType.Magnet , (()=> Stats.Instance.MagnetLevel, ()=> Stats.Instance.MagnetLevel += 1) },
             { ItemType.DoubleMoney , (()=> Stats.Instance.DoubleMoneyLevel, ()=> Stats.Instance.DoubleMoneyLevel += 1) },
             { ItemType.HighJump , (()=> Stats.Instance.HighJumpLevel, ()=> Stats.Instance.HighJumpLevel += 1) },
+            { ItemType.DoubleScore, (()=> Stats.Instance.DoubleScoreLevel, ()=> Stats.Instance.DoubleScoreLevel += 1) },
         };
 
         for (int i = 0; i < _itemTypes.Count; i++)
