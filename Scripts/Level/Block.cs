@@ -15,11 +15,21 @@ public class Block : MonoBehaviour
         }
     }
 
-    public void HideObstacle()
+    public void HideBlock()
     {
         foreach (var obstacle in _obstacles)
         {
             obstacle.HideObstacle();
+        }
+        
+        gameObject.SetActive(false);
+    }
+
+    public void EnterBlock()
+    {
+        foreach (var obstacle in _obstacles)
+        {
+            obstacle.EnterObstacle();
         }
     }
 }

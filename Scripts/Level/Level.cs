@@ -12,7 +12,6 @@ public sealed class Level : MonoBehaviour, IPauseable
     private const float EmptyFieldHeight = 10;
     private const int ViewDistance = 1000;
     private const float BaseYPosition = 1;
-    private const float MoneyDistance = 5;
     private const int BaseBlocksGenerationCount = 20;
     private const float HideBlockOffset = 5;
 
@@ -57,10 +56,9 @@ public sealed class Level : MonoBehaviour, IPauseable
         }
         
         _lastBlockPosition = SetNewBlocks(_firstBlock.Block.transform.position.z, _lastBlockPosition);
-            
-        _firstBlock.Block.gameObject.SetActive(false);
-        _firstBlock.Block.HideObstacle();
-        _firstBlock = _blocksPositions.Dequeue();
+        
+        _firstBlock.Block.HideBlock();
+        UpdateFirstBlock();
     }
 
     public void StartRun()
@@ -68,7 +66,7 @@ public sealed class Level : MonoBehaviour, IPauseable
         _isPause = false;
 
         _lastBlockPosition = SetNewBlocks(0, 0);
-        _firstBlock = _blocksPositions.Dequeue();
+        UpdateFirstBlock();
     }
 
     public void EndRun()
@@ -88,12 +86,6 @@ public sealed class Level : MonoBehaviour, IPauseable
 
     private void Start()
     {
-        /*_itemsFactoryPools = new Dictionary<ItemType, FactoryPool<Item>>();
-        foreach (var factories in _factories.ItemFactories.AsEnumerable())
-        {
-            _itemsFactoryPools[factories.Key] = new FactoryPool<Item>(factories.Value, null, true);
-        }*/
-
         _blocks = new Dictionary<int, LevelBlocksPools>();
         for (int i = 0; i < _levelBlocks.Count; i++)
         {
@@ -123,6 +115,12 @@ public sealed class Level : MonoBehaviour, IPauseable
         {
             HideCurrentBlock();
         }
+    }
+
+    private void UpdateFirstBlock()
+    {
+        _firstBlock = _blocksPositions.Dequeue();
+        _firstBlock.Block.EnterBlock();
     }
 
     private float SetNewBlocks(float startPosition, float lastBlockPosition)
@@ -192,37 +190,11 @@ public sealed class Level : MonoBehaviour, IPauseable
             {
                 createdObstacles.Add(newObstacle);
             }
-
-            /*Vector3 leftItemPosition = new Vector3(-ColumnOffset, y1, currentPosition);
-            SpawnItemOnBlock(leftItemPosition ,lineEndPosition, parent, pickedBlock.Line[i].ItemType1);
-
-            Vector3 centerItemPosition = new Vector3(0, y2, currentPosition);
-            SpawnItemOnBlock(centerItemPosition, lineEndPosition, parent, pickedBlock.Line[i].ItemType2);
-
-            Vector3 rightItemPosition = new Vector3(ColumnOffset, y3, currentPosition);
-            SpawnItemOnBlock(rightItemPosition, lineEndPosition, parent, pickedBlock.Line[i].ItemType3);*/
-
+            
             blockEndPosition += lineEndPosition;
         }
 
         return (blockEndPosition, createdObstacles);
-    }
-
-    private void SpawnItemOnBlock(Vector3 position, float blockSizeZ, Transform parent, ItemType itemType)
-    {
-        if (itemType == ItemType.None)
-            return;
-
-        float currentPositionZ = 0;
-        while (currentPositionZ < blockSizeZ)
-        {
-            ItemType type = currentPositionZ + MoneyDistance < blockSizeZ ? ItemType.Money : itemType;
-
-            GameObject item = _itemsFactoryPools[type].GetItem();
-            item.transform.parent = parent;
-            item.transform.position = position + Vector3.forward * currentPositionZ;
-            currentPositionZ += MoneyDistance;
-        }
     }
 
     private (Obstacle obstacle, float z) SpawnObstacle(

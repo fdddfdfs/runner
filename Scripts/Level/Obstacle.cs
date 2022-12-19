@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Obstacle: MonoBehaviour
 {
-    [SerializeField] private List<ItemParent> _items;
+    [SerializeField] protected List<ItemParent> _items;
 
     public void Init(Factories factories)
     {
@@ -17,7 +17,17 @@ public class Obstacle: MonoBehaviour
         }
     }
 
-    public void HideObstacle()
+    public virtual void HideObstacle()
+    {
+        foreach (var item in _items)
+        {
+            item.HideObstacle();
+        }
+        
+        gameObject.SetActive(false);
+    }
+
+    public virtual void EnterObstacle()
     {
         foreach (var item in _items)
         {
@@ -25,8 +35,8 @@ public class Obstacle: MonoBehaviour
             {
                 item.ItemObject.gameObject.SetActive(true);
             }
+            
+            item.EnterObstacle();
         }
-        
-        gameObject.SetActive(false);
     }
 }
