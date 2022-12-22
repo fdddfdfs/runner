@@ -10,6 +10,7 @@ public class FlyGravity : IGravitable
 
     private MoneySpawner _moneySpawner;
     private ThirdPersonController _player;
+    private float _length;
 
     public FlyGravity(float gravity, float flyHeight, float speed, ThirdPersonController player, RunProgress runProgress)
     {
@@ -24,11 +25,16 @@ public class FlyGravity : IGravitable
             speed,
             player.Controller.height);
     }
+
+    public void SetGravityLength(float length)
+    {
+        _length = length;
+    }
     
     public void EnterGravity()
     {
         _verticalVelocity = Mathf.Sqrt(_flyHeight * -2f * _gravity);
-        _moneySpawner.SpawnMoneys(_player.gameObject.transform.position);
+        _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
     }
 
     public float VerticalVelocity(bool isGrounded)

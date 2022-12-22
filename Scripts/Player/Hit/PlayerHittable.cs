@@ -1,15 +1,24 @@
 ﻿using System;
 using System.Collections;
+using StarterAssets;
 using UnityEngine;
 
 public class PlayerHittable : IHittable
 {
-    private const float RecoverTime = 3f;
+    private const float RecoverTime = 20f;
     
     private readonly WaitForSeconds _recoveryWaiter = new(RecoverTime);
+    private readonly ThirdPersonController _player;
+    private readonly Follower _follower;
     
     private Coroutine _recoveryRoutine;
     private bool _isRecovery;
+
+    public PlayerHittable(ThirdPersonController player, Follower follower)
+    {
+        _player = player;
+        _follower = follower;
+    }
     
     public bool Hit(HitType hitType)
     {
@@ -34,6 +43,7 @@ public class PlayerHittable : IHittable
     private IEnumerator Recover()
     {
         _isRecovery = true;
+        _follower.FollowForTime(_player.gameObject, RecoverTime);
         
         yield return _recoveryWaiter;
 

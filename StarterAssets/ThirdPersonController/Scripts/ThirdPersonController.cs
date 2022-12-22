@@ -24,6 +24,7 @@ namespace StarterAssets
         [SerializeField] private Level _level;
         [SerializeField] private ActiveItemsUI _activeItemsUI;
         [SerializeField] private Run _run;
+        [SerializeField] private Follower _follower;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -207,7 +208,7 @@ namespace StarterAssets
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },
-                { typeof(PlayerHittable), new PlayerHittable() },
+                { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
                 { typeof(ImmuneHittable), new ImmuneHittable(_level) },
             };
 

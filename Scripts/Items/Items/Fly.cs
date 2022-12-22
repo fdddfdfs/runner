@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using StarterAssets;
 using UnityEngine;
 
@@ -19,6 +20,10 @@ public class Fly : ActivatableItem<Fly>
 
     protected override void Activate()
     {
+        if (_player.Gravitables[typeof(FlyGravity)] is not FlyGravity flyGravity) 
+            throw new Exception("Unable get FlyGravity from players gravities");
+        
+        flyGravity.SetGravityLength(ActiveTime);
         _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
     }
 

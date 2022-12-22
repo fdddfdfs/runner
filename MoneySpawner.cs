@@ -3,13 +3,12 @@
 public class MoneySpawner
 {
     private const float MoneyDistance = 1f;
-    private const float MoneySpawnDistance = 200;
     
-    private readonly MoneyFactory<Money> _moneyFactory;
     private readonly float _height;
     private readonly float _gravity;
     private readonly float _speed;
     private readonly float _playerHalfHeight;
+    private readonly FactoryPool<Money> _moneyPool;
 
     public MoneySpawner(
         MoneyFactory<Money> moneyFactory,
@@ -18,14 +17,14 @@ public class MoneySpawner
         float speed,
         float playerHeight)
     {
-        _moneyFactory = moneyFactory;
         _height = height;
         _gravity = gravity;
         _speed = speed;
         _playerHalfHeight = playerHeight / 2;
+        _moneyPool = new FactoryPool<Money>(moneyFactory, null, true);
     }
-    //TODO: fix money returning to start location
-    public void SpawnMoneys(Vector3 startPosition)
+    
+    public void SpawnMoneys(Vector3 startPosition, float activeTime)
     {
         float currentPosition = 0;
         Vector3 position = startPosition;
@@ -33,7 +32,7 @@ public class MoneySpawner
         float distance = Time.fixedDeltaTime * _speed;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         int counter = 0;
-        int maxCounter = (int)(MoneySpawnDistance/ MoneyDistance);
+        int maxCounter = (int)(activeTime * _speed / MoneyDistance);
         float currentGravity = 0;
         while (counter < maxCounter)
         {
@@ -54,7 +53,7 @@ public class MoneySpawner
                     Level.GetClosestColumn(position.x),
                     currentGravity + _playerHalfHeight,
                     position.z + MoneyDistance);
-                _moneyFactory.CreateItem().transform.position = position;
+                _moneyPool.GetItem().transform.position = position;
                 currentPosition = 0;
                 counter++;
             }
