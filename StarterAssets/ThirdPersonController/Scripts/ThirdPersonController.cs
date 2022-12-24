@@ -92,10 +92,7 @@ namespace StarterAssets
         private int _movingXDir;
         private int _movingDestination;
         private int _movingXQueue;
-        private bool _roll;
-        private bool _rollEnd = true;
         private int _previousMovingDestination;
-        private bool _isDamaged;
 
         // cinemachine
         private float _cinemachineTargetYaw;
@@ -108,10 +105,6 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
-
-        // timeout deltatime
-        private float _jumpTimeoutDelta;
-        private float _fallTimeoutDelta;
 
         // animation IDs
         private int _animIDSpeed;
@@ -128,13 +121,12 @@ namespace StarterAssets
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
 
-        private const float _threshold = 0.01f;
-
         private IHittable _hittable;
         private Dictionary<Type, IHittable> _hittables;
         private Board _board;
 
         private IGravitable _gravitable;
+        private IRollable _rollable;
         private Dictionary<Type, IGravitable> _gravitables;
 
         private bool _hasAnimator;
@@ -152,10 +144,7 @@ namespace StarterAssets
 
         public void EndRoll()
         {
-            _controller.height *= 4f;
-            _controller.center *= 4f;
-            _rollEnd = true;
-            _roll = false;
+            _rollable?.EndRoll();
         }
         
         public void Pause()
@@ -177,8 +166,11 @@ namespace StarterAssets
 
         public void ChangeGravitable(IGravitable newGravitable)
         {
+            _gravitable?.LeaveGravity();
             _gravitable = newGravitable;
             _gravitable.EnterGravity();
+
+            _rollable = _gravitable as IRollable;
         }
 
         public void StartRun()
@@ -212,7 +204,7 @@ namespace StarterAssets
                 { typeof(ImmuneHittable), new ImmuneHittable(_level) },
             };
 
-            _hittable = _hittables[typeof(PlayerHittable)];
+            ChangeHittable(_hittables[typeof(PlayerHittable)]);
         }
 
         private void Start()
@@ -227,10 +219,6 @@ namespace StarterAssets
 
             AssignAnimationIDs();
 
-            // reset our timeouts on start
-            _jumpTimeoutDelta = JumpTimeout;
-            _fallTimeoutDelta = FallTimeout;
-
             _gravitables = new Dictionary<Type, IGravitable>
             {
                 {
@@ -244,7 +232,8 @@ namespace StarterAssets
                         this,
                         _animator,
                         _animIDJump,
-                        _animIDFreeFall)
+                        _animIDFreeFall,
+                        _animIDRoll)
                 },
                 {
                     typeof(FlyGravity),
@@ -252,7 +241,7 @@ namespace StarterAssets
                 }
             };
 
-            _gravitable = _gravitables[typeof(DefaultGravity)];
+            ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
         private void FixedUpdate()
@@ -306,13 +295,11 @@ namespace StarterAssets
 
         private void GroundedCheck()
         {
-            // set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
                 transform.position.z);
             Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
                 QueryTriggerInteraction.Ignore);
-
-            // update animator if using character
+            
             if (_hasAnimator)
             {
                 _animator.SetBool(_animIDGrounded, Grounded);
@@ -321,21 +308,9 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
-            // if there is an input and camera position is not fixed
-            /*if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
-            {
-                //Don't multiply mouse input by Time.deltaTime;
-                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
-
-                _cinemachineTargetYaw += _input.look.x * deltaTimeMultiplier;
-                _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
-            }*/
-
-            // clamp our rotations so our values are limited 360 degrees
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-            // Cinemachine will follow this target
             CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
                 _cinemachineTargetYaw, 0.0f);
         }
@@ -455,108 +430,15 @@ namespace StarterAssets
             }
         }
 
-        //TODO: move it to gravity coz that`s doesnt work
         private void Roll()
         {
-            if (!Grounded && _roll)
-            {
-                _verticalVelocity += Gravity * Time.fixedDeltaTime * 3;
-            }
-            else if (_roll)
-            {
-                _roll = false;
-            }
-            
-            if (!_rollEnd)
-            {
-                return;
-            }
-            
-            if (_movingInput.IsRollPressed)
-            {
-                //_animator.SetTrigger(_animIDRoll);
-                _animator.SetBool(_animIDJump, false);
-                _animator.Play(_animIDRoll);
-                _roll = true;
-                _rollEnd = false;
-                _controller.height *= 0.25f;
-                _controller.center *= 0.25f;
-            }
+            _rollable?.Roll(Grounded);
         }
 
         private void JumpAndGravity()
         {
             _verticalVelocity = _gravitable.VerticalVelocity(Grounded);
         }
-
-        /*private void JumpAndGravity()
-        {
-            if (Grounded)
-            {
-                // reset the fall timeout timer
-                _fallTimeoutDelta = FallTimeout;
-
-                // update animator if using character
-                if (_hasAnimator)
-                {
-                    _animator.SetBool(_animIDJump, false);
-                    _animator.SetBool(_animIDFreeFall, false);
-                }
-
-                // stop our velocity dropping infinitely when grounded
-                if (_verticalVelocity < 0.0f)
-                {
-                    _verticalVelocity = -2f;
-                }
-
-                // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
-                {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-
-                    // update animator if using character
-                    if (_hasAnimator)
-                    {
-                        _animator.SetBool(_animIDJump, true);
-                    }
-                }
-
-                // jump timeout
-                if (_jumpTimeoutDelta >= 0.0f)
-                {
-                    _jumpTimeoutDelta -= Time.deltaTime;
-                }
-            }
-            else
-            {
-                // reset the jump timeout timer
-                _jumpTimeoutDelta = JumpTimeout;
-
-                // fall timeout
-                if (_fallTimeoutDelta >= 0.0f)
-                {
-                    _fallTimeoutDelta -= Time.deltaTime;
-                }
-                else
-                {
-                    // update animator if using character
-                    if (_hasAnimator)
-                    {
-                        _animator.SetBool(_animIDFreeFall, true);
-                    }
-                }
-
-                // if we are not grounded, do not jump
-                _input.jump = false;
-            }
-
-            if (_verticalVelocity < _terminalVelocity)
-            {
-                _verticalVelocity += Gravity * Time.deltaTime;
-            }
-        }*/
-        
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {

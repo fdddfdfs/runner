@@ -1,7 +1,7 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class DefaultGravity : IGravitable
+public class DefaultGravity : IGravitable, IRollable
 {
     private readonly float _fallTimeout;
     private readonly float _jumpTimeout;
@@ -15,10 +15,13 @@ public class DefaultGravity : IGravitable
     private readonly Animator _animator;
     private readonly int _animIDJump;
     private readonly int _animIDFreeFall;
+    private readonly int _animIDRoll;
     
     private float _verticalVelocity;
     private float _fallTimeoutDelta;
     private float _jumpTimeoutDelta;
+    private bool _roll;
+    private bool _rollEnd;
 
     public DefaultGravity(
         float fallTimeout,
@@ -29,7 +32,8 @@ public class DefaultGravity : IGravitable
         ThirdPersonController player,
         Animator animator = null,
         int animIDJump = 0,
-        int animIDFreeFall = 0)
+        int animIDFreeFall = 0,
+        int animIDRoll = 0)
     {
         _fallTimeout = fallTimeout;
         _jumpTimeout = jumpTimeout;
@@ -38,14 +42,17 @@ public class DefaultGravity : IGravitable
         _movingInput = movingInput;
         _player = player;
         
+        _jumpTimeoutDelta = _jumpTimeout;
+        _fallTimeoutDelta = _fallTimeout;
+        
         if (animator == null) return;
         _animator = animator;
         _hasAnimator = true;
         _animIDJump = animIDJump;
         _animIDFreeFall = animIDFreeFall;
+        _animIDRoll = animIDRoll;
 
-        _jumpTimeoutDelta = _jumpTimeout;
-        _fallTimeoutDelta = _fallTimeout;
+        _rollEnd = true;
     }
 
     public float VerticalVelocity(bool isGrounded)
@@ -103,5 +110,48 @@ public class DefaultGravity : IGravitable
         }
 
         return _verticalVelocity;
+    }
+
+    public void Roll(bool isGrounded)
+    {
+        if (!isGrounded && _roll)
+        {
+            _verticalVelocity += _gravity * Time.fixedDeltaTime * 3;
+        }
+        else if (_roll)
+        {
+            _roll = false;
+        }
+            
+        if (!_rollEnd)
+        {
+            return;
+        }
+        
+        if (_movingInput.IsRollPressed)
+        {
+            _animator.SetBool(_animIDJump, false);
+            _animator.Play(_animIDRoll);
+            _roll = true;
+            _rollEnd = false;
+            _player.Controller.height *= 0.25f;
+            _player.Controller.center *= 0.25f;
+        }
+    }
+
+    public void EndRoll()
+    {
+        _player.Controller.height *= 4f;
+        _player.Controller.center *= 4f;
+        _rollEnd = true;
+        _roll = false;
+    }
+
+    public void LeaveGravity()
+    {
+        if (!_rollEnd)
+        {
+            EndRoll();
+        }
     }
 }
