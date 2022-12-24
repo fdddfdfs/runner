@@ -10,4 +10,5 @@ public enum ItemType
     Immune,
     Fly,
     DoubleScore,
+    Spring,
 }

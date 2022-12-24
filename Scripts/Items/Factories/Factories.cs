@@ -24,6 +24,7 @@ public sealed class Factories : MonoBehaviour
             [ItemType.Immune] = new ImmuneFactory<Item>(_activeItemsUI),
             [ItemType.Fly] = new FlyFactory<Item>(_activeItemsUI),
             [ItemType.DoubleScore] = new DoubleScoreFactory<Item>(_runProgress,_activeItemsUI),
+            [ItemType.Spring] = new SpringFactory<Item>(),
         };
     }
 }

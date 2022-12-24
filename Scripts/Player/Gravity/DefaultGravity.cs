@@ -15,13 +15,11 @@ public class DefaultGravity : IGravitable, IRollable
     private readonly Animator _animator;
     private readonly int _animIDJump;
     private readonly int _animIDFreeFall;
-    private readonly int _animIDRoll;
+    private readonly Roll _roll;
     
     private float _verticalVelocity;
     private float _fallTimeoutDelta;
     private float _jumpTimeoutDelta;
-    private bool _roll;
-    private bool _rollEnd;
 
     public DefaultGravity(
         float fallTimeout,
@@ -50,9 +48,8 @@ public class DefaultGravity : IGravitable, IRollable
         _hasAnimator = true;
         _animIDJump = animIDJump;
         _animIDFreeFall = animIDFreeFall;
-        _animIDRoll = animIDRoll;
 
-        _rollEnd = true;
+        _roll = new Roll(player, movingInput, gravity * 3, animator, animIDRoll, animIDJump);
     }
 
     public float VerticalVelocity(bool isGrounded)
@@ -114,44 +111,16 @@ public class DefaultGravity : IGravitable, IRollable
 
     public void Roll(bool isGrounded)
     {
-        if (!isGrounded && _roll)
-        {
-            _verticalVelocity += _gravity * Time.fixedDeltaTime * 3;
-        }
-        else if (_roll)
-        {
-            _roll = false;
-        }
-            
-        if (!_rollEnd)
-        {
-            return;
-        }
-        
-        if (_movingInput.IsRollPressed)
-        {
-            _animator.SetBool(_animIDJump, false);
-            _animator.Play(_animIDRoll);
-            _roll = true;
-            _rollEnd = false;
-            _player.Controller.height *= 0.25f;
-            _player.Controller.center *= 0.25f;
-        }
+        _verticalVelocity += _roll.RollVelocity(isGrounded);
     }
 
     public void EndRoll()
     {
-        _player.Controller.height *= 4f;
-        _player.Controller.center *= 4f;
-        _rollEnd = true;
-        _roll = false;
+        _roll.EndRoll();
     }
 
     public void LeaveGravity()
     {
-        if (!_rollEnd)
-        {
-            EndRoll();
-        }
+        EndRoll();
     }
 }

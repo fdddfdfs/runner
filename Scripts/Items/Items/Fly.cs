@@ -24,7 +24,7 @@ public class Fly : ActivatableItem<Fly>
             throw new Exception("Unable get FlyGravity from players gravities");
         
         flyGravity.SetGravityLength(ActiveTime);
-        _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
+        _player.ChangeGravitable(flyGravity);
     }
 
     protected override void Deactivate()

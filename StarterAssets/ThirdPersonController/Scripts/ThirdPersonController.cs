@@ -190,7 +190,6 @@ namespace StarterAssets
             _startPosition = transform.position;
             _isPause = true;
             
-            // get a reference to our main camera
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -238,7 +237,19 @@ namespace StarterAssets
                 {
                     typeof(FlyGravity),
                     new FlyGravity(Gravity, JumpHeight * 10, SprintSpeed, this, _runProgress)
-                }
+                },
+                {
+                    typeof(SpringGravity),
+                    new SpringGravity(
+                        Gravity/2,
+                        JumpHeight*7,
+                        SprintSpeed,
+                        this,
+                        _movingInput,
+                        _animator,
+                        _animIDRoll,
+                        _animIDJump)
+                },
             };
 
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
@@ -295,8 +306,8 @@ namespace StarterAssets
 
         private void GroundedCheck()
         {
-            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
-                transform.position.z);
+            Vector3 position = transform.position;
+            Vector3 spherePosition = new Vector3(position.x, position.y - GroundedOffset, position.z);
             Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
                 QueryTriggerInteraction.Ignore);
             
@@ -326,7 +337,8 @@ namespace StarterAssets
 
             if (inputMove == Vector3.zero) targetSpeed = 0.0f;
 
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            Vector3 velocity = _controller.velocity;
+            float currentHorizontalSpeed = new Vector3(velocity.x, 0.0f, velocity.z).magnitude;
 
             float speedOffset = 0.1f;
             float inputMagnitude = _input.analogMovement ? inputMove.magnitude : 1f;
@@ -390,10 +402,11 @@ namespace StarterAssets
             }
             else if (_isMovingX)
             {
+                Vector3 position = transform.localPosition;
                 transform.localPosition = new Vector3(
                     _movingDestination,
-                    transform.localPosition.y,
-                    transform.localPosition.z);
+                    position.y,
+                    position.z);
                 _isMovingX = false;
             }
             else if(_movingXQueue != 0)
@@ -454,7 +467,10 @@ namespace StarterAssets
                 if (FootstepAudioClips.Length > 0)
                 {
                     var index = Random.Range(0, FootstepAudioClips.Length);
-                    AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                    AudioSource.PlayClipAtPoint(
+                        FootstepAudioClips[index],
+                        transform.TransformPoint(_controller.center),
+                        FootstepAudioVolume);
                 }
             }
         }
@@ -463,7 +479,10 @@ namespace StarterAssets
         {
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
-                AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                AudioSource.PlayClipAtPoint(
+                    LandingAudioClip,
+                    transform.TransformPoint(_controller.center),
+                    FootstepAudioVolume);
             }
         }
 
