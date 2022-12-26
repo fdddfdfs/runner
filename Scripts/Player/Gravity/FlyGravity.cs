@@ -1,25 +1,29 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class FlyGravity : IGravitable
+public sealed class FlyGravity : IGravitable
 {
     private readonly float _gravity;
     private readonly float _flyHeight;
+    private readonly MoneySpawner _moneySpawner;
+    private readonly ThirdPersonController _player;
     
     private float _verticalVelocity;
-
-    private MoneySpawner _moneySpawner;
-    private ThirdPersonController _player;
     private float _length;
 
-    public FlyGravity(float gravity, float flyHeight, float speed, ThirdPersonController player, RunProgress runProgress)
+    public FlyGravity(
+        float gravity,
+        float flyHeight,
+        float speed,
+        ThirdPersonController player,
+        MoneyFactory<Item> moneyFactory)
     {
         _gravity = gravity;
         _flyHeight = flyHeight;
         _player = player;
 
         _moneySpawner = new MoneySpawner(
-            new MoneyFactory<Money>(runProgress, false, true),
+            moneyFactory,
             flyHeight,
             gravity,
             speed,

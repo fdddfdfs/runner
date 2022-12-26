@@ -25,6 +25,7 @@ namespace StarterAssets
         [SerializeField] private ActiveItemsUI _activeItemsUI;
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
+        [SerializeField] private Factories _factories;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -236,16 +237,22 @@ namespace StarterAssets
                 },
                 {
                     typeof(FlyGravity),
-                    new FlyGravity(Gravity, JumpHeight * 10, SprintSpeed, this, _runProgress)
+                    new FlyGravity(
+                        Gravity,
+                        JumpHeight * 10,
+                        SprintSpeed,
+                        this,
+                        _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>)
                 },
                 {
                     typeof(SpringGravity),
                     new SpringGravity(
-                        Gravity/2,
-                        JumpHeight*7,
+                        Gravity / 2,
+                        JumpHeight * 20,
                         SprintSpeed,
                         this,
                         _movingInput,
+                        _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
                         _animator,
                         _animIDRoll,
                         _animIDJump)
@@ -343,7 +350,7 @@ namespace StarterAssets
             float speedOffset = 0.1f;
             float inputMagnitude = _input.analogMovement ? inputMove.magnitude : 1f;
 
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+            /*if (currentHorizontalSpeed < targetSpeed - speedOffset ||
                 currentHorizontalSpeed > targetSpeed + speedOffset)
             {
                 _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
@@ -354,7 +361,8 @@ namespace StarterAssets
             else
             {
                 _speed = targetSpeed;
-            }
+            }*/
+            _speed = targetSpeed;
 
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
@@ -377,11 +385,13 @@ namespace StarterAssets
 
 
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            targetDirection = new Vector3(targetDirection.x, 0, 0);
 
             _runProgress.AddScore(Time.fixedDeltaTime);
             
-            _controller.Move(targetDirection.normalized * (_speed * Time.fixedDeltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime);
+            _controller.Move(new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
+                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
+                             Vector3.forward * (_speed * Time.fixedDeltaTime));
 
             if (_hasAnimator)
             {
@@ -512,6 +522,14 @@ namespace StarterAssets
         private void Die()
         {
             _run.Lose();
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.gameObject.TryGetComponent(out Item item))
+            {
+                item.PickupItem(this);
+            }
         }
     }
 }

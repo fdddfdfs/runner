@@ -1,13 +1,13 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class SpringGravity : IGravitable, IRollable
+public sealed class SpringGravity : IGravitable, IRollable
 {
     private readonly ThirdPersonController _player;
     private readonly float _springGravity;
     private readonly float _springHeight;
-    private readonly float _speed;
     private readonly Roll _roll;
+    private readonly MoneySpawner _moneySpawner;
 
     private float _verticalVelocity;
 
@@ -17,21 +17,29 @@ public class SpringGravity : IGravitable, IRollable
         float speed,
         ThirdPersonController player,
         MovingInput movingInput,
+        MoneyFactory<Item> moneyFactory,
         Animator animator = null,
         int animIDRoll = 0,
         int animIDJump = 0)
     {
         _springGravity = springGravity;
         _springHeight = springHeight;
-        _speed = speed;
         _player = player;
 
         _roll = new Roll(player, movingInput, springGravity * 10, animator, animIDRoll, animIDJump);
+        _moneySpawner = new MoneySpawner(
+            moneyFactory,
+            springHeight,
+            springGravity,
+            speed,
+            player.Controller.height,
+            new float[] { -Level.ColumnOffset, 0, Level.ColumnOffset });
     }
 
     public void EnterGravity()
     {
         _verticalVelocity = Mathf.Sqrt(_springHeight * -2f * _springGravity);
+        _moneySpawner.SpawnMoneys(_springHeight * 0.7f, _player.transform.position);
     }
     
     public float VerticalVelocity(bool isGrounded)
