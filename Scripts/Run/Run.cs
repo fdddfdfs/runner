@@ -8,7 +8,7 @@ public class Run : MonoBehaviour
 {
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
-    [SerializeField] private Level _level;
+    [SerializeField] private Map _map;
     [SerializeField] private ResurrectMenu _resurrectMenu;
     [SerializeField] private LoseMenu _loseMenu;
     [SerializeField] private MainMenu _mainMenu;
@@ -17,7 +17,7 @@ public class Run : MonoBehaviour
     {
         _runProgress.StartRun();
         _player.StartRun();
-        _level.StartRun();
+        _map.StartRun();
     }
 
     public void Lose()
@@ -35,7 +35,7 @@ public class Run : MonoBehaviour
     public void Resurrect()
     {
         Time.timeScale = 1;
-        _level.HideCurrentBlock();
+        _map.HideCurrentBlock();
     }
 
     public void EndRun()
@@ -47,7 +47,7 @@ public class Run : MonoBehaviour
         
         _runProgress.EndRun();
         _player.EndRun();
-        _level.EndRun();
+        _map.EndRun();
     }
 
     public void BackToMenu()

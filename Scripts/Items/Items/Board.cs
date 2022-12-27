@@ -12,7 +12,7 @@ public class Board : IHittable
     private readonly WaitForSeconds _activateWaiter = new(ActiveTime);
     private readonly WaitForSeconds _recoveryWaiter = new(RecoverTime);
     private readonly ThirdPersonController _player;
-    private readonly Level _level;
+    private readonly Map _map;
     private readonly ActiveItemsUI _activeItemsUI;
     
     private Coroutine _activeRoutine;
@@ -21,10 +21,10 @@ public class Board : IHittable
     private bool _isActive;
     private bool _isRecovery;
 
-    public Board(ThirdPersonController player, Level level, ActiveItemsUI activeItemsUI)
+    public Board(ThirdPersonController player, Map map, ActiveItemsUI activeItemsUI)
     {
         _player = player;
-        _level = level;
+        _map = map;
         _activeItemsUI = activeItemsUI;
     }
     
@@ -50,7 +50,7 @@ public class Board : IHittable
                 Coroutines.StopRoutine(_activeRoutine);
                 _isRecovery = false;
                 _isActive = false;
-                _level.HideCurrentBlock();
+                _map.HideCurrentBlock();
                 Deactivate();
                 break;
             case HitType.Soft:
@@ -59,7 +59,7 @@ public class Board : IHittable
             case HitType.Hard when _isActive:
                 Coroutines.StopRoutine(_activeRoutine);
                 _isActive = false;
-                _level.HideCurrentBlock();
+                _map.HideCurrentBlock();
                 Deactivate();
                 break;
             case HitType.Hard:

@@ -100,7 +100,7 @@ public class MoneySpawner
         for (int i = 0; i < (_spawnLines?.Length ?? 1); i++)
         {
             Vector3 tempPosition = new Vector3(
-                _spawnLines == null ? Level.GetClosestColumn(position.x) : _spawnLines[i],
+                _spawnLines == null ? Map.GetClosestColumn(position.x) : _spawnLines[i],
                 currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
             _moneyPool.GetItem().transform.position = tempPosition;

@@ -1,0 +1,75 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+public sealed class Map : MonoBehaviour, IPauseable
+{
+    public const int ColumnOffset = 3;
+
+    [SerializeField] private List<LevelBlockInfo> _levelBlocks;
+    [SerializeField] private List<EnvironmentBlockInfo> _environmentBlockInfos;
+    [SerializeField] private Transform _player;
+    [SerializeField] private Factories _factories;
+
+    private Level _level;
+    private Environment _environment;
+
+    private bool _isPause;
+
+    public static float GetClosestColumn(float positionX)
+    {
+        return positionX < -ColumnOffset / 2f ? -ColumnOffset : positionX < ColumnOffset / 2f ? 0 : ColumnOffset;
+    }
+
+    public void Pause()
+    {
+        _isPause = true;
+    }
+
+    public void UnPause()
+    {
+        _isPause = false;
+    }
+    
+    public void HideCurrentBlock()
+    {
+        _level.HideCurrentBlock();
+    }
+
+    public void StartRun()
+    {
+        _isPause = false;
+
+        _level.StartRun();
+        _environment.StartRun();
+    }
+
+    public void EndRun()
+    {
+        _level.EndRun();
+        _environment.EndRun();
+    }
+    
+    private void Awake()
+    {
+        _isPause = true;
+    }
+
+    private void Start()
+    {
+        _level = new Level(_levelBlocks, _factories, _player, ColumnOffset);
+        _environment = new Environment(_environmentBlockInfos, _player);
+    }
+
+    private void Update()
+    {
+        if (_isPause)
+            return;
+        
+        _level.CheckToHideBlock();
+        _environment.CheckToHideBlock();
+    }
+}

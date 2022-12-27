@@ -8,7 +8,7 @@ public class Magnet : Item
 {
     private const float ActiveTime = 10;
 
-    private readonly Vector3 _overlapHalfSize = new(Level.ColumnOffset, 20, 2);
+    private readonly Vector3 _overlapHalfSize = new(Map.ColumnOffset, 20, 2);
     private readonly Collider[] _overlappedColliders = new Collider[10];
     private Vector3 _center;
     private LayerMask _mask;

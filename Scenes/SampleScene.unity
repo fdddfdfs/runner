@@ -888,7 +888,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _runProgress: {fileID: 272269898}
   _player: {fileID: 1744505250}
-  _level: {fileID: 445209660}
+  _map: {fileID: 445209660}
   _resurrectMenu: {fileID: 1855225058}
   _loseMenu: {fileID: 1061024080}
   _mainMenu: {fileID: 2023377997}
@@ -1219,6 +1219,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 4416926081852918490, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
+      propertyPath: _map
+      value: 
+      objectReference: {fileID: 445209660}
     - target: {fileID: 4416926081852918490, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
       propertyPath: _run
       value: 
@@ -1657,7 +1661,7 @@ GameObject:
   - component: {fileID: 445209661}
   - component: {fileID: 445209660}
   m_Layer: 0
-  m_Name: Level
+  m_Name: Map
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1677,6 +1681,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _levelBlocks:
   - {fileID: 11400000, guid: 2ead6bc3b8a12da4b8d775d4dfcd2bd4, type: 2}
+  - {fileID: 11400000, guid: 2ead6bc3b8a12da4b8d775d4dfcd2bd4, type: 2}
+  _environmentBlockInfos:
+  - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
+  - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   _player: {fileID: 1077567568}
   _factories: {fileID: 1288113285}
 --- !u!4 &445209661
@@ -2600,7 +2608,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00007429252}
+  m_AnchoredPosition: {x: 0, y: -0.000046676414}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395

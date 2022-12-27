@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
 using UnityEngine.InputSystem;
@@ -21,7 +22,7 @@ namespace StarterAssets
     public class ThirdPersonController : MonoBehaviour, IPauseable
     {
         [SerializeField] private RunProgress _runProgress;
-        [SerializeField] private Level _level;
+        [SerializeField] private Map _map;
         [SerializeField] private ActiveItemsUI _activeItemsUI;
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
@@ -196,12 +197,12 @@ namespace StarterAssets
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
 
-            _board = new Board(this, _level, _activeItemsUI);
+            _board = new Board(this, _map, _activeItemsUI);
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },
                 { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
-                { typeof(ImmuneHittable), new ImmuneHittable(_level) },
+                { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
 
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
@@ -449,7 +450,7 @@ namespace StarterAssets
                 _isMovingX = true;
                 _movingXDir = dir;
                 _previousMovingDestination = _movingDestination;
-                _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Level.ColumnOffset * dir);
+                _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Map.ColumnOffset * dir);
             }
         }
 

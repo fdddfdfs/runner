@@ -1,17 +1,17 @@
 ﻿public class ImmuneHittable : IHittable
 {
-    private readonly Level _level;
+    private readonly Map _map;
     
-    public ImmuneHittable(Level level)
+    public ImmuneHittable(Map map)
     {
-        _level = level;
+        _map = map;
     }
     
     public bool Hit(HitType hitType)
     {
         if (hitType == HitType.Hard)
         {
-            _level.HideCurrentBlock();
+            _map.HideCurrentBlock();
         }
 
         return false;

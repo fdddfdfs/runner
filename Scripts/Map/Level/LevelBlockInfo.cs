@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Level", menuName = "Levels")]
-public sealed class LevelBlock : ScriptableObject
+public sealed class LevelBlockInfo : ScriptableObject , IWeightable
 {
     [SerializeField] private List<Line> _line;
     [SerializeField] private int _weight;

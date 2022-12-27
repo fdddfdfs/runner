@@ -33,7 +33,7 @@ public sealed class SpringGravity : IGravitable, IRollable
             springGravity,
             speed,
             player.Controller.height,
-            new float[] { -Level.ColumnOffset, 0, Level.ColumnOffset });
+            new float[] { -Map.ColumnOffset, 0, Map.ColumnOffset });
     }
 
     public void EnterGravity()
