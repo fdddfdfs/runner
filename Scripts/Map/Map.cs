@@ -8,11 +8,14 @@ using Random = UnityEngine.Random;
 public sealed class Map : MonoBehaviour, IPauseable
 {
     public const int ColumnOffset = 3;
+    public const int LinesCount = 3;
 
     [SerializeField] private List<LevelBlockInfo> _levelBlocks;
     [SerializeField] private List<EnvironmentBlockInfo> _environmentBlockInfos;
     [SerializeField] private Transform _player;
     [SerializeField] private Factories _factories;
+    [SerializeField] private bool _needSpawnLevel;
+    [SerializeField] private bool _needSpawnEnvironment;
 
     private Level _level;
     private Environment _environment;
@@ -36,21 +39,21 @@ public sealed class Map : MonoBehaviour, IPauseable
     
     public void HideCurrentBlock()
     {
-        _level.HideCurrentBlock();
+        _level?.HideCurrentBlock();
     }
 
     public void StartRun()
     {
         _isPause = false;
 
-        _level.StartRun();
-        _environment.StartRun();
+        _level?.StartRun();
+        _environment?.StartRun();
     }
 
     public void EndRun()
     {
-        _level.EndRun();
-        _environment.EndRun();
+        _level?.EndRun();
+        _environment?.EndRun();
     }
     
     private void Awake()
@@ -60,8 +63,8 @@ public sealed class Map : MonoBehaviour, IPauseable
 
     private void Start()
     {
-        _level = new Level(_levelBlocks, _factories, _player, ColumnOffset);
-        _environment = new Environment(_environmentBlockInfos, _player);
+        _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, ColumnOffset) : null;
+        _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
     }
 
     private void Update()
@@ -69,7 +72,7 @@ public sealed class Map : MonoBehaviour, IPauseable
         if (_isPause)
             return;
         
-        _level.CheckToHideBlock();
-        _environment.CheckToHideBlock();
+        _level?.CheckToHideBlock();
+        _environment?.CheckToHideBlock();
     }
 }
