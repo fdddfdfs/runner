@@ -40,6 +40,7 @@ public sealed class SpringGravity : IGravitable, IRollable
     {
         _verticalVelocity = Mathf.Sqrt(_springHeight * -2f * _springGravity);
         _moneySpawner.SpawnMoneys(_springHeight * 0.7f, _player.transform.position);
+        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
     }
     
     public float VerticalVelocity(bool isGrounded)
@@ -67,5 +68,6 @@ public sealed class SpringGravity : IGravitable, IRollable
     public void LeaveGravity()
     {
         EndRoll();
+        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
     }
 }

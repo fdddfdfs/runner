@@ -131,6 +131,9 @@ namespace StarterAssets
         private IRollable _rollable;
         private Dictionary<Type, IGravitable> _gravitables;
 
+        private HorizontalMoveRestriction _horizontalMoveRestriction;
+        private Dictionary<Type, HorizontalMoveRestriction> _horizontalMoveRestrictions;
+
         private bool _hasAnimator;
 
         private bool _isPause;
@@ -141,6 +144,8 @@ namespace StarterAssets
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
+
+        public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions => _horizontalMoveRestrictions;
 
         public CharacterController Controller => _controller;
 
@@ -175,6 +180,11 @@ namespace StarterAssets
             _rollable = _gravitable as IRollable;
         }
 
+        public void ChangeHorizontalMoveRestriction(HorizontalMoveRestriction newRestriction)
+        {
+            _horizontalMoveRestriction = _horizontalMoveRestriction?.ChangeRestriction(newRestriction) ?? newRestriction;
+        }
+
         public void StartRun()
         {
             _isPause = false;
@@ -206,6 +216,14 @@ namespace StarterAssets
             };
 
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
+
+            _horizontalMoveRestrictions = new Dictionary<Type, HorizontalMoveRestriction>
+            {
+                { typeof(HorizontalMoveRestriction), new HorizontalMoveRestriction() },
+                { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
+            };
+
+            ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
         }
 
         private void Start()
@@ -336,7 +354,7 @@ namespace StarterAssets
 
         private void Move()
         {
-            float dir = CheckForMovingX();
+            int dir = CheckForMovingX();
 
             Vector3 inputMove = new(dir, 0, _moveZ);
             _input.sprint = true;
@@ -422,7 +440,7 @@ namespace StarterAssets
             }
             else if(_movingXQueue != 0)
             {
-                SetupMoving(_movingXQueue);
+                SetupMovingX(_movingXQueue);
                 dir = _movingXQueue;
                 _movingXQueue = 0;
             }
@@ -433,9 +451,12 @@ namespace StarterAssets
             {
                 if (input)
                 {
+                    if (!_isMovingX && !_horizontalMoveRestriction.CheckHorizontalMoveRestriction(dir))
+                        return;
+                    
                     if (!_isMovingX)
                     {
-                        SetupMoving(dir);
+                        SetupMovingX(dir);
                         outputDir = dir;
                     }
                     else
@@ -444,14 +465,16 @@ namespace StarterAssets
                     }
                 }
             }
+        }
+        
+        private void SetupMovingX(int dir, bool clearQueue = false)
+        {
+            _isMovingX = true;
+            _movingXDir = dir;
+            _previousMovingDestination = _movingDestination;
+            _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Map.ColumnOffset * dir);
 
-            void SetupMoving(int dir)
-            {
-                _isMovingX = true;
-                _movingXDir = dir;
-                _previousMovingDestination = _movingDestination;
-                _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Map.ColumnOffset * dir);
-            }
+            if (clearQueue) _movingXQueue = 0;
         }
 
         private void Roll()

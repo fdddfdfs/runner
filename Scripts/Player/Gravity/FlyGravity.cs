@@ -39,6 +39,12 @@ public sealed class FlyGravity : IGravitable
     {
         _verticalVelocity = Mathf.Sqrt(_flyHeight * -2f * _gravity);
         _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
+        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
+    }
+
+    public void LeaveGravity()
+    {
+        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
     }
 
     public float VerticalVelocity(bool isGrounded)
