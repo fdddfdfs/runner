@@ -18,7 +18,8 @@ public sealed class FlyGravity : IGravitable
         float speed,
         ThirdPersonController player,
         MoneyFactory<Item> moneyFactory,
-        Map map)
+        Map map,
+        RunProgress runProgress)
     {
         _gravity = gravity;
         _flyHeight = flyHeight;
@@ -30,7 +31,8 @@ public sealed class FlyGravity : IGravitable
             flyHeight,
             gravity,
             speed,
-            player.Controller.height);
+            player.Controller.height,
+            runProgress);
     }
 
     public void SetGravityLength(float length)

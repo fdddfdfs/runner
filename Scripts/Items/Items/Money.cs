@@ -36,7 +36,9 @@ public class Money : Item
         _startPosition = transform.position;
         ChangeColliderActive(false);
 
-        Tweener tweener = transform.DOMove(player.transform.position, Speed).SetEase(Ease.OutExpo);
+        Tweener tweener = transform.DOMove(
+            player.transform.position,
+            Speed/_runProgress.SpeedMultiplayer).SetEase(Ease.OutExpo);
         tweener.onUpdate += () =>
         {
             if (Vector3.Magnitude(transform.position - player.transform.position) > MoneyStopMoveRadius)

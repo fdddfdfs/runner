@@ -12,6 +12,7 @@ public class MoneySpawner
     private readonly float _playerHalfHeight;
     private readonly FactoryPool<Item> _moneyPool;
     private readonly float[] _spawnLines;
+    private readonly RunProgress _runProgress;
 
     public MoneySpawner(
         MoneyFactory<Item> moneyFactory,
@@ -19,6 +20,7 @@ public class MoneySpawner
         float gravity,
         float speed,
         float playerHeight,
+        RunProgress runProgress,
         float[] spawnLines = null)
     {
         _height = height;
@@ -27,12 +29,13 @@ public class MoneySpawner
         _playerHalfHeight = playerHeight / 2;
         _moneyPool = new FactoryPool<Item>(moneyFactory, null, true);
         _spawnLines = spawnLines;
+        _runProgress = runProgress;
     }
     
     public float SpawnMoneys(Vector3 startPosition, float activeTime)
     {
         float currentPosition = 0;
-        float distance = Time.fixedDeltaTime * _speed;
+        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplayer;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         float currentTime = 0;
@@ -65,7 +68,7 @@ public class MoneySpawner
     public float SpawnMoneys(float gravityRestriction, Vector3 startPosition)
     {
         float currentPosition = 0;
-        float distance = Time.fixedDeltaTime * _speed;
+        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplayer;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         int counter = 0;

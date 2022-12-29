@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using System;
+using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,12 +13,16 @@ public class Run : MonoBehaviour
     [SerializeField] private ResurrectMenu _resurrectMenu;
     [SerializeField] private LoseMenu _loseMenu;
     [SerializeField] private MainMenu _mainMenu;
+
+    private bool _isRun;
     
     public void StartRun()
     {
         _runProgress.StartRun();
         _player.StartRun();
         _map.StartRun();
+
+        _isRun = true;
     }
 
     public void Lose()
@@ -48,11 +53,22 @@ public class Run : MonoBehaviour
         _runProgress.EndRun();
         _player.EndRun();
         _map.EndRun();
+
+        _isRun = false;
     }
 
     public void BackToMenu()
     {
         EndRun();
         _mainMenu.ShowMainMenu();
+    }
+
+    private void Update()
+    {
+        if (_isRun)
+        {
+            _runProgress.AddScore(Time.deltaTime);
+            _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime);
+        }
     }
 }

@@ -7,14 +7,21 @@ public sealed class Level : MapPart<LevelBlockInfo, ObstacleBlock>
 
     private readonly Factories _factories;
     private readonly float _columnOffset;
+    private readonly RunProgress _runProgress;
 
     private WeightRandom _weightRandom;
 
-    public Level(List<LevelBlockInfo> levelBlocks, Factories factories, Transform player, float columnOffset) :
+    public Level(
+        List<LevelBlockInfo> levelBlocks,
+        Factories factories,
+        Transform player,
+        float columnOffset,
+        RunProgress runProgress) :
         base(levelBlocks, player)
     {
         _columnOffset = columnOffset;
         _factories = factories;
+        _runProgress = runProgress;
     }
 
     protected override float GenerateBlock(LevelBlockInfo pickedBlockInfo, ObstacleBlock parent)
@@ -64,7 +71,7 @@ public sealed class Level : MapPart<LevelBlockInfo, ObstacleBlock>
             blockEndPosition += lineEndPosition;
         }
         
-        parent.Init(createdObstacles, _factories);
+        parent.Init(createdObstacles, _factories, _runProgress);
         return blockEndPosition;
     }
 

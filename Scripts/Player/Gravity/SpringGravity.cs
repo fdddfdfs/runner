@@ -20,6 +20,7 @@ public sealed class SpringGravity : IGravitable, IRollable
         MovingInput movingInput,
         MoneyFactory<Item> moneyFactory,
         Map map,
+        RunProgress runProgress,
         Animator animator = null,
         int animIDRoll = 0,
         int animIDJump = 0)
@@ -36,6 +37,7 @@ public sealed class SpringGravity : IGravitable, IRollable
             springGravity,
             speed,
             player.Controller.height,
+            runProgress,
             new float[] { -Map.ColumnOffset, 0, Map.ColumnOffset });
     }
 

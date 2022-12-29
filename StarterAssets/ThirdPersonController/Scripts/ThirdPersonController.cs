@@ -262,7 +262,8 @@ namespace StarterAssets
                         SprintSpeed,
                         this,
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
-                        _map)
+                        _map,
+                        _runProgress)
                 },
                 {
                     typeof(SpringGravity),
@@ -274,6 +275,7 @@ namespace StarterAssets
                         _movingInput,
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
                         _map,
+                        _runProgress,
                         _animator,
                         _animIDRoll,
                         _animIDJump)
@@ -383,7 +385,7 @@ namespace StarterAssets
             {
                 _speed = targetSpeed;
             }*/
-            _speed = targetSpeed;
+            _speed = targetSpeed * _runProgress.SpeedMultiplayer;
 
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
@@ -408,8 +410,6 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
             targetDirection = new Vector3(targetDirection.x, 0, 0);
 
-            _runProgress.AddScore(Time.fixedDeltaTime);
-            
             _controller.Move(new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
                              new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
                              Vector3.forward * (_speed * Time.fixedDeltaTime));

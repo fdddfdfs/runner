@@ -10,6 +10,15 @@ public class MovingObstacle : Obstacle
     private Vector3 _startPosition;
 
     private bool _isEntered;
+    
+    private RunProgress _runProgress;
+
+    public void Init(Factories factories, RunProgress runProgress)
+    {
+        Init(factories);
+
+        _runProgress = runProgress;
+    }
 
     public override void HideObstacle()
     {
@@ -35,7 +44,7 @@ public class MovingObstacle : Obstacle
     {
         if (_isEntered)
         {
-            transform.localPosition += _movingDirection * Time.deltaTime;
+            transform.localPosition += _movingDirection * (_runProgress.SpeedMultiplayer * Time.deltaTime);
         }
     }
 }

@@ -14,6 +14,7 @@ public sealed class Map : MonoBehaviour, IPauseable
     [SerializeField] private List<EnvironmentBlockInfo> _environmentBlockInfos;
     [SerializeField] private Transform _player;
     [SerializeField] private Factories _factories;
+    [SerializeField] private RunProgress _runProgress;
     [SerializeField] private bool _needSpawnLevel;
     [SerializeField] private bool _needSpawnEnvironment;
 
@@ -60,7 +61,7 @@ public sealed class Map : MonoBehaviour, IPauseable
 
     private void Start()
     {
-        _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, ColumnOffset) : null;
+        _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, ColumnOffset, _runProgress) : null;
         _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
     }
 
