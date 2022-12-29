@@ -22,7 +22,7 @@ public class Magnet : Item
         base.Init();
 
         _activeItemsUI = activeItemsUI;
-        _center = new Vector3(0, 1, 0);
+        _center = new Vector3(0, 0, 0);
         _mask = LayerMask.GetMask("Item");
     }
 
@@ -47,8 +47,9 @@ public class Magnet : Item
 
         while (currentTime < ActiveTime)
         {
-            var collidersCount = Physics.OverlapBoxNonAlloc(
-                 _center + Vector3.forward * player.transform.position.z,
+            Vector3 position = player.transform.position;
+            int collidersCount = Physics.OverlapBoxNonAlloc(
+                 _center + Vector3.up * position.y + Vector3.forward * position.z,
                 _overlapHalfSize,
                 _overlappedColliders,
                 Quaternion.identity,
