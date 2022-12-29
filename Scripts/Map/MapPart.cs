@@ -6,7 +6,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     where TBlock: MonoBehaviour, IMapBlock
 {
     private const int BaseBlocksGenerationCount = 20;
-    private const int ViewDistance = 1000;
+    private const int ViewDistance = 400;
     private const float BaseYPosition = 1;
     private const float HideBlockOffset = 5;
 
@@ -20,6 +20,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     private SettedBlock _firstBlock;
     private float _lastBlockPosition;
+    private float _firstBlockPosition;
     
     private record BlocksPools(PoolMono<TBlock> BlockPool, float SizeZ);
     
@@ -52,7 +53,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     public void CheckToHideBlock()
     {
-        if (_player.transform.position.z > _firstBlock.Block.transform.position.z + _firstBlock.SizeZ)
+        if (_player.transform.position.z > _firstBlockPosition + _firstBlock.SizeZ)
         {
             HideCurrentBlock();
         }
@@ -60,6 +61,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     public void StartRun()
     {
+        _firstBlockPosition = 0;
         _lastBlockPosition = SetNewBlocks(0, 0);
         UpdateFirstBlock();
     }
@@ -74,7 +76,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
 
     public void HideCurrentEnteredBlock()
     {
-        if (_player.transform.position.z + HideBlockOffset < _firstBlock.Block.transform.position.z)
+        if (_player.transform.position.z + HideBlockOffset < _firstBlockPosition)
         {
             return;
         }
@@ -84,7 +86,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     public void HideBlocksBeforePositionZ(float positionZ)
     {
-        while (_firstBlock.Block.transform.position.z < positionZ)
+        while (_firstBlockPosition < positionZ)
         {
             HideCurrentBlock();
         }
@@ -94,16 +96,15 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     private void HideCurrentBlock()
     {
-        float firstBlockPositionZ = _firstBlock.Block.transform.position.z;
-        
         _firstBlock.Block.HideBlock();
         UpdateFirstBlock();
         
-        _lastBlockPosition = SetNewBlocks(firstBlockPositionZ, _lastBlockPosition);
+        _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
     }
 
     private void UpdateFirstBlock()
     {
+        _firstBlockPosition += _firstBlock?.SizeZ ?? 0;
         _firstBlock = _blocksPositions.Dequeue();
         _firstBlock.Block.EnterBlock();
     }
@@ -122,6 +123,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
                 endPosition = GenerateBlock(_blocksInfo[i], obstacleBlock);
                 generatedBlocks.Add(obstacleBlock);
             }
+            
             Blocks.Add(i, new BlocksPools(new PoolMono<TBlock>(generatedBlocks), endPosition));
         }
     }
@@ -130,7 +132,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     {
         float currentGeneratedDistance = lastBlockPosition;
         float endPosition = ViewDistance + startPosition;
-
+        
         while (currentGeneratedDistance < endPosition)
         {
             int blockID = _weightRandom.GetRandom();

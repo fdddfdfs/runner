@@ -385,7 +385,7 @@ namespace StarterAssets
             {
                 _speed = targetSpeed;
             }*/
-            _speed = targetSpeed * _runProgress.SpeedMultiplayer;
+            _speed = targetSpeed;
 
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
@@ -410,9 +410,10 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
             targetDirection = new Vector3(targetDirection.x, 0, 0);
 
-            _controller.Move(new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
-                             Vector3.forward * (_speed * Time.fixedDeltaTime));
+            _controller.Move(
+                new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
+                new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
+                Vector3.forward * (_speed * _runProgress.SpeedMultiplayer * Time.fixedDeltaTime));
 
             if (_hasAnimator)
             {

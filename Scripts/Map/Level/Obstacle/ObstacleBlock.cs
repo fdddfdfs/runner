@@ -17,7 +17,7 @@ public class ObstacleBlock : MonoBehaviour, IMapBlock
             }
             else
             {
-                obstacle.Init(factories);   
+                obstacle.Init(factories);
             }
         }
     }
