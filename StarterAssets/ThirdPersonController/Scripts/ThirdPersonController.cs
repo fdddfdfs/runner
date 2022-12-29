@@ -261,7 +261,8 @@ namespace StarterAssets
                         JumpHeight * 10,
                         SprintSpeed,
                         this,
-                        _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>)
+                        _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
+                        _map)
                 },
                 {
                     typeof(SpringGravity),
@@ -272,6 +273,7 @@ namespace StarterAssets
                         this,
                         _movingInput,
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
+                        _map,
                         _animator,
                         _animIDRoll,
                         _animIDJump)

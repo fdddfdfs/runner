@@ -22,6 +22,8 @@ public sealed class Map : MonoBehaviour, IPauseable
 
     private bool _isPause;
 
+    public Level Level => _level;
+
     public static float GetClosestColumn(float positionX)
     {
         return positionX < -ColumnOffset / 2f ? -ColumnOffset : positionX < ColumnOffset / 2f ? 0 : ColumnOffset;
@@ -35,11 +37,6 @@ public sealed class Map : MonoBehaviour, IPauseable
     public void UnPause()
     {
         _isPause = false;
-    }
-    
-    public void HideCurrentBlock()
-    {
-        _level?.HideCurrentBlock();
     }
 
     public void StartRun()

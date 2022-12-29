@@ -23,7 +23,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     private record BlocksPools(PoolMono<TBlock> BlockPool, float SizeZ);
     
-    private record SettedBlock(TBlock ObstacleBlock, float SizeZ);
+    private record SettedBlock(TBlock Block, float SizeZ);
 
     private Dictionary<int, BlocksPools> Blocks
     {
@@ -52,7 +52,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
     
     public void CheckToHideBlock()
     {
-        if (_player.transform.position.z > _firstBlock.ObstacleBlock.transform.position.z + _firstBlock.SizeZ)
+        if (_player.transform.position.z > _firstBlock.Block.transform.position.z + _firstBlock.SizeZ)
         {
             HideCurrentBlock();
         }
@@ -68,29 +68,44 @@ public abstract class MapPart<TBlockInfo,TBlock>
     {
         while (_blocksPositions.Count != 0)
         {
-            _blocksPositions.Dequeue().ObstacleBlock.gameObject.SetActive(false);
+            _blocksPositions.Dequeue().Block.gameObject.SetActive(false);
         }
     }
-    
-    public void HideCurrentBlock()
+
+    public void HideCurrentEnteredBlock()
     {
-        if (_player.transform.position.z + HideBlockOffset < _firstBlock.ObstacleBlock.transform.position.z)
+        if (_player.transform.position.z + HideBlockOffset < _firstBlock.Block.transform.position.z)
         {
             return;
         }
         
-        _lastBlockPosition = SetNewBlocks(_firstBlock.ObstacleBlock.transform.position.z, _lastBlockPosition);
-        
-        _firstBlock.ObstacleBlock.HideBlock();
-        UpdateFirstBlock();
+        HideCurrentBlock();
     }
-
+    
+    public void HideBlocksBeforePositionZ(float positionZ)
+    {
+        while (_firstBlock.Block.transform.position.z < positionZ)
+        {
+            HideCurrentBlock();
+        }
+    }
+    
     protected abstract float GenerateBlock(TBlockInfo block, TBlock parent);
+    
+    private void HideCurrentBlock()
+    {
+        float firstBlockPositionZ = _firstBlock.Block.transform.position.z;
+        
+        _firstBlock.Block.HideBlock();
+        UpdateFirstBlock();
+        
+        _lastBlockPosition = SetNewBlocks(firstBlockPositionZ, _lastBlockPosition);
+    }
 
     private void UpdateFirstBlock()
     {
         _firstBlock = _blocksPositions.Dequeue();
-        _firstBlock.ObstacleBlock.EnterBlock();
+        _firstBlock.Block.EnterBlock();
     }
 
     private void InitializeBlocks()

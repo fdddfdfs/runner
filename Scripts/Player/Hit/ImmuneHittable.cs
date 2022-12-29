@@ -11,7 +11,7 @@
     {
         if (hitType == HitType.Hard)
         {
-            _map.HideCurrentBlock();
+            _map.Level.HideCurrentEnteredBlock();
         }
 
         return false;

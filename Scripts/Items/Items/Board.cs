@@ -50,7 +50,7 @@ public class Board : IHittable
                 Coroutines.StopRoutine(_activeRoutine);
                 _isRecovery = false;
                 _isActive = false;
-                _map.HideCurrentBlock();
+                _map.Level.HideCurrentEnteredBlock();
                 Deactivate();
                 break;
             case HitType.Soft:
@@ -59,7 +59,7 @@ public class Board : IHittable
             case HitType.Hard when _isActive:
                 Coroutines.StopRoutine(_activeRoutine);
                 _isActive = false;
-                _map.HideCurrentBlock();
+                _map.Level.HideCurrentEnteredBlock();
                 Deactivate();
                 break;
             case HitType.Hard:

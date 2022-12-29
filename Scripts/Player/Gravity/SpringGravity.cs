@@ -8,6 +8,7 @@ public sealed class SpringGravity : IGravitable, IRollable
     private readonly float _springHeight;
     private readonly Roll _roll;
     private readonly MoneySpawner _moneySpawner;
+    private readonly Map _map;
 
     private float _verticalVelocity;
 
@@ -18,6 +19,7 @@ public sealed class SpringGravity : IGravitable, IRollable
         ThirdPersonController player,
         MovingInput movingInput,
         MoneyFactory<Item> moneyFactory,
+        Map map,
         Animator animator = null,
         int animIDRoll = 0,
         int animIDJump = 0)
@@ -25,6 +27,7 @@ public sealed class SpringGravity : IGravitable, IRollable
         _springGravity = springGravity;
         _springHeight = springHeight;
         _player = player;
+        _map = map;
 
         _roll = new Roll(player, movingInput, springGravity * 10, animator, animIDRoll, animIDJump);
         _moneySpawner = new MoneySpawner(
@@ -39,7 +42,10 @@ public sealed class SpringGravity : IGravitable, IRollable
     public void EnterGravity()
     {
         _verticalVelocity = Mathf.Sqrt(_springHeight * -2f * _springGravity);
-        _moneySpawner.SpawnMoneys(_springHeight * 0.7f, _player.transform.position);
+        float endGravityPositionZ = _moneySpawner.SpawnMoneys(
+            _springHeight * 0.7f,
+            _player.transform.position);
+        _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
     }
     

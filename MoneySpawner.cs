@@ -29,7 +29,7 @@ public class MoneySpawner
         _spawnLines = spawnLines;
     }
     
-    public void SpawnMoneys(Vector3 startPosition, float activeTime)
+    public float SpawnMoneys(Vector3 startPosition, float activeTime)
     {
         float currentPosition = 0;
         float distance = Time.fixedDeltaTime * _speed;
@@ -58,9 +58,11 @@ public class MoneySpawner
                 currentPosition -= MoneyDistance;
             }
         }
+
+        return startPosition.z;
     }
     
-    public void SpawnMoneys(float gravityRestriction, Vector3 startPosition)
+    public float SpawnMoneys(float gravityRestriction, Vector3 startPosition)
     {
         float currentPosition = 0;
         float distance = Time.fixedDeltaTime * _speed;
@@ -77,7 +79,7 @@ public class MoneySpawner
             }
             else
             {
-                return;
+                return startPosition.z;
             }
 
             currentPosition += distance;

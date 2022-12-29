@@ -7,6 +7,7 @@ public sealed class FlyGravity : IGravitable
     private readonly float _flyHeight;
     private readonly MoneySpawner _moneySpawner;
     private readonly ThirdPersonController _player;
+    private readonly Map _map;
     
     private float _verticalVelocity;
     private float _length;
@@ -16,11 +17,13 @@ public sealed class FlyGravity : IGravitable
         float flyHeight,
         float speed,
         ThirdPersonController player,
-        MoneyFactory<Item> moneyFactory)
+        MoneyFactory<Item> moneyFactory,
+        Map map)
     {
         _gravity = gravity;
         _flyHeight = flyHeight;
         _player = player;
+        _map = map;
 
         _moneySpawner = new MoneySpawner(
             moneyFactory,
@@ -38,7 +41,8 @@ public sealed class FlyGravity : IGravitable
     public void EnterGravity()
     {
         _verticalVelocity = Mathf.Sqrt(_flyHeight * -2f * _gravity);
-        _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
+        float endGravityPositionZ = _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
+        _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
     }
 

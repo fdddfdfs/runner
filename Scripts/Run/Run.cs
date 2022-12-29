@@ -35,7 +35,7 @@ public class Run : MonoBehaviour
     public void Resurrect()
     {
         Time.timeScale = 1;
-        _map.HideCurrentBlock();
+        _map.Level.HideCurrentEnteredBlock();
     }
 
     public void EndRun()
