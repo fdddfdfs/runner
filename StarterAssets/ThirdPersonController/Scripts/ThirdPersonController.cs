@@ -360,6 +360,7 @@ namespace StarterAssets
         {
             int dir = CheckForMovingX();
 
+            Debug.Log(dir);
             Vector3 inputMove = new(dir, 0, _moveZ);
             _input.sprint = true;
 
@@ -394,7 +395,11 @@ namespace StarterAssets
 
             if(!_isMovingX)
             {
-                inputDirection = new Vector3(_movingDestination - transform.localPosition.x, inputDirection.y, inputDirection.z);
+                float xDelta = _movingDestination - transform.localPosition.x;
+                inputDirection = new Vector3(
+                    xDelta > 0.1f ? xDelta : 0,
+                    inputDirection.y,
+                    inputDirection.z);
             }
 
             if (inputMove != Vector3.zero)
@@ -428,7 +433,8 @@ namespace StarterAssets
             CheckForInput(_movingInput.IsLeftPressed, -1, ref dir);
             CheckForInput(_movingInput.IsRightPressed, 1, ref dir);
 
-            if (_isMovingX && Mathf.Abs(transform.localPosition.x - _movingDestination) > 0.2f)
+            float xDelta = transform.localPosition.x - _movingDestination;
+            if (_isMovingX && Mathf.Abs(xDelta) > 0.1f && Math.Sign(-xDelta) == _movingXDir)
             {
                 dir = _movingXDir;
             }
@@ -475,7 +481,7 @@ namespace StarterAssets
             _isMovingX = true;
             _movingXDir = dir;
             _previousMovingDestination = _movingDestination;
-            _movingDestination = Mathf.RoundToInt(transform.localPosition.x + Map.ColumnOffset * dir);
+            _movingDestination = (int)Map.GetClosestColumn(transform.localPosition.x + Map.ColumnOffset * dir);
 
             if (clearQueue) _movingXQueue = 0;
         }
