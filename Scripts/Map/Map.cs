@@ -18,16 +18,25 @@ public sealed class Map : MonoBehaviour, IPauseable
     [SerializeField] private bool _needSpawnLevel;
     [SerializeField] private bool _needSpawnEnvironment;
 
+    private static readonly float[] AllLines = { -ColumnOffset, 0, ColumnOffset };
+    
     private Level _level;
     private Environment _environment;
-
+    
     private bool _isPause;
 
     public Level Level => _level;
 
+    public static float[] AllLinesCoordsX => AllLines;
+
     public static float GetClosestColumn(float positionX)
     {
         return positionX < -ColumnOffset / 2f ? -ColumnOffset : positionX < ColumnOffset / 2f ? 0 : ColumnOffset;
+    }
+
+    public static int GetClosestColumnIndex(float positionX)
+    {
+        return positionX < -ColumnOffset / 2f ? 0 : positionX < ColumnOffset / 2f ? 1 : 2;
     }
 
     public void Pause()

@@ -1,18 +1,21 @@
 ﻿using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class MoneySpawner
 {
     private const float MoneyDistance = 1f;
     private const int MaxIterationsCount = 1000;
-    
+
     private readonly float _height;
     private readonly float _gravity;
     private readonly float _speed;
     private readonly float _playerHalfHeight;
     private readonly FactoryPool<Item> _moneyPool;
-    private readonly float[] _spawnLines;
     private readonly RunProgress _runProgress;
+    private readonly RandomSpawnLine _randomSpawnLine;
+    
+    private float[] _spawnLines;
 
     public MoneySpawner(
         MoneyFactory<Item> moneyFactory,
@@ -30,6 +33,7 @@ public class MoneySpawner
         _moneyPool = new FactoryPool<Item>(moneyFactory, null, true);
         _spawnLines = spawnLines;
         _runProgress = runProgress;
+        _randomSpawnLine = new RandomSpawnLine();
     }
     
     public float SpawnMoneys(Vector3 startPosition, float activeTime)
@@ -39,6 +43,8 @@ public class MoneySpawner
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         float currentTime = 0;
+        
+        _randomSpawnLine.Init(startPosition.x);
 
         while (currentTime < activeTime)
         {
@@ -57,6 +63,11 @@ public class MoneySpawner
             currentPosition += distance;
             if (currentPosition > MoneyDistance)
             {
+                if (gravity == 0)
+                {
+                    _spawnLines = _randomSpawnLine.GetLines();
+                }
+
                 startPosition = SpawnMoneyItem(startPosition, currentGravity);
                 currentPosition -= MoneyDistance;
             }
