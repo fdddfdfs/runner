@@ -6,9 +6,8 @@ public class Money : Item
 {
     private const float Speed = 0.5f;
     private const float MoneyStopMoveRadius = 1f;
+    private const float SquaredMoneyStopMoveRadius = MoneyStopMoveRadius * MoneyStopMoveRadius;
 
-    private readonly float _squaredMoneyStopMoveRadius = MoneyStopMoveRadius * MoneyStopMoveRadius;
-    
     private Vector3 _startPosition;
     private RunProgress _runProgress;
 
@@ -43,7 +42,7 @@ public class Money : Item
             Speed/_runProgress.SpeedMultiplayer).SetEase(Ease.OutExpo);
         tweener.onUpdate += () =>
         {
-            if (Vector3.SqrMagnitude(transform.position - player.transform.position) > _squaredMoneyStopMoveRadius)
+            if (Vector3.SqrMagnitude(transform.position - player.transform.position) > SquaredMoneyStopMoveRadius)
             {
                 tweener.ChangeEndValue(player.transform.position, true);
             }
