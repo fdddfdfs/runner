@@ -1689,7 +1689,7 @@ MonoBehaviour:
   _player: {fileID: 1077567568}
   _factories: {fileID: 1288113285}
   _runProgress: {fileID: 0}
-  _needSpawnLevel: 1
+  _needSpawnLevel: 0
   _needSpawnEnvironment: 0
 --- !u!4 &445209661
 Transform:
@@ -2612,7 +2612,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00005429587}
+  m_AnchoredPosition: {x: 0, y: -0.000068825495}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395
@@ -4982,7 +4982,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 327491353}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99967104
+  m_Size: 0.9999783
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

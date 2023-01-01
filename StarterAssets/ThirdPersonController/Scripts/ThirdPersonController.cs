@@ -480,7 +480,7 @@ namespace StarterAssets
             _isMovingX = true;
             _movingXDir = dir;
             _previousMovingDestination = _movingDestination;
-            _movingDestination = (int)Map.GetClosestColumn(transform.localPosition.x + Map.ColumnOffset * dir);
+            _movingDestination = (int)Map.GetClosestColumn(transform.localPosition.x) + Map.ColumnOffset * dir;
 
             if (clearQueue) _movingXQueue = 0;
         }

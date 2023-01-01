@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class Follower : MonoBehaviour
 {
-    private const float FollowDelay = 0.1f;
+    private const float FollowDelay = 0.2f;
 
     [SerializeField] private RunProgress _runProgress;
     
@@ -67,7 +67,7 @@ public class Follower : MonoBehaviour
     private void SetupAppear()
     {
         var position = _target.transform.position;
-        _appearStartPosition = position - Vector3.back * 5;
+        _appearStartPosition = position + Vector3.back * 5;
         _appearEndPosition = position;
         _appearTime = FollowDelay / _runProgress.SpeedMultiplayer;
         _currentAppearTime = 0;
