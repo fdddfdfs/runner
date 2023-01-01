@@ -359,8 +359,7 @@ namespace StarterAssets
         private void Move()
         {
             int dir = CheckForMovingX();
-
-            Debug.Log(dir);
+            
             Vector3 inputMove = new(dir, 0, _moveZ);
             _input.sprint = true;
 

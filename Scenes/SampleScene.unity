@@ -155,6 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cf45c0179ca4d359a9ce3d11f01478c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _runProgress: {fileID: 272269898}
 --- !u!65 &25849545
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1687,6 +1688,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   _player: {fileID: 1077567568}
   _factories: {fileID: 1288113285}
+  _runProgress: {fileID: 0}
   _needSpawnLevel: 1
   _needSpawnEnvironment: 0
 --- !u!4 &445209661
@@ -2610,7 +2612,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000045776367}
+  m_AnchoredPosition: {x: 0, y: 0.00005429587}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395
@@ -4980,7 +4982,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 327491353}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99967104
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
