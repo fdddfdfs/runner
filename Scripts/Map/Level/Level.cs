@@ -29,7 +29,7 @@ public sealed class Level : MapPart<LevelBlockInfo, ObstacleBlock>
         float blockEndPosition = 0;
         List<Obstacle> createdObstacles = new();
 
-        for (int i = 0; i < pickedBlockInfo.Line.Count; i++)
+        for (int i = pickedBlockInfo.Line.Count - 1; i >= 0; i--)
         {
             float currentPosition = blockEndPosition;
             float lineEndPosition = EmptyFieldHeight;
