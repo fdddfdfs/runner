@@ -311,11 +311,6 @@ namespace StarterAssets
             CheckForMovingInput();
         }
 
-        private void LateUpdate()
-        {
-            //CameraRotation();
-        }
-
         private void CheckForMovingInput()
         {
             _movingInput.Update();
@@ -372,25 +367,8 @@ namespace StarterAssets
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
             if (inputMove == Vector3.zero) targetSpeed = 0.0f;
-
-            Vector3 velocity = _controller.velocity;
-            float currentHorizontalSpeed = new Vector3(velocity.x, 0.0f, velocity.z).magnitude;
-
-            float speedOffset = 0.1f;
+            
             float inputMagnitude = _input.analogMovement ? inputMove.magnitude : 1f;
-
-            /*if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
-            {
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.fixedDeltaTime * SpeedChangeRate);
-
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
-            }
-            else
-            {
-                _speed = targetSpeed;
-            }*/
             _speed = targetSpeed;
 
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
@@ -415,11 +393,7 @@ namespace StarterAssets
 
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
             }
-
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-            targetDirection = new Vector3(targetDirection.x, 0, 0);
-
+            
             _controller.Move(
                 new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
@@ -461,21 +435,21 @@ namespace StarterAssets
 
             return dir;
 
-            void CheckForInput(bool input, int dir, ref int outputDir)
+            void CheckForInput(bool input, int direction, ref int outputDir)
             {
                 if (input)
                 {
-                    if (!_isMovingX && !_horizontalMoveRestriction.CheckHorizontalMoveRestriction(dir))
+                    if (!_isMovingX && !_horizontalMoveRestriction.CheckHorizontalMoveRestriction(direction))
                         return;
                     
                     if (!_isMovingX)
                     {
-                        SetupMovingX(dir);
-                        outputDir = dir;
+                        SetupMovingX(direction);
+                        outputDir = direction;
                     }
                     else
                     {
-                        _movingXQueue = dir;
+                        _movingXQueue = direction;
                     }
                 }
             }
@@ -538,7 +512,7 @@ namespace StarterAssets
         {
             if (hit.gameObject.layer == 7)
             {
-                if(hit.normal.y > 0.5f)
+                if(Mathf.Abs(hit.normal.y) > 0.5f || hit.normal.z > 0)
                     return;
                 HitType hitType = Mathf.Abs(hit.normal.x) > 0.5f ? HitType.Soft : HitType.Hard;
                 bool result = _hittable.Hit(hitType);
