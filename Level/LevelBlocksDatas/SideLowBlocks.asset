@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69b776fd9033aba4790866cbf84be3b0, type: 3}
+  m_Name: SideLowBlocks
+  m_EditorClassIdentifier: 
+  _line:
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  _weight: 100
