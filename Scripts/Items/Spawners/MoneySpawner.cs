@@ -39,7 +39,7 @@ public class MoneySpawner
     public float SpawnMoneys(Vector3 startPosition, float activeTime)
     {
         float currentPosition = 0;
-        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplayer;
+        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplier;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         float currentTime = 0;
@@ -79,7 +79,7 @@ public class MoneySpawner
     public float SpawnMoneys(float gravityRestriction, Vector3 startPosition)
     {
         float currentPosition = 0;
-        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplayer;
+        float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplier;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         int counter = 0;

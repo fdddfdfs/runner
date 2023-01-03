@@ -69,7 +69,7 @@ public class Follower : MonoBehaviour
         var position = _target.transform.position;
         _appearStartPosition = position + Vector3.back * 5;
         _appearEndPosition = position;
-        _appearTime = FollowDelay / _runProgress.SpeedMultiplayer;
+        _appearTime = FollowDelay / _runProgress.SpeedMultiplier;
         _currentAppearTime = 0;
     }
 
@@ -78,7 +78,7 @@ public class Follower : MonoBehaviour
         _isFollowing = true;
         _isFollowingDelay = true;
 
-        yield return new WaitForSeconds(FollowDelay / _runProgress.SpeedMultiplayer);
+        yield return new WaitForSeconds(FollowDelay / _runProgress.SpeedMultiplier);
 
         _isFollowingDelay = false;
 

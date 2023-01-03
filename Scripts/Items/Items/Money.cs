@@ -39,7 +39,7 @@ public class Money : Item
 
         Tweener tweener = transform.DOMove(
             player.transform.position,
-            Speed/_runProgress.SpeedMultiplayer).SetEase(Ease.OutExpo);
+            Speed/_runProgress.SpeedMultiplier).SetEase(Ease.OutExpo);
         tweener.onUpdate += () =>
         {
             if (Vector3.SqrMagnitude(transform.position - player.transform.position) > SquaredMoneyStopMoveRadius)

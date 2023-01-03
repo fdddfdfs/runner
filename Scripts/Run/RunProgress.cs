@@ -9,7 +9,7 @@ public sealed class RunProgress : MonoBehaviour
 {
     public const int DefaultMoneyMultiplier = 1;
     public const int DefaultScoreMultiplier = 1;
-    private const float DefaultSpeedMultiplayer = 1;
+    private const float DefaultSpeedMultiplier = 1;
     
     [SerializeField] private TMPro.TMP_Text _scoreText;
     [SerializeField] private TMPro.TMP_Text _moneyText;
@@ -18,9 +18,9 @@ public sealed class RunProgress : MonoBehaviour
     private int _money;
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
-    private float _speedMultiplayer = DefaultSpeedMultiplayer;
+    private float _speedMultiplier = DefaultSpeedMultiplier;
 
-    public float SpeedMultiplayer => _speedMultiplayer;
+    public float SpeedMultiplier => _speedMultiplier;
 
     public float Score => _score;
 
@@ -28,7 +28,7 @@ public sealed class RunProgress : MonoBehaviour
 
     public void AddScore(float value)
     {
-        _score += value * _scoreMultiplier * _speedMultiplayer;
+        _score += value * _scoreMultiplier * _speedMultiplier;
         _scoreText.text = _score.ToString(CultureInfo.InvariantCulture);
     }
     
@@ -40,7 +40,7 @@ public sealed class RunProgress : MonoBehaviour
 
     public void IncreaseSpeedMultiplayerInTime(float time)
     {
-        _speedMultiplayer += SpeedMultiplayerFunc(time);
+        _speedMultiplier += SpeedMultiplayerFunc(time);
     }
 
     public void ChangeMoneyMultiplier(int multiplier = DefaultMoneyMultiplier)
@@ -73,6 +73,9 @@ public sealed class RunProgress : MonoBehaviour
         
         _money = 0;
         _score = 0;
+        _speedMultiplier = DefaultSpeedMultiplier;
+        _scoreMultiplier = DefaultScoreMultiplier;
+        _moneyMultiplier = DefaultMoneyMultiplier;
     }
 
     private void Awake()
