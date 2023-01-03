@@ -7,7 +7,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
 {
     private const int BaseBlocksGenerationCount = 20;
     private const int ViewDistance = 400;
-    private const float BaseYPosition = 1;
+    private const float BaseYPosition = 0;
     private const float HideBlockOffset = 5;
 
     private Dictionary<int, BlocksPools> _blocks;
@@ -68,6 +68,7 @@ public abstract class MapPart<TBlockInfo,TBlock>
 
     public void EndRun()
     {
+        _firstBlock.Block.gameObject.SetActive(false);
         while (_blocksPositions.Count != 0)
         {
             _blocksPositions.Dequeue().Block.gameObject.SetActive(false);

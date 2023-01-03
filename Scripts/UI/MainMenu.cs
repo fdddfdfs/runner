@@ -13,7 +13,7 @@ public class MainMenu : MonoBehaviour
 
     public void ShowMainMenu()
     {
-        _upgradeMenu.gameObject.SetActive(true);
+        _upgradeMenu.ChangeMenuVisible(true);
         _startText.gameObject.SetActive(true);
         _isRun = false;
     }

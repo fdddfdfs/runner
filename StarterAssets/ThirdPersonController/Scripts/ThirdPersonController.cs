@@ -192,7 +192,13 @@ namespace StarterAssets
 
         public void EndRun()
         {
-            transform.position = _startPosition;
+            _controller.Move(_startPosition - transform.localPosition);
+            _isPause = true;
+            _isMovingX = false;
+            _movingXDir = 0;
+            _previousMovingDestination = 0;
+            _movingDestination = 0; 
+            _movingXQueue = 0;
         }
 
         private void Awake()
@@ -440,10 +446,10 @@ namespace StarterAssets
             else if (_isMovingX)
             {
                 Vector3 position = transform.localPosition;
-                transform.localPosition = new Vector3(
+                _controller.Move(new Vector3(
                     _movingDestination,
                     position.y,
-                    position.z);
+                    position.z) - position);
                 _isMovingX = false;
             }
             else if(_movingXQueue != 0)

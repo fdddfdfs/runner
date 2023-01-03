@@ -31,7 +31,7 @@ public sealed class RunProgress : MonoBehaviour
         _score += value * _scoreMultiplier * _speedMultiplayer;
         _scoreText.text = _score.ToString(CultureInfo.InvariantCulture);
     }
-
+    
     public void AddMoney(int money = 1)
     {
         _money += money * _moneyMultiplier;

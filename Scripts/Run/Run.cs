@@ -23,11 +23,19 @@ public class Run : MonoBehaviour
         _map.StartRun();
 
         _isRun = true;
+        
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void Lose()
     {
+        _map.Level.HideCurrentEnteredBlock();
+        
         Time.timeScale = 0;
+        
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
         
         _resurrectMenu.ShowMenu(_runProgress.Score);
     }
@@ -40,7 +48,6 @@ public class Run : MonoBehaviour
     public void Resurrect()
     {
         Time.timeScale = 1;
-        _map.Level.HideCurrentEnteredBlock();
     }
 
     public void EndRun()
@@ -50,8 +57,8 @@ public class Run : MonoBehaviour
         Coroutines.StopAllRoutines();
         Time.timeScale = 1;
         
-        _runProgress.EndRun();
         _player.EndRun();
+        _runProgress.EndRun();
         _map.EndRun();
 
         _isRun = false;
