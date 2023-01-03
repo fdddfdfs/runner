@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class DefaultGravity : IGravitable, IRollable
 {
+    private const float RollGravityMultiplayer = 3;
+    
     private readonly float _fallTimeout;
     private readonly float _jumpTimeout;
     private readonly float _terminalVelocity;
@@ -49,7 +51,7 @@ public class DefaultGravity : IGravitable, IRollable
         _animIDJump = animIDJump;
         _animIDFreeFall = animIDFreeFall;
 
-        _roll = new Roll(player, movingInput, gravity * 3, animator, animIDRoll, animIDJump);
+        _roll = new Roll(player, movingInput, gravity * RollGravityMultiplayer, animator, animIDRoll, animIDJump);
     }
 
     public float VerticalVelocity(bool isGrounded)

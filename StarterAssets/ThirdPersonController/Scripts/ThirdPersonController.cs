@@ -397,7 +397,7 @@ namespace StarterAssets
             _controller.Move(
                 new Vector3(inputMove.x,0,0) * (_speed * Time.fixedDeltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
-                Vector3.forward * (_speed * _runProgress.SpeedMultiplayer * Time.fixedDeltaTime));
+                Vector3.forward * (_speed * _runProgress.SpeedMultiplier * Time.fixedDeltaTime));
 
             if (_hasAnimator)
             {
