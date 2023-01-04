@@ -68,7 +68,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
 
     public void EndRun()
     {
-        _firstBlock.Block.HideBlock();
+        _firstBlock?.Block.HideBlock();
         _firstBlock = null;
         
         while (_blocksPositions.Count != 0)

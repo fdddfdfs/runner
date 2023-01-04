@@ -34,7 +34,12 @@ public class Follower : MonoBehaviour, IRunnable
 
     public void EndRun()
     {
-        StopCoroutine(_followCoroutine);
+        if (_followCoroutine != null)
+        {
+            StopCoroutine(_followCoroutine);
+        }
+        
+
         _isFollowing = false;
         _isFollowingDelay = false;
         
