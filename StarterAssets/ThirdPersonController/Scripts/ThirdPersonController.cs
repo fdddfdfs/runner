@@ -187,11 +187,18 @@ namespace StarterAssets
 
         public void StartRun()
         {
+            _movingInput.StartRun();
+
             _isPause = false;
+            ChangeHittable(_hittables[typeof(PlayerHittable)]);
+            ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+            ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
         public void EndRun()
         {
+            _movingInput.EndRun();
+            
             _controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
             _isMovingX = false;
@@ -221,15 +228,11 @@ namespace StarterAssets
                 { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
 
-            ChangeHittable(_hittables[typeof(PlayerHittable)]);
-
             _horizontalMoveRestrictions = new Dictionary<Type, HorizontalMoveRestriction>
             {
                 { typeof(HorizontalMoveRestriction), new HorizontalMoveRestriction() },
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
             };
-
-            ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
         }
 
         private void Start()
@@ -287,8 +290,6 @@ namespace StarterAssets
                         _animIDJump)
                 },
             };
-
-            ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
         private void FixedUpdate()

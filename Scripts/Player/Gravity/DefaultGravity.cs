@@ -124,5 +124,6 @@ public class DefaultGravity : IGravitable, IRollable
     public void LeaveGravity()
     {
         EndRoll();
+        _verticalVelocity = 0;
     }
 }
