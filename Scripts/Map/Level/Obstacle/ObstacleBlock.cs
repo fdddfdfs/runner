@@ -9,7 +9,7 @@ public class ObstacleBlock : MonoBehaviour, IMapBlock
     {
         _obstacles = obstacles;
 
-        foreach (var obstacle in obstacles)
+        foreach (Obstacle obstacle in obstacles)
         {
             if (obstacle is MovingObstacle movingObstacle)
             {
@@ -24,7 +24,7 @@ public class ObstacleBlock : MonoBehaviour, IMapBlock
 
     public void HideBlock()
     {
-        foreach (var obstacle in _obstacles)
+        foreach (Obstacle obstacle in _obstacles)
         {
             obstacle.HideObstacle();
         }
@@ -34,7 +34,7 @@ public class ObstacleBlock : MonoBehaviour, IMapBlock
 
     public void EnterBlock()
     {
-        foreach (var obstacle in _obstacles)
+        foreach (Obstacle obstacle in _obstacles)
         {
             obstacle.EnterObstacle();
         }

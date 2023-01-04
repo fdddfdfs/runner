@@ -5,7 +5,7 @@ using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class RunProgress : MonoBehaviour
+public sealed class RunProgress : MonoBehaviour, IRunnable
 {
     public const int DefaultMoneyMultiplier = 1;
     public const int DefaultScoreMultiplier = 1;

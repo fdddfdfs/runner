@@ -19,7 +19,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
     [RequireComponent(typeof(MovingInput))]
 #endif
-    public class ThirdPersonController : MonoBehaviour, IPauseable
+    public class ThirdPersonController : MonoBehaviour, IPauseable, IRunnable
     {
         [SerializeField] private RunProgress _runProgress;
         [SerializeField] private Map _map;

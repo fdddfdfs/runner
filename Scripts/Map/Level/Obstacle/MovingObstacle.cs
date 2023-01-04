@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class MovingObstacle : Obstacle
 {
-    private const float Speed = 1;
+    private const float Speed = 15;
 
-    private readonly Vector3 _movingDirection = Vector3.forward * Speed;
+    private readonly Vector3 _movingDirection = Vector3.back * Speed;
 
     private Vector3 _startPosition;
 
@@ -15,9 +15,11 @@ public class MovingObstacle : Obstacle
 
     public void Init(Factories factories, RunProgress runProgress)
     {
-        Init(factories);
+        base.Init(factories);
 
         _runProgress = runProgress;
+        
+        _startPosition = transform.localPosition;
     }
 
     public override void HideObstacle()
@@ -33,11 +35,6 @@ public class MovingObstacle : Obstacle
         base.EnterObstacle();
         
         _isEntered = true;
-    }
-    
-    private void Awake()
-    {
-        _startPosition = transform.localPosition;
     }
 
     private void Update()

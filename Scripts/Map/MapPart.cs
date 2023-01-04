@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class MapPart<TBlockInfo,TBlock> 
+public abstract class MapPart<TBlockInfo,TBlock> : IRunnable 
     where TBlockInfo: ScriptableObject, IWeightable
-    where TBlock: MonoBehaviour, IMapBlock
+    where TBlock: MonoBehaviour, IMapBlock 
 {
     private const int BaseBlocksGenerationCount = 20;
     private const int ViewDistance = 400;
@@ -68,10 +68,12 @@ public abstract class MapPart<TBlockInfo,TBlock>
 
     public void EndRun()
     {
-        _firstBlock.Block.gameObject.SetActive(false);
+        _firstBlock.Block.HideBlock();
+        _firstBlock = null;
+        
         while (_blocksPositions.Count != 0)
         {
-            _blocksPositions.Dequeue().Block.gameObject.SetActive(false);
+            _blocksPositions.Dequeue().Block.HideBlock();
         }
     }
 

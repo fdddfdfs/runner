@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public sealed class Map : MonoBehaviour, IPauseable
+public sealed class Map : MonoBehaviour, IPauseable , IRunnable
 {
     public const int ColumnOffset = 3;
     public const int LinesCount = 3;
@@ -18,15 +18,16 @@ public sealed class Map : MonoBehaviour, IPauseable
     [SerializeField] private bool _needSpawnLevel;
     [SerializeField] private bool _needSpawnEnvironment;
 
-    private static readonly float[] AllLines = { -ColumnOffset, 0, ColumnOffset };
-    
     private Level _level;
     private Environment _environment;
+    private List<IRunnable> _runnables;
     
     private bool _isPause;
 
     public Level Level => _level;
 
+    private static readonly float[] AllLines = { -ColumnOffset, 0, ColumnOffset };
+    
     public static float[] AllLinesCoordsX => AllLines;
 
     public static float GetClosestColumn(float positionX)
@@ -51,16 +52,22 @@ public sealed class Map : MonoBehaviour, IPauseable
 
     public void StartRun()
     {
+        foreach (IRunnable runnable in _runnables)
+        {
+            runnable?.StartRun();
+        }
+        
         _isPause = false;
-
-        _level?.StartRun();
-        _environment?.StartRun();
     }
 
     public void EndRun()
     {
-        _level?.EndRun();
-        _environment?.EndRun();
+        foreach (IRunnable runnable in _runnables)
+        {
+            runnable?.EndRun();
+        }
+
+        _isPause = true;
     }
     
     private void Awake()
@@ -72,6 +79,7 @@ public sealed class Map : MonoBehaviour, IPauseable
     {
         _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, ColumnOffset, _runProgress) : null;
         _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
+        _runnables = new List<IRunnable> { _level, _environment };
     }
 
     private void Update()

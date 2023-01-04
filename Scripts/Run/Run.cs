@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 
-public class Run : MonoBehaviour
+public class Run : MonoBehaviour, IRunnable
 {
+    [SerializeField] private Follower _follower;
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private Map _map;
@@ -15,12 +17,15 @@ public class Run : MonoBehaviour
     [SerializeField] private MainMenu _mainMenu;
 
     private bool _isRun;
+
+    private List<IRunnable> _runnables;
     
     public void StartRun()
     {
-        _runProgress.StartRun();
-        _player.StartRun();
-        _map.StartRun();
+        foreach (IRunnable runnable in _runnables)
+        {
+            runnable.StartRun();
+        }
 
         _isRun = true;
         
@@ -56,10 +61,11 @@ public class Run : MonoBehaviour
         DOTween.KillAll();
         Coroutines.StopAllRoutines();
         Time.timeScale = 1;
-        
-        _player.EndRun();
-        _runProgress.EndRun();
-        _map.EndRun();
+
+        foreach (IRunnable runnable in _runnables)
+        {
+            runnable.EndRun();
+        }
 
         _isRun = false;
     }
@@ -77,5 +83,10 @@ public class Run : MonoBehaviour
             _runProgress.AddScore(Time.deltaTime);
             _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime);
         }
+    }
+
+    private void Awake()
+    {
+        _runnables = new List<IRunnable> { _player, _runProgress, _map, _follower };
     }
 }

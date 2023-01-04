@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
-public class Follower : MonoBehaviour
+public class Follower : MonoBehaviour, IRunnable
 {
     private const float FollowDelay = 0.2f;
 
@@ -17,12 +17,30 @@ public class Follower : MonoBehaviour
     private GameObject _target;
     private WaitForSeconds _followWaiter;
     private float _previousTime = -1;
+    private Coroutine _followCoroutine;
 
     private Vector3 _appearStartPosition;
     private Vector3 _appearEndPosition;
     private float _appearTime;
     private float _currentAppearTime;
 
+    private Vector3 _startPosition;
+
+    public void StartRun()
+    {
+        gameObject.SetActive(true);
+        transform.position = _startPosition;
+    }
+
+    public void EndRun()
+    {
+        StopCoroutine(_followCoroutine);
+        _isFollowing = false;
+        _isFollowingDelay = false;
+        
+        gameObject.SetActive(false);
+    }
+    
     public void FollowForTime(GameObject target, float time)
     {
         _isFollowing = true;
@@ -36,7 +54,7 @@ public class Follower : MonoBehaviour
             _previousTime = time;
         }
 
-        StartCoroutine(Follow());
+        _followCoroutine = StartCoroutine(Follow());
     }
 
     private void FixedUpdate()
@@ -53,6 +71,11 @@ public class Follower : MonoBehaviour
         {
             Appear(Time.fixedDeltaTime);
         }
+    }
+
+    private void Awake()
+    {
+        _startPosition = transform.position;
     }
 
     private void Appear(float deltaTime)

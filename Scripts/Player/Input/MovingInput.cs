@@ -1,6 +1,6 @@
 ﻿using UnityEngine.InputSystem;
 
-public class MovingInput
+public class MovingInput : IRunnable
 {
     private bool _isLeftPressed;
     private bool _isRightPressed;
@@ -72,5 +72,18 @@ public class MovingInput
         {
             _isRollPressed = Keyboard.current.sKey.wasPressedThisFrame;
         }
+    }
+
+    public void StartRun()
+    {
+        
+    }
+
+    public void EndRun()
+    {
+        _isJumpPressed = false;
+        _isLeftPressed = false;
+        _isRightPressed = false;
+        _isRollPressed = false;
     }
 }
