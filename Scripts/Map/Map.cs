@@ -26,9 +26,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
 
     public Level Level => _level;
 
-    private static readonly float[] AllLines = { -ColumnOffset, 0, ColumnOffset };
-    
-    public static float[] AllLinesCoordsX => AllLines;
+    public static float[] AllLinesCoordsX { get; } = { -ColumnOffset, 0, ColumnOffset };
 
     public static float GetClosestColumn(float positionX)
     {
@@ -77,7 +75,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
 
     private void Start()
     {
-        _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, ColumnOffset, _runProgress) : null;
+        _level = _needSpawnLevel? new Level(_levelBlocks, _factories, _player, _runProgress) : null;
         _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
         _runnables = new List<IRunnable> { _level, _environment };
     }
