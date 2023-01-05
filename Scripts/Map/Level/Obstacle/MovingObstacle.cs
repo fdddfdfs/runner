@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class MovingObstacle : Obstacle
 {
-    private const float Speed = 15;
+    private const float Speed = 10;
 
     private readonly Vector3 _movingDirection = Vector3.back * Speed;
 

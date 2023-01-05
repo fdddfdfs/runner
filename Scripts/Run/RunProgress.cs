@@ -19,8 +19,11 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
     private float _speedMultiplier = DefaultSpeedMultiplier;
+    private float _halfSpeedMultiplier = DefaultSpeedMultiplier;
 
     public float SpeedMultiplier => _speedMultiplier;
+
+    public float HalfSpeedMultiplier => _halfSpeedMultiplier;
 
     public float Score => _score;
 
@@ -40,7 +43,9 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void IncreaseSpeedMultiplayerInTime(float time)
     {
-        _speedMultiplier += SpeedMultiplayerFunc(time);
+        float delta = SpeedMultiplayerFunc(time);
+        _speedMultiplier += delta;
+        _halfSpeedMultiplier += delta / 2;
     }
 
     public void ChangeMoneyMultiplier(int multiplier = DefaultMoneyMultiplier)
@@ -74,6 +79,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         _money = 0;
         _score = 0;
         _speedMultiplier = DefaultSpeedMultiplier;
+        _halfSpeedMultiplier = DefaultSpeedMultiplier;
         _scoreMultiplier = DefaultScoreMultiplier;
         _moneyMultiplier = DefaultMoneyMultiplier;
     }
