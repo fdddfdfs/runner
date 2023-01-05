@@ -1,0 +1,286 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69b776fd9033aba4790866cbf84be3b0, type: 3}
+  m_Name: Something7
+  m_EditorClassIdentifier: 
+  _line:
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  _weight: 100

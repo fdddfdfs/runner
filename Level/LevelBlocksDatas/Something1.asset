@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69b776fd9033aba4790866cbf84be3b0, type: 3}
+  m_Name: Something1
+  m_EditorClassIdentifier: 
+  _line:
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 8096779991886049883, guid: d21f26259a4b6e6488979a0ef3386dee, type: 3}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4907842016924744057, guid: 7abd9257c7be28b43a14775a55c3cd04, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 4907842016924744057, guid: 7abd9257c7be28b43a14775a55c3cd04, type: 3}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4907842016924744057, guid: 7abd9257c7be28b43a14775a55c3cd04, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 4907842016924744057, guid: 7abd9257c7be28b43a14775a55c3cd04, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _itemType1: 0
+    _itemType2: 0
+    _itemType3: 0
+  _weight: 100

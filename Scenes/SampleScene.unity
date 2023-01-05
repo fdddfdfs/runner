@@ -1690,9 +1690,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _levelBlocks:
+  - {fileID: 11400000, guid: cb9d35c67533ab34f8fcb38354dfce82, type: 2}
+  - {fileID: 11400000, guid: 4ffcac77162a5a44088bb8bfaac4b828, type: 2}
   - {fileID: 11400000, guid: 99718bf78f75672429e772f37c4ab724, type: 2}
-  - {fileID: 11400000, guid: 99718bf78f75672429e772f37c4ab724, type: 2}
-  - {fileID: 11400000, guid: 99718bf78f75672429e772f37c4ab724, type: 2}
+  - {fileID: 11400000, guid: 4d05f0e818acf564a9062540bdd0a274, type: 2}
+  - {fileID: 11400000, guid: e9186c7d61f7282459643346f9f7cd90, type: 2}
+  - {fileID: 11400000, guid: d2175226a7f917e4ab063eeae6802eee, type: 2}
+  - {fileID: 11400000, guid: 80012f5a0f0938246ae68802c9cb3cd7, type: 2}
+  - {fileID: 11400000, guid: ecff3249fe13a5f418c72ba87d0839a4, type: 2}
+  - {fileID: 11400000, guid: f15f40d131c1ef24ea1d8151a18f28c8, type: 2}
+  - {fileID: 11400000, guid: 46329862e09f88441b17e93d8ad576f0, type: 2}
+  - {fileID: 11400000, guid: 592445a50522f50468a60ccaa379e509, type: 2}
+  - {fileID: 11400000, guid: 95151e0d64c331a449f31493d4c4ea23, type: 2}
+  - {fileID: 11400000, guid: 8ff49457f05c1d5429ef7de93a696581, type: 2}
+  - {fileID: 11400000, guid: e057d97a2da0739448fd066677649dcb, type: 2}
+  - {fileID: 11400000, guid: 72cde31d4476f034793fc65f409587db, type: 2}
+  - {fileID: 11400000, guid: d9c4aa2812348f747a9872add0406215, type: 2}
   _environmentBlockInfos:
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
@@ -2640,7 +2653,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000045965582}
+  m_AnchoredPosition: {x: 0, y: 0.0000712747}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395
