@@ -121,8 +121,9 @@ public sealed class LineDrawer : PropertyDrawer
                 bindingPath = $"_obstacle{i}",
                 style =
                 {
-                    flexGrow = 1,
-                    flexShrink = 10,
+                    flexGrow = 0,
+                    flexShrink = 1,
+                    flexBasis = 100,
                 },
                 objectType = typeof(GameObject),
             });
