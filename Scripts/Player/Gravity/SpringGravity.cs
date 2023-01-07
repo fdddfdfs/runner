@@ -21,16 +21,14 @@ public sealed class SpringGravity : IGravitable, IRollable
         MoneyFactory<Item> moneyFactory,
         Map map,
         RunProgress runProgress,
-        Animator animator = null,
-        int animIDRoll = 0,
-        int animIDJump = 0)
+        PlayerAnimator playerAnimator)
     {
         _springGravity = springGravity;
         _springHeight = springHeight;
         _player = player;
         _map = map;
 
-        _roll = new Roll(player, movingInput, springGravity * 10, animator, animIDRoll, animIDJump);
+        _roll = new Roll(player, movingInput, springGravity * 10, playerAnimator);
         _moneySpawner = new MoneySpawner(
             moneyFactory,
             springHeight,

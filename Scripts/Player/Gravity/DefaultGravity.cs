@@ -12,11 +12,8 @@ public class DefaultGravity : IGravitable, IRollable
 
     private readonly ThirdPersonController _player;
     private readonly MovingInput _movingInput;
-    
-    private readonly bool _hasAnimator;
-    private readonly Animator _animator;
-    private readonly int _animIDJump;
-    private readonly int _animIDFreeFall;
+
+    private readonly PlayerAnimator _playerAnimator;
     private readonly Roll _roll;
     
     private float _verticalVelocity;
@@ -29,11 +26,8 @@ public class DefaultGravity : IGravitable, IRollable
         float terminalVelocity,
         float gravity,
         MovingInput movingInput,
-        ThirdPersonController player,
-        Animator animator = null,
-        int animIDJump = 0,
-        int animIDFreeFall = 0,
-        int animIDRoll = 0)
+        ThirdPersonController player, 
+        PlayerAnimator playerAnimator)
     {
         _fallTimeout = fallTimeout;
         _jumpTimeout = jumpTimeout;
@@ -44,14 +38,10 @@ public class DefaultGravity : IGravitable, IRollable
         
         _jumpTimeoutDelta = _jumpTimeout;
         _fallTimeoutDelta = _fallTimeout;
-        
-        if (animator == null) return;
-        _animator = animator;
-        _hasAnimator = true;
-        _animIDJump = animIDJump;
-        _animIDFreeFall = animIDFreeFall;
 
-        _roll = new Roll(player, movingInput, gravity * RollGravityMultiplayer, animator, animIDRoll, animIDJump);
+        _playerAnimator = playerAnimator;
+
+        _roll = new Roll(player, movingInput, gravity * RollGravityMultiplayer, playerAnimator);
     }
 
     public float VerticalVelocity(bool isGrounded)
@@ -60,11 +50,8 @@ public class DefaultGravity : IGravitable, IRollable
         {
             _fallTimeoutDelta = _fallTimeout;
 
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDJump, false);
-                _animator.SetBool(_animIDFreeFall, false);
-            }
+            _playerAnimator.ChangeAnimationBool(AnimationType.Jump, false);
+            _playerAnimator.ChangeAnimationBool(AnimationType.Fall, false);
 
             if (_verticalVelocity < 0.0f)
             {
@@ -75,10 +62,7 @@ public class DefaultGravity : IGravitable, IRollable
             {
                 _verticalVelocity = Mathf.Sqrt(_player.JumpHeight * -2f * _gravity);
 
-                if (_hasAnimator)
-                {
-                    _animator.SetBool(_animIDJump, true);
-                }
+                _playerAnimator.ChangeAnimationBool(AnimationType.Jump, true);
             }
 
             if (_jumpTimeoutDelta >= 0.0f)
@@ -96,10 +80,7 @@ public class DefaultGravity : IGravitable, IRollable
             }
             else
             {
-                if (_hasAnimator)
-                {
-                    _animator.SetBool(_animIDFreeFall, true);
-                }
+                _playerAnimator.ChangeAnimationBool(AnimationType.Fall, true);
             }
         }
 

@@ -13,12 +13,14 @@ public class PlayerAnimator
     {
         _playerAnimator = playerAnimator;
 
-        Dictionary<AnimationType, int> animationsID = new Dictionary<AnimationType, int>();
+        Dictionary<AnimationType, int> animationsID = GetAnimationIDs();
 
         _animators = new Dictionary<Type, PlayerBaseAnimator>
         {
             { typeof(PlayerDefaultAnimator), new PlayerDefaultAnimator(playerAnimator, animationsID) }
         };
+        
+        ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     public void ChangeAnimator(Type animatorType)
@@ -40,5 +42,18 @@ public class PlayerAnimator
     public void ChangeAnimationFloat(AnimationType animation, float value)
     {
         _current.ChangeAnimationFloat(animation, value);
+    }
+
+    private static Dictionary<AnimationType, int> GetAnimationIDs()
+    {
+        return new Dictionary<AnimationType, int>
+        {
+            { AnimationType.Run, Animator.StringToHash("Speed") },
+            { AnimationType.Land, Animator.StringToHash("Grounded") },
+            { AnimationType.Jump, Animator.StringToHash("Jump") },
+            { AnimationType.Fall, Animator.StringToHash("FreeFall") },
+            { AnimationType.Speed, Animator.StringToHash("MotionSpeed") },
+            { AnimationType.Roll, Animator.StringToHash("Roll") },
+        };
     }
 }

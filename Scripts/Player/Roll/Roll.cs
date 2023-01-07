@@ -4,35 +4,20 @@ using UnityEngine;
 public class Roll
 {
     private readonly ThirdPersonController _player;
-    private readonly Animator _animator;
+    private readonly PlayerAnimator _playerAnimator;
     private readonly MovingInput _movingInput;
-    private readonly int _animIDRoll;
-    private readonly int _animIDJump;
     private readonly float _gravity;
-    private readonly bool _isAnimatorNotNull;
-    
+
     private bool _roll;
     private bool _rollEnd;
 
-    public Roll(
-        ThirdPersonController player,
-        MovingInput movingInput,
-        float gravity,
-        Animator animator = null,
-        int animIDRoll = 0,
-        int animIDJump = 0)
+    public Roll(ThirdPersonController player, MovingInput movingInput, float gravity, PlayerAnimator playerAnimator)
     {
         _player = player;
         _movingInput = movingInput;
         _gravity = gravity;
-
+        _playerAnimator = playerAnimator;
         _rollEnd = true;
-        
-        if (animator == null) return;
-        _animator = animator;
-        _animIDRoll = animIDRoll;
-        _animIDJump = animIDJump;
-        _isAnimatorNotNull = _animator != null;
     }
 
     public float RollVelocity(bool isGrounded)
@@ -54,11 +39,8 @@ public class Roll
         
         if (_movingInput.IsRollPressed)
         {
-            if (_isAnimatorNotNull)
-            {
-                _animator.SetBool(_animIDJump, false);
-                _animator.Play(_animIDRoll);
-            }
+            _playerAnimator.ChangeAnimationBool(AnimationType.Jump, false);
+            _playerAnimator.ChangeAnimationTrigger(AnimationType.Roll);
 
             _roll = true;
             _rollEnd = false;

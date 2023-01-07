@@ -108,20 +108,12 @@ namespace StarterAssets
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
 
-        // animation IDs
-        private int _animIDSpeed;
-        private int _animIDGrounded;
-        private int _animIDJump;
-        private int _animIDFreeFall;
-        private int _animIDMotionSpeed;
-        private int _animIDRoll;
-        private int _animIDLand;
-
         private PlayerInput _playerInput;
         private Animator _animator;
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
+        private PlayerAnimator _playerAnimator;
 
         private IHittable _hittable;
         private Dictionary<Type, IHittable> _hittables;
@@ -245,7 +237,7 @@ namespace StarterAssets
             _input = GetComponent<StarterAssetsInputs>();
             _playerInput = GetComponent<PlayerInput>();
 
-            AssignAnimationIDs();
+            _playerAnimator = new PlayerAnimator(_animator);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {
@@ -258,10 +250,7 @@ namespace StarterAssets
                         Gravity,
                         _movingInput,
                         this,
-                        _animator,
-                        _animIDJump,
-                        _animIDFreeFall,
-                        _animIDRoll)
+                        _playerAnimator)
                 },
                 {
                     typeof(FlyGravity),
@@ -285,9 +274,7 @@ namespace StarterAssets
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
                         _map,
                         _runProgress,
-                        _animator,
-                        _animIDRoll,
-                        _animIDJump)
+                        _playerAnimator)
                 },
             };
         }
@@ -325,17 +312,6 @@ namespace StarterAssets
             }
         }
 
-        private void AssignAnimationIDs()
-        {
-            _animIDSpeed = Animator.StringToHash("Speed");
-            _animIDGrounded = Animator.StringToHash("Grounded");
-            _animIDJump = Animator.StringToHash("Jump");
-            _animIDFreeFall = Animator.StringToHash("FreeFall");
-            _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-            _animIDRoll = Animator.StringToHash("Roll");
-            _animIDLand = Animator.StringToHash("Land");
-        }
-
         private void GroundedCheck()
         {
             Vector3 position = transform.position;
@@ -345,7 +321,7 @@ namespace StarterAssets
             
             if (_hasAnimator)
             {
-                _animator.SetBool(_animIDGrounded, Grounded);
+                _playerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
             }
         }
 
@@ -403,8 +379,8 @@ namespace StarterAssets
 
             if (_hasAnimator)
             {
-                _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+                _playerAnimator.ChangeAnimationFloat(AnimationType.Run, _animationBlend);
+                _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, inputMagnitude);
             }
         }
 

@@ -10,7 +10,7 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
     {
         _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>
         {
-            { AnimationType.Roll, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Roll]) },
+            { AnimationType.Roll, new InstantTriggerAnimation(playerAnimator, animationsID[AnimationType.Roll]) },
         };
 
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>

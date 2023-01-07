@@ -39,7 +39,7 @@ public abstract class PlayerBaseAnimator
 
     public void ChangeAnimationBool(AnimationType animation, bool value)
     {
-        if (!_triggerAnimations.ContainsKey(animation))
+        if (!_boolAnimations.ContainsKey(animation))
         {
             throw new Exception($"Bool do not exist for {animation} in {this}");
         }
@@ -49,7 +49,7 @@ public abstract class PlayerBaseAnimator
 
     public void ChangeAnimationFloat(AnimationType animation, float value)
     {
-        if (!_triggerAnimations.ContainsKey(animation))
+        if (!_floatAnimations.ContainsKey(animation))
         {
             throw new Exception($"Float do not exist for {animation} in {this}");
         }
