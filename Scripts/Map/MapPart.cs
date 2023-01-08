@@ -99,7 +99,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     
     private void HideCurrentBlock()
     {
-        _firstBlock.Block.HideBlock();
+        _firstBlock?.Block.HideBlock();
         UpdateFirstBlock();
         
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);

@@ -87,6 +87,6 @@ public class Run : MonoBehaviour, IRunnable
 
     private void Awake()
     {
-        _runnables = new List<IRunnable> { _player, _runProgress, _map, _follower };
+        _runnables = new List<IRunnable> { _map, _player, _runProgress, _follower };
     }
 }

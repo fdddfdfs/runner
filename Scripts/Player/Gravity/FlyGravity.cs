@@ -8,6 +8,7 @@ public sealed class FlyGravity : IGravitable
     private readonly MoneySpawner _moneySpawner;
     private readonly ThirdPersonController _player;
     private readonly Map _map;
+    private readonly PlayerAnimator _playerAnimator;
     
     private float _verticalVelocity;
     private float _length;
@@ -19,12 +20,14 @@ public sealed class FlyGravity : IGravitable
         ThirdPersonController player,
         MoneyFactory<Item> moneyFactory,
         Map map,
-        RunProgress runProgress)
+        RunProgress runProgress,
+        PlayerAnimator playerAnimator)
     {
         _gravity = gravity;
         _flyHeight = flyHeight;
         _player = player;
         _map = map;
+        _playerAnimator = playerAnimator;
 
         _moneySpawner = new MoneySpawner(
             moneyFactory,
@@ -46,21 +49,31 @@ public sealed class FlyGravity : IGravitable
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
         _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
+        
+        _playerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
     }
 
     public void LeaveGravity()
     {
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+        
+        _playerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     public float VerticalVelocity(bool isGrounded)
     {
         if (_verticalVelocity > 0)
         {
+            _playerAnimator.ChangeAnimationBool(AnimationType.Jump, true);
+            
             _verticalVelocity += _gravity * Time.fixedDeltaTime;
 
             if (_verticalVelocity < 0)
                 _verticalVelocity = 0;
+        }
+        else
+        {
+            _playerAnimator.ChangeAnimationBool(AnimationType.Jump, false);
         }
         
         return _verticalVelocity;

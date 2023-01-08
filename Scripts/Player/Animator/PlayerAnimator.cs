@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using StarterAssets;
 using UnityEngine;
 
 public class PlayerAnimator
@@ -9,7 +10,7 @@ public class PlayerAnimator
     private readonly Animator _playerAnimator;
     private PlayerBaseAnimator _current;
     
-    public PlayerAnimator(Animator playerAnimator)
+    public PlayerAnimator(Animator playerAnimator, ThirdPersonController player)
     {
         _playerAnimator = playerAnimator;
 
@@ -17,7 +18,8 @@ public class PlayerAnimator
 
         _animators = new Dictionary<Type, PlayerBaseAnimator>
         {
-            { typeof(PlayerDefaultAnimator), new PlayerDefaultAnimator(playerAnimator, animationsID) }
+            { typeof(PlayerDefaultAnimator), new PlayerDefaultAnimator(playerAnimator, animationsID, player) },
+            {typeof(PlayerFlyAnimator), new PlayerFlyAnimator(playerAnimator, player)}
         };
         
         ChangeAnimator(typeof(PlayerDefaultAnimator));
@@ -25,8 +27,9 @@ public class PlayerAnimator
 
     public void ChangeAnimator(Type animatorType)
     {
+        _current?.ExitAnimator();
         _current = _animators[animatorType];
-        _playerAnimator.runtimeAnimatorController = _current.AnimatorController;
+        _current.EnterAnimator();
     }
 
     public void ChangeAnimationTrigger(AnimationType animation)

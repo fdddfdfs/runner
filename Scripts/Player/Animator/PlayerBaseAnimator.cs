@@ -10,21 +10,34 @@ public abstract class PlayerBaseAnimator
     
     protected abstract string AnimatorResourceName { get; }
 
-    public RuntimeAnimatorController AnimatorController { get;}
+    private readonly RuntimeAnimatorController _animatorController;
+    private readonly Animator _playerAnimator;
 
-    protected PlayerBaseAnimator()
+    protected PlayerBaseAnimator(Animator playerAnimator)
     {
+        _playerAnimator = playerAnimator;
+        
         if (AnimatorResourceName == null)
         {
             throw new Exception("AnimatorResourceName get method need to be initialized");
         }
         
-        AnimatorController = Resources.Load(AnimatorResourceName) as RuntimeAnimatorController;
+        _animatorController = Resources.Load(AnimatorResourceName) as RuntimeAnimatorController;
 
-        if (AnimatorController == null)
+        if (_animatorController == null)
         {
             throw new Exception($"Resources does not contain {AnimatorResourceName} animation controller");
         }
+    }
+
+    public virtual void EnterAnimator()
+    {
+        _playerAnimator.runtimeAnimatorController = _animatorController;
+    }
+
+    public virtual void ExitAnimator()
+    {
+        Debug.Log("");
     }
 
     public void ChangeAnimationTrigger(AnimationType animation)

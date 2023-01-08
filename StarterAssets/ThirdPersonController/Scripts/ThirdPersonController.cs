@@ -16,9 +16,6 @@ using UnityEngine.InputSystem;
 namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
-#if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
-    [RequireComponent(typeof(MovingInput))]
-#endif
     public class ThirdPersonController : MonoBehaviour, IPauseable, IRunnable
     {
         [SerializeField] private RunProgress _runProgress;
@@ -104,11 +101,9 @@ namespace StarterAssets
         private float _speed;
         private float _animationBlend;
         private float _targetRotation;
-        private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
-
-        private PlayerInput _playerInput;
+        
         private Animator _animator;
         private CharacterController _controller;
         private StarterAssetsInputs _input;
@@ -125,8 +120,6 @@ namespace StarterAssets
 
         private HorizontalMoveRestriction _horizontalMoveRestriction;
         private Dictionary<Type, HorizontalMoveRestriction> _horizontalMoveRestrictions;
-
-        private bool _hasAnimator;
 
         private bool _isPause;
         private Vector3 _startPosition;
@@ -184,7 +177,7 @@ namespace StarterAssets
             _isPause = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
             ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
-            ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
+            ChangeGravitable(_gravitables[typeof(FlyGravity)]);
         }
 
         public void EndRun()
@@ -231,13 +224,12 @@ namespace StarterAssets
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             
-            _hasAnimator = TryGetComponent(out _animator);
+            TryGetComponent(out _animator);
             _animator.keepAnimatorControllerStateOnDisable = true;
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
-            _playerInput = GetComponent<PlayerInput>();
 
-            _playerAnimator = new PlayerAnimator(_animator);
+            _playerAnimator = new PlayerAnimator(_animator, this);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {
@@ -261,7 +253,8 @@ namespace StarterAssets
                         this,
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
                         _map,
-                        _runProgress)
+                        _runProgress,
+                        _playerAnimator)
                 },
                 {
                     typeof(SpringGravity),
@@ -316,13 +309,12 @@ namespace StarterAssets
         {
             Vector3 position = transform.position;
             Vector3 spherePosition = new Vector3(position.x, position.y - GroundedOffset, position.z);
-            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
+            Grounded = Physics.CheckSphere(
+                spherePosition, GroundedRadius,
+                GroundLayers,
                 QueryTriggerInteraction.Ignore);
             
-            if (_hasAnimator)
-            {
-                _playerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
-            }
+            _playerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
         }
 
         private void CameraRotation()
@@ -330,7 +322,8 @@ namespace StarterAssets
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
+                _cinemachineTargetPitch + CameraAngleOverride,
                 _cinemachineTargetYaw, 0.0f);
         }
 
@@ -361,27 +354,17 @@ namespace StarterAssets
                     inputDirection.y,
                     inputDirection.z);
             }
-
-            if (inputMove != Vector3.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
             
+            _playerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, inputDirection.x);
+
             _controller.Move(
                 new Vector3(inputMove.x,0,0) * 
                 (_speed * _runProgress.HalfSpeedMultiplier * Time.fixedDeltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
                 Vector3.forward * (_speed * _runProgress.SpeedMultiplier * Time.fixedDeltaTime));
 
-            if (_hasAnimator)
-            {
-                _playerAnimator.ChangeAnimationFloat(AnimationType.Run, _animationBlend);
-                _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, inputMagnitude);
-            }
+            _playerAnimator.ChangeAnimationFloat(AnimationType.Run, _animationBlend);
+            _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, inputMagnitude);
         }
 
         private int CheckForMovingX()
