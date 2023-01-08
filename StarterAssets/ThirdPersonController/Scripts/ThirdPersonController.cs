@@ -389,9 +389,14 @@ namespace StarterAssets
             }
             else if(_movingXQueue != 0)
             {
-                SetupMovingX(_movingXQueue);
+                if (!_horizontalMoveRestriction.CheckHorizontalMoveRestriction(_movingXQueue))
+                {
+                    _movingXQueue = 0;
+                    return dir;
+                }
+                
+                SetupMovingX(_movingXQueue, true);
                 dir = _movingXQueue;
-                _movingXQueue = 0;
             }
 
             return dir;

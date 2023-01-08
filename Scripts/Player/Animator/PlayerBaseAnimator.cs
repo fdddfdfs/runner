@@ -37,7 +37,7 @@ public abstract class PlayerBaseAnimator
 
     public virtual void ExitAnimator()
     {
-        Debug.Log("");
+        
     }
 
     public void ChangeAnimationTrigger(AnimationType animation)
