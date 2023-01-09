@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public sealed class MoneyFactory<T> : Factory<T> where T: Item
+public sealed class MoneyItemFactory<T> : ItemFactory<T> where T: Item
 {
     private readonly RunProgress _runProgress;
     private readonly bool _isAutoHiding;
     private readonly bool _isAutoActivating;
 
-    public MoneyFactory(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
+    public MoneyItemFactory(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
     {
         _runProgress = runProgress;
         _isAutoActivating = isAutoActivating;

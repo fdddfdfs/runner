@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class SpringFactory<T> : Factory<T> where T : Item
+public class SpringItemFactory<T> : ItemFactory<T> where T : Item
 {
     protected override string PrefabName => "Spring";
     

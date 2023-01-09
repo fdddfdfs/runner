@@ -24,7 +24,7 @@ public class ActiveItemsUI : MonoBehaviour
             _items.Add(_itemTypes[i], _itemSprites[i]);
         }
 
-        _activeItems = new PoolMono<ActiveItem>(_prefab, _parent, true, 5);
+        _activeItems = new GameObjectPoolMono<ActiveItem>(_prefab, _parent, true, 5);
     }
 
     public void ShowNewItemEffect(ItemType itemType, float time)

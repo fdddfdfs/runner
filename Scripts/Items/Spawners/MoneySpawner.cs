@@ -18,7 +18,7 @@ public class MoneySpawner
     private float[] _spawnLines;
 
     public MoneySpawner(
-        MoneyFactory<Item> moneyFactory,
+        MoneyItemFactory<Item> moneyItemFactory,
         float height,
         float gravity,
         float speed,
@@ -30,7 +30,7 @@ public class MoneySpawner
         _gravity = gravity;
         _speed = speed;
         _playerHalfHeight = playerHeight / 2;
-        _moneyPool = new FactoryPool<Item>(moneyFactory, null, true);
+        _moneyPool = new FactoryPool<Item>(moneyItemFactory, null, true);
         _spawnLines = spawnLines;
         _runProgress = runProgress;
         _randomSpawnLine = new RandomSpawnLine();

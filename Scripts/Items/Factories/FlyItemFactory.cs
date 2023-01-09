@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 
-public class FlyFactory<T> : Factory<T> where T:Item
+public class FlyItemFactory<T> : ItemFactory<T> where T:Item
 {
     private ActiveItemsUI _activeItemsUI;
     
     protected override string PrefabName => "Fly";
 
-    public FlyFactory(ActiveItemsUI activeItemsUI)
+    public FlyItemFactory(ActiveItemsUI activeItemsUI)
     {
         _activeItemsUI = activeItemsUI;
     }

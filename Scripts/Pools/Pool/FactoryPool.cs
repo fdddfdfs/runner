@@ -5,10 +5,10 @@ using UnityEngine;
 
 public sealed class FactoryPool<T> : Pool where T: MonoBehaviour
 {
-    private readonly Factory<T> _factory;
+    private readonly AbstractFactory<T> _factory;
     private readonly Transform _parent;
     
-    public FactoryPool(Factory<T> factory, Transform parent = null, bool isExpandable = false) :
+    public FactoryPool(AbstractFactory<T> factory, Transform parent = null, bool isExpandable = false) :
         base(isExpandable)
     {
         _factory = factory;

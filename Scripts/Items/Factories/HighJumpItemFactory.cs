@@ -1,14 +1,14 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class HighJumpFactory<T> : Factory<T> where T : Item
+public class HighJumpItemFactory<T> : ItemFactory<T> where T : Item
 {
     protected override string PrefabName => "HighJump";
 
     private float _baseJumpHeight;
     private ActiveItemsUI _activeItemsUI;
 
-    public HighJumpFactory(ThirdPersonController player, ActiveItemsUI activeItemsUI)
+    public HighJumpItemFactory(ThirdPersonController player, ActiveItemsUI activeItemsUI)
     {
         _baseJumpHeight = player.JumpHeight;
         _activeItemsUI = activeItemsUI;

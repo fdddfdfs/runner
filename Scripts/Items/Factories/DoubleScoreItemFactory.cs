@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 
-public sealed class DoubleScoreFactory<T> : Factory<T> where T: Item
+public sealed class DoubleScoreItemFactory<T> : ItemFactory<T> where T: Item
 {
     private readonly RunProgress _runProgress;
     private readonly ActiveItemsUI _activeItemsUI;
     
-    public DoubleScoreFactory(RunProgress runProgress, ActiveItemsUI activeItemsUI)
+    public DoubleScoreItemFactory(RunProgress runProgress, ActiveItemsUI activeItemsUI)
     {
         _runProgress = runProgress;
         _activeItemsUI = activeItemsUI;

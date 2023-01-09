@@ -1,15 +1,13 @@
 using UnityEngine;
 
-public abstract class Factory<T> where T : MonoBehaviour
+public abstract class ItemFactory<T> : AbstractFactory<T> where T : MonoBehaviour
 {
     protected abstract string PrefabName { get; }
 
     protected readonly GameObject _prefab;
     
-    protected Factory()
+    protected ItemFactory()
     {
         _prefab = Resources.Load(PrefabName) as GameObject;
     }
-    
-    public abstract T CreateItem();
 }

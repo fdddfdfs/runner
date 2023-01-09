@@ -61,6 +61,8 @@ public abstract class Item : MonoBehaviour
     private IEnumerator DeactivateItem()
     {
         yield return _activateWaiter;
+
+        gameObject.SetActive(false);
     }
 
     private void ChangeItemVisible(bool state)

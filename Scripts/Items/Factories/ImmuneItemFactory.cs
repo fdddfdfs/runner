@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
-public class ImmuneFactory<T> : Factory<T> where T: Item
+public class ImmuneItemFactory<T> : ItemFactory<T> where T: Item
 {
     private readonly ActiveItemsUI _activeItemsUI;
 
-    public ImmuneFactory(ActiveItemsUI activeItemsUI)
+    public ImmuneItemFactory(ActiveItemsUI activeItemsUI)
     {
         _activeItemsUI = activeItemsUI;
     }

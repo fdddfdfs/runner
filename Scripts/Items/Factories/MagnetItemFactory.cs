@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 
-public class MagnetFactory<T> : Factory<T> where T : Item
+public class MagnetItemFactory<T> : ItemFactory<T> where T : Item
 {
     protected override string PrefabName => "Magnet";
 
     private ActiveItemsUI _activeItemsUI;
     
-    public MagnetFactory(ActiveItemsUI activeItemsUI)
+    public MagnetItemFactory(ActiveItemsUI activeItemsUI)
     {
         _activeItemsUI = activeItemsUI;
     }

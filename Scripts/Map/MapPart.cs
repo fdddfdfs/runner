@@ -127,7 +127,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
                 generatedBlocks.Add(obstacleBlock);
             }
             
-            Blocks.Add(i, new BlocksPools(new PoolMono<TBlock>(generatedBlocks), endPosition));
+            Blocks.Add(i, new BlocksPools(new GameObjectPoolMono<TBlock>(generatedBlocks), endPosition));
         }
     }
 
