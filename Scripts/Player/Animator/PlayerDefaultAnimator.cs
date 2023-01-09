@@ -27,7 +27,6 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
 
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
-            { AnimationType.Run, new FloatAnimation(playerAnimator, animationsID[AnimationType.Run]) },
             { AnimationType.Speed, new FloatAnimation(playerAnimator, animationsID[AnimationType.Speed]) },
             { AnimationType.HorizontalRun, new DefaultHorizontalMoveAnimation(player) }
         };

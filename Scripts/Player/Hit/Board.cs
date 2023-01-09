@@ -14,6 +14,7 @@ public class Board : IHittable
     private readonly ThirdPersonController _player;
     private readonly Map _map;
     private readonly ActiveItemsUI _activeItemsUI;
+    private readonly PlayerAnimator _playerAnimator;
     
     private Coroutine _activeRoutine;
     private Coroutine _recoveryRoutine;
@@ -21,11 +22,12 @@ public class Board : IHittable
     private bool _isActive;
     private bool _isRecovery;
 
-    public Board(ThirdPersonController player, Map map, ActiveItemsUI activeItemsUI)
+    public Board(ThirdPersonController player, Map map, ActiveItemsUI activeItemsUI, PlayerAnimator playerAnimator)
     {
         _player = player;
         _map = map;
         _activeItemsUI = activeItemsUI;
+        _playerAnimator = playerAnimator;
     }
     
     public void Activate()
@@ -39,6 +41,7 @@ public class Board : IHittable
         _activeItemsUI.ShowNewItemEffect(ItemType.Board, ActiveTime);
         _activeRoutine = Coroutines.StartRoutine(Activated());
         _player.ChangeHittable(this);
+        _playerAnimator.ChangeAnimator(typeof(PlayerBoardAnimator));
     }
     
     public bool Hit(HitType hitType)
@@ -81,6 +84,8 @@ public class Board : IHittable
             Coroutines.StopRoutine(_recoveryRoutine);
             _isRecovery = false;
         }
+        
+        _playerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     private IEnumerator Activated()

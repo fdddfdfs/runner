@@ -11,7 +11,7 @@ public class DefaultGravity : IGravitable, IRollable
     private readonly float _gravity;
 
     private readonly ThirdPersonController _player;
-    private readonly MovingInput _movingInput;
+    private readonly PlayerRunInput _playerRunInput;
 
     private readonly PlayerAnimator _playerAnimator;
     private readonly Roll _roll;
@@ -25,7 +25,7 @@ public class DefaultGravity : IGravitable, IRollable
         float jumpTimeout,
         float terminalVelocity,
         float gravity,
-        MovingInput movingInput,
+        PlayerRunInput playerRunInput,
         ThirdPersonController player, 
         PlayerAnimator playerAnimator)
     {
@@ -33,7 +33,7 @@ public class DefaultGravity : IGravitable, IRollable
         _jumpTimeout = jumpTimeout;
         _terminalVelocity = terminalVelocity;
         _gravity = gravity;
-        _movingInput = movingInput;
+        _playerRunInput = playerRunInput;
         _player = player;
         
         _jumpTimeoutDelta = _jumpTimeout;
@@ -41,7 +41,7 @@ public class DefaultGravity : IGravitable, IRollable
 
         _playerAnimator = playerAnimator;
 
-        _roll = new Roll(player, movingInput, gravity * RollGravityMultiplayer, playerAnimator);
+        _roll = new Roll(player, playerRunInput, gravity * RollGravityMultiplayer, playerAnimator);
     }
 
     public float VerticalVelocity(bool isGrounded)
@@ -58,7 +58,7 @@ public class DefaultGravity : IGravitable, IRollable
                 _verticalVelocity = -2f;
             }
 
-            if (_movingInput.IsJumpPressed && _jumpTimeoutDelta <= 0.0f)
+            if (_playerRunInput.IsJumpPressed && _jumpTimeoutDelta <= 0.0f)
             {
                 _verticalVelocity = Mathf.Sqrt(_player.JumpHeight * -2f * _gravity);
 

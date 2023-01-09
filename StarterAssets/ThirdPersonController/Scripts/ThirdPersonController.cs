@@ -24,6 +24,7 @@ namespace StarterAssets
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
         [SerializeField] private Factories _factories;
+        [SerializeField] private Transform _playerMesh;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -124,7 +125,7 @@ namespace StarterAssets
         private bool _isPause;
         private Vector3 _startPosition;
 
-        private MovingInput _movingInput;
+        private PlayerRunInput _playerRunInput;
 
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
@@ -133,6 +134,8 @@ namespace StarterAssets
         public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions => _horizontalMoveRestrictions;
 
         public CharacterController Controller => _controller;
+
+        public Transform PlayerMesh => _playerMesh;
 
         public void EndRoll()
         {
@@ -172,17 +175,17 @@ namespace StarterAssets
 
         public void StartRun()
         {
-            _movingInput.StartRun();
+            _playerRunInput.StartRun();
 
             _isPause = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
             ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
-            ChangeGravitable(_gravitables[typeof(FlyGravity)]);
+            ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
         public void EndRun()
         {
-            _movingInput.EndRun();
+            _playerRunInput.EndRun();
             
             _controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
@@ -195,7 +198,7 @@ namespace StarterAssets
 
         private void Awake()
         {
-            _movingInput = new MovingInput();
+            _playerRunInput = new PlayerRunInput();
             
             _startPosition = transform.position;
             _isPause = true;
@@ -204,14 +207,6 @@ namespace StarterAssets
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
-
-            _board = new Board(this, _map, _activeItemsUI);
-            _hittables = new Dictionary<Type, IHittable>
-            {
-                { typeof(Board), _board },
-                { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
-                { typeof(ImmuneHittable), new ImmuneHittable(_map) },
-            };
 
             _horizontalMoveRestrictions = new Dictionary<Type, HorizontalMoveRestriction>
             {
@@ -240,7 +235,7 @@ namespace StarterAssets
                         JumpTimeout,
                         _terminalVelocity,
                         Gravity,
-                        _movingInput,
+                        _playerRunInput,
                         this,
                         _playerAnimator)
                 },
@@ -263,12 +258,20 @@ namespace StarterAssets
                         JumpHeight * 20,
                         SprintSpeed,
                         this,
-                        _movingInput,
+                        _playerRunInput,
                         _factories.ItemFactories[ItemType.Money] as MoneyFactory<Item>,
                         _map,
                         _runProgress,
                         _playerAnimator)
                 },
+            };
+            
+            _board = new Board(this, _map, _activeItemsUI, _playerAnimator);
+            _hittables = new Dictionary<Type, IHittable>
+            {
+                { typeof(Board), _board },
+                { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
+                { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
         }
 
@@ -294,12 +297,12 @@ namespace StarterAssets
 
         private void CheckForMovingInput()
         {
-            _movingInput.Update();
+            _playerRunInput.Update();
         }
 
         private void BoardActive()
         {
-            if (Input.GetKeyDown(KeyCode.E) && _hittable.GetType() != typeof(ImmuneHittable))
+            if (_playerRunInput.IsBoardPressed && _hittable.GetType() != typeof(ImmuneHittable))
             {
                 _board.Activate();
             }
@@ -337,13 +340,12 @@ namespace StarterAssets
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
             if (inputMove == Vector3.zero) targetSpeed = 0.0f;
-            
-            float inputMagnitude = _input.analogMovement ? inputMove.magnitude : 1f;
+
             _speed = targetSpeed;
 
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.fixedDeltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
-
+            
             Vector3 inputDirection = inputMove.normalized;
 
             if(!_isMovingX)
@@ -354,7 +356,7 @@ namespace StarterAssets
                     inputDirection.y,
                     inputDirection.z);
             }
-            
+
             _playerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, inputDirection.x);
 
             _controller.Move(
@@ -362,16 +364,15 @@ namespace StarterAssets
                 (_speed * _runProgress.HalfSpeedMultiplier * Time.fixedDeltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
                 Vector3.forward * (_speed * _runProgress.SpeedMultiplier * Time.fixedDeltaTime));
-
-            _playerAnimator.ChangeAnimationFloat(AnimationType.Run, _animationBlend);
-            _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, inputMagnitude);
+            
+            _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, _runProgress.HalfSpeedMultiplier);
         }
 
         private int CheckForMovingX()
         {
             int dir = 0;
-            CheckForInput(_movingInput.IsLeftPressed, -1, ref dir);
-            CheckForInput(_movingInput.IsRightPressed, 1, ref dir);
+            CheckForInput(_playerRunInput.IsLeftPressed, -1, ref dir);
+            CheckForInput(_playerRunInput.IsRightPressed, 1, ref dir);
 
             float xDelta = transform.localPosition.x - _movingDestination;
             if (_isMovingX && Mathf.Abs(xDelta) > 0.1f && Math.Sign(-xDelta) == _movingXDir)

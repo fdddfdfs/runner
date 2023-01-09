@@ -5,16 +5,16 @@ public class Roll
 {
     private readonly ThirdPersonController _player;
     private readonly PlayerAnimator _playerAnimator;
-    private readonly MovingInput _movingInput;
+    private readonly PlayerRunInput _playerRunInput;
     private readonly float _gravity;
 
     private bool _roll;
     private bool _rollEnd;
 
-    public Roll(ThirdPersonController player, MovingInput movingInput, float gravity, PlayerAnimator playerAnimator)
+    public Roll(ThirdPersonController player, PlayerRunInput playerRunInput, float gravity, PlayerAnimator playerAnimator)
     {
         _player = player;
-        _movingInput = movingInput;
+        _playerRunInput = playerRunInput;
         _gravity = gravity;
         _playerAnimator = playerAnimator;
         _rollEnd = true;
@@ -37,7 +37,7 @@ public class Roll
             return verticalVelocity;
         }
         
-        if (_movingInput.IsRollPressed)
+        if (_playerRunInput.IsRollPressed)
         {
             _playerAnimator.ChangeAnimationBool(AnimationType.Jump, false);
             _playerAnimator.ChangeAnimationTrigger(AnimationType.Roll);

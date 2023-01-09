@@ -7,22 +7,21 @@ public class PlayerAnimator
 {
     private readonly Dictionary<Type, PlayerBaseAnimator> _animators;
     
-    private readonly Animator _playerAnimator;
     private PlayerBaseAnimator _current;
     
     public PlayerAnimator(Animator playerAnimator, ThirdPersonController player)
     {
-        _playerAnimator = playerAnimator;
-
         Dictionary<AnimationType, int> animationsID = GetAnimationIDs();
 
         _animators = new Dictionary<Type, PlayerBaseAnimator>
         {
             { typeof(PlayerDefaultAnimator), new PlayerDefaultAnimator(playerAnimator, animationsID, player) },
-            {typeof(PlayerFlyAnimator), new PlayerFlyAnimator(playerAnimator, player)}
+            { typeof(PlayerFlyAnimator), new PlayerFlyAnimator(playerAnimator, player) },
+            { typeof(PlayerBoardAnimator), new PlayerBoardAnimator(playerAnimator, player) },
+            { typeof(PlayerImmuneAnimator), new PlayerImmuneAnimator(playerAnimator, player) },
         };
         
-        ChangeAnimator(typeof(PlayerDefaultAnimator));
+        ChangeAnimator(typeof(PlayerImmuneAnimator));
     }
 
     public void ChangeAnimator(Type animatorType)
@@ -51,11 +50,10 @@ public class PlayerAnimator
     {
         return new Dictionary<AnimationType, int>
         {
-            { AnimationType.Run, Animator.StringToHash("Speed") },
             { AnimationType.Land, Animator.StringToHash("Grounded") },
             { AnimationType.Jump, Animator.StringToHash("Jump") },
             { AnimationType.Fall, Animator.StringToHash("FreeFall") },
-            { AnimationType.Speed, Animator.StringToHash("MotionSpeed") },
+            { AnimationType.Speed, Animator.StringToHash("Speed") },
             { AnimationType.Roll, Animator.StringToHash("Roll") },
         };
     }

@@ -1,12 +1,26 @@
 ﻿using UnityEngine.InputSystem;
 
-public class MovingInput : IRunnable
+public class PlayerRunInput : IRunnable
 {
     private bool _isLeftPressed;
     private bool _isRightPressed;
     private bool _isRollPressed;
     private bool _isJumpPressed;
+    private bool _isBoardPressed;
 
+    private bool _isRun;
+    
+    public bool IsBoardPressed
+    {
+        get
+        {
+            if (!_isBoardPressed) return false;
+
+            _isBoardPressed = false;
+            return true;
+        }
+    }
+    
     public bool IsLeftPressed
     {
         get
@@ -53,6 +67,8 @@ public class MovingInput : IRunnable
 
     public void Update()
     {
+        if (!_isRun) return;
+        
         if (!_isJumpPressed)
         {
             _isJumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
@@ -72,18 +88,26 @@ public class MovingInput : IRunnable
         {
             _isRollPressed = Keyboard.current.sKey.wasPressedThisFrame;
         }
+
+        if (!_isBoardPressed)
+        {
+            _isBoardPressed = Keyboard.current.eKey.wasPressedThisFrame;
+        }
     }
 
     public void StartRun()
     {
-        
+        _isRun = true;
     }
 
     public void EndRun()
     {
+        _isRun = false;
+        
         _isJumpPressed = false;
         _isLeftPressed = false;
         _isRightPressed = false;
         _isRollPressed = false;
+        _isBoardPressed = false;
     }
 }
