@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-public class ActiveItemsUI : MonoBehaviour
+public sealed class ActiveItemsUI : MonoBehaviour
 {
     [SerializeField] private List<ItemType> _itemTypes;
     [SerializeField] private List<Sprite> _itemSprites;

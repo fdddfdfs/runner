@@ -1,4 +1,4 @@
-﻿public class ImmuneHittable : IHittable
+﻿public sealed class ImmuneHittable : IHittable
 {
     private readonly Map _map;
     

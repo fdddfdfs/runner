@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using StarterAssets;
-using UnityEngine;
+﻿using StarterAssets;
 
-public class Immune : ActivatableItem<Immune>
+public sealed class Immune : ActivatableItem<Immune>
 {
     private static ThirdPersonController _player;
     

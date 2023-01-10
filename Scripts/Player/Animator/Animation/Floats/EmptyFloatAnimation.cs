@@ -1,7 +1,4 @@
-﻿public class EmptyFloatAnimation : IFloatAnimation
+﻿public sealed class EmptyFloatAnimation : IFloatAnimation
 {
-    public void SetFloat(float value)
-    {
-            
-    }
+    public void SetFloat(float value) { }
 }

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-public class FlyItemFactory<T> : ItemFactory<T> where T:Item
+public sealed class FlyItemFactory<T> : ItemFactory<T> where T:Item
 {
-    private ActiveItemsUI _activeItemsUI;
+    private readonly ActiveItemsUI _activeItemsUI;
     
     protected override string PrefabName => "Fly";
 

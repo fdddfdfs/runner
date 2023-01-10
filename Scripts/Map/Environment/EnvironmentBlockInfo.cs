@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "Environment", menuName = "Environments")]
-public class EnvironmentBlockInfo : ScriptableObject, IWeightable
+public sealed class EnvironmentBlockInfo : ScriptableObject, IWeightable
 {
     [SerializeField] private int _weight;
     [SerializeField] private Terrain _terrain;

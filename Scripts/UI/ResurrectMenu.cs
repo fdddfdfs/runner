@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections;
-using DG.Tweening;
+﻿using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ResurrectMenu : MonoBehaviour
+public sealed class ResurrectMenu : MonoBehaviour
 {
     private const int BuyBackPrice = 1000;
     private const int SkipTime = 3;

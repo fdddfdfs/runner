@@ -1,7 +1,4 @@
-﻿public class EmptyBoolAnimation : IBoolAnimation
+﻿public sealed class EmptyBoolAnimation : IBoolAnimation
 {
-    public void SetBool(bool value)
-    {
-        
-    }
+    public void SetBool(bool value) { }
 }

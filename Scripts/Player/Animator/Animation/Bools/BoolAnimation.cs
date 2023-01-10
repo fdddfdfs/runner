@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class BoolAnimation : IBoolAnimation
+public sealed class BoolAnimation : IBoolAnimation
 {
     private readonly Animator _animator;
     private readonly int _boolID;

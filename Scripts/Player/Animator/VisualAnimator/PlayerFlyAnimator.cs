@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-public class PlayerFlyAnimator : PlayerVisualAnimator
+public sealed class PlayerFlyAnimator : PlayerVisualAnimator
 {
     protected override string AnimatorResourceName => "FlyAnimator";
 

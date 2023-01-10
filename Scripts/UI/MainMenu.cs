@@ -1,9 +1,7 @@
-﻿using System;
-using StarterAssets;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
-public class MainMenu : MonoBehaviour
+public sealed class MainMenu : MonoBehaviour
 {
     [SerializeField] private TMP_Text _startText;
     [SerializeField] private UpgradeMenu _upgradeMenu;

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-public class PlayerImmuneAnimator : PlayerVisualAnimator
+public sealed class PlayerImmuneAnimator : PlayerVisualAnimator
 {
     protected override string AnimatorResourceName => "ImmuneAnimator";
     

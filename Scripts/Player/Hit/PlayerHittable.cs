@@ -3,7 +3,7 @@ using System.Collections;
 using StarterAssets;
 using UnityEngine;
 
-public class PlayerHittable : IHittable
+public sealed class PlayerHittable : IHittable
 {
     private const float RecoverTime = 20f;
     

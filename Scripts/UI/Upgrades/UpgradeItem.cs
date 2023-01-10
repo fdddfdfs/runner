@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UpgradeItem : MonoBehaviour
+public sealed class UpgradeItem : MonoBehaviour
 {
     [SerializeField] private Image _image;
     [SerializeField] private GameObject _firstLevel;

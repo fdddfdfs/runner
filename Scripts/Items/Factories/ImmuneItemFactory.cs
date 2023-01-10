@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class ImmuneItemFactory<T> : ItemFactory<T> where T: Item
+public sealed class ImmuneItemFactory<T> : ItemFactory<T> where T: Item
 {
     private readonly ActiveItemsUI _activeItemsUI;
 

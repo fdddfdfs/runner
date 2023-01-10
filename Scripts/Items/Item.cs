@@ -1,9 +1,8 @@
 using System.Collections;
-using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider))]
+[RequireComponent(typeof(BoxCollider), typeof(MeshRenderer))]
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 10;

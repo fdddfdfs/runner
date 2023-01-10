@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class ActiveItem: MonoBehaviour
+public sealed class ActiveItem: MonoBehaviour
 {
     [SerializeField] private Image _itemImage;
     [SerializeField] private Image _progressImage;

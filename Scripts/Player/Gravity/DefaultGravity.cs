@@ -1,7 +1,7 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class DefaultGravity : IGravitable, IRollable
+public sealed class DefaultGravity : IGravitable, IRollable
 {
     private const float RollGravityMultiplayer = 3;
     

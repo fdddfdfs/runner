@@ -1,7 +1,6 @@
-﻿using System;
-using StarterAssets;
+﻿using StarterAssets;
 
-public class Spring : Item
+public sealed class Spring : Item
 {
     public void Init()
     {

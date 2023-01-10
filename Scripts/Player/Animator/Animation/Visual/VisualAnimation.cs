@@ -1,4 +1,4 @@
-﻿public class VisualAnimation
+﻿public abstract class VisualAnimation
 {
     protected readonly Visual _visual;
 

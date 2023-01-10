@@ -1,10 +1,9 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
-public class Board : IHittable
+public sealed class Board : IHittable
 {
     private const float ActiveTime = 10f;
     private const float RecoverTime = 3f;

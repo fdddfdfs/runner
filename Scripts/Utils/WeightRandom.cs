@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 
-public class WeightRandom
+public sealed class WeightRandom
 {
     private readonly int[] _weights;
     private readonly bool _canRepeatValues;

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-public class PlayerBoardAnimator : PlayerVisualAnimator
+public sealed class PlayerBoardAnimator : PlayerVisualAnimator
 {
     protected override string AnimatorResourceName => "BoardAnimator";
 

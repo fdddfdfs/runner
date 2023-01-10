@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock>
+public sealed class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock>
 {
     private readonly List<EnvironmentBlockInfo> _environmentBlocks;
     

@@ -1,6 +1,4 @@
-﻿using Unity.VisualScripting;
-
-public interface IGravitable
+﻿public interface IGravitable
 {
     public void EnterGravity(){}
 

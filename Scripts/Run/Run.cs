@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
-public class Run : MonoBehaviour, IRunnable
+public sealed class Run : MonoBehaviour, IRunnable
 {
     [SerializeField] private Follower _follower;
     [SerializeField] private RunProgress _runProgress;

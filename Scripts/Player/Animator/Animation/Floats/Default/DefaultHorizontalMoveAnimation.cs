@@ -1,7 +1,7 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class DefaultHorizontalMoveAnimation : IFloatAnimation
+public sealed class DefaultHorizontalMoveAnimation : IFloatAnimation
 {
     private readonly ThirdPersonController _player;
     private float _rotationVelocity;

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleBlock : MonoBehaviour, IMapBlock
+public sealed class ObstacleBlock : MonoBehaviour, IMapBlock
 {
     private List<Obstacle> _obstacles;
     private float _blockSize;

@@ -2,7 +2,7 @@ using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
 
-public class Money : Item
+public sealed class Money : Item
 {
     private const float Speed = 0.5f;
     private const float MoneyStopMoveRadius = 1f;

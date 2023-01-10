@@ -1,8 +1,7 @@
 ﻿using System;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
-public class MoneySpawner
+public sealed class MoneySpawner
 {
     private const float MoneyDistance = 1f;
     private const int MaxIterationsCount = 1000;

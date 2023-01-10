@@ -1,4 +1,4 @@
-﻿public class Stats
+﻿public sealed class Stats
 {
     public const int MaxLevel = 10;
     

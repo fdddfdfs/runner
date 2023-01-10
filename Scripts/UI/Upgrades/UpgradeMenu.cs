@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UpgradeMenu : MonoBehaviour
+public sealed class UpgradeMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
     [SerializeField] private Transform _parent;

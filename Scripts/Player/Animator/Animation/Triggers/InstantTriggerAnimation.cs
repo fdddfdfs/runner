@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class InstantTriggerAnimation : ITriggerAnimation
+public sealed class InstantTriggerAnimation : ITriggerAnimation
 {
     private readonly Animator _animator;
     private readonly int _animationID;

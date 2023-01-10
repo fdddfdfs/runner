@@ -1,4 +1,4 @@
-﻿public class VisualTakeoffAnimation : VisualAnimation, IBoolAnimation
+﻿public sealed class VisualTakeoffAnimation : VisualAnimation, IBoolAnimation
 {
     public VisualTakeoffAnimation(Visual visual) : base(visual){}
 

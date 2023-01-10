@@ -1,7 +1,4 @@
-﻿public class EmptyTriggerAnimation : ITriggerAnimation
+﻿public sealed class EmptyTriggerAnimation : ITriggerAnimation
 {
-    public void SetTrigger()
-    {
-        
-    }
+    public void SetTrigger() { }
 }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class GameObjectPoolMono<T> : PoolMono<T> where T: MonoBehaviour
+public sealed class GameObjectPoolMono<T> : PoolMono<T> where T: MonoBehaviour
 {
     private readonly Transform _parent;
     private readonly GameObject _prefab;

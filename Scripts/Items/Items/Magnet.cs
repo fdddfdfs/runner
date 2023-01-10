@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using StarterAssets;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-public class Magnet : Item
+public sealed class Magnet : Item
 {
     private const float ActiveTime = 10;
 

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class FlyHorizontalRestriction : HorizontalMoveRestriction
+public sealed class FlyHorizontalRestriction : HorizontalMoveRestriction
 {
     private readonly int _linesHalfCount;
 

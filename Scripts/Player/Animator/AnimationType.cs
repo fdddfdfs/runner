@@ -1,6 +1,5 @@
 ﻿public enum AnimationType
 {
-    Run,
     HorizontalRun,
     Speed,
     Jump,

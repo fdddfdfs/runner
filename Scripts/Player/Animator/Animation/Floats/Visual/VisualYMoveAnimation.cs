@@ -1,4 +1,4 @@
-﻿public class VisualYMoveAnimation : VisualAnimation, IFloatAnimation
+﻿public sealed class VisualYMoveAnimation : VisualAnimation, IFloatAnimation
 {
     public VisualYMoveAnimation(Visual visual) : base(visual) {}
 

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using UnityEngine.PlayerLoop;
 
-public class RandomSpawnLine
+public sealed class RandomSpawnLine
 {
     private const int MinSpawnedItemsInLine = 15;
     private const int ChanceToChangeLine = 10; // actual chance is 1 / ChangeToChangeLine

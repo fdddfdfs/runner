@@ -1,11 +1,10 @@
 ﻿using System;
-using Unity.VisualScripting;
 
-public class RandomItemItemFactory<T> : ItemFactory<T> where T: Item
+public sealed class RandomItemItemFactory<T> : ItemFactory<T> where T: Item
 {
     protected override string PrefabName { get; }
 
-    private Factories _factories;
+    private readonly Factories _factories;
     
     public RandomItemItemFactory(Factories factories)
     {

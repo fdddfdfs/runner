@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
-public class PlayerAnimator
+public sealed class PlayerAnimator
 {
     private readonly Dictionary<Type, PlayerBaseAnimator> _animators;
     

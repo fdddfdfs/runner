@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class MovingObstacle : Obstacle
+public sealed class MovingObstacle : Obstacle
 {
     private const float Speed = 10;
 

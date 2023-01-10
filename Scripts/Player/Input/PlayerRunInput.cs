@@ -1,6 +1,6 @@
 ﻿using UnityEngine.InputSystem;
 
-public class PlayerRunInput : IRunnable
+public sealed class PlayerRunInput : IRunnable
 {
     private bool _isLeftPressed;
     private bool _isRightPressed;

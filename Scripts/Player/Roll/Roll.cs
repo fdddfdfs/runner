@@ -1,7 +1,7 @@
 ﻿using StarterAssets;
 using UnityEngine;
 
-public class Roll
+public sealed class Roll
 {
     private readonly ThirdPersonController _player;
     private readonly PlayerAnimator _playerAnimator;

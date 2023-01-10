@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using StarterAssets;
 using UnityEngine;
 
-public class Follower : MonoBehaviour, IRunnable
+public sealed class Follower : MonoBehaviour, IRunnable
 {
     private const float FollowDelay = 0.2f;
 

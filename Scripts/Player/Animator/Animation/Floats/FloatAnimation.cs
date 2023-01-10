@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class FloatAnimation : IFloatAnimation
+public sealed class FloatAnimation : IFloatAnimation
 {
     private readonly Animator _animator;
     private readonly int _floatID;

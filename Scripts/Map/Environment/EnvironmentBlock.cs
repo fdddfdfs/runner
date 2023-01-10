@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class EnvironmentBlock : MonoBehaviour, IMapBlock
+public sealed class EnvironmentBlock : MonoBehaviour, IMapBlock
 {
     private float _blockSize;
     
@@ -11,10 +11,7 @@ public class EnvironmentBlock : MonoBehaviour, IMapBlock
         _blockSize = blockSize;
     }
     
-    public void EnterBlock()
-    {
-        
-    }
+    public void EnterBlock() { }
 
     public void HideBlock()
     {

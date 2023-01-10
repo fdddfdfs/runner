@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LoseMenu : MonoBehaviour
+public sealed class LoseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
     [SerializeField] private TMP_Text _score;

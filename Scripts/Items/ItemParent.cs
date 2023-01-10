@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class ItemParent : MonoBehaviour
+public sealed class ItemParent : MonoBehaviour
 {
     private const float Speed = 1;
 

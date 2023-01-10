@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-public class ObstacleBlockFactory: AbstractFactory<ObstacleBlock>
+public sealed class ObstacleBlockFactory: AbstractFactory<ObstacleBlock>
 {
     private const float EmptyFieldHeight = 5;
     private const string EmptyObstacleName = "Empty";

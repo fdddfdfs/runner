@@ -1,4 +1,4 @@
-﻿public class VisualJumpAnimation : VisualAnimation, IBoolAnimation
+﻿public sealed class VisualJumpAnimation : VisualAnimation, IBoolAnimation
 {
     public VisualJumpAnimation(Visual visual) : base(visual) {}
 

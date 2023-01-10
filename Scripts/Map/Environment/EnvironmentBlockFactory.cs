@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Globalization;
+using UnityEngine;
 
-public class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
+public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
 {
     private readonly EnvironmentBlockInfo _environmentBlockInfo;
     private float _count;
@@ -12,7 +13,8 @@ public class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
     
     public override EnvironmentBlock CreateItem()
     {
-        GameObject parent = new($"MapPartParent_{_environmentBlockInfo.name}{_count.ToString()}");
+        GameObject parent = new(
+            $"MapPartParent_{_environmentBlockInfo.name}{_count.ToString(CultureInfo.InvariantCulture)}");
         GameObject environmentBlockObject = Object.Instantiate(_environmentBlockInfo.Prefab, parent.transform);
         var environmentBlock = environmentBlockObject.GetComponent<EnvironmentBlock>();
         environmentBlock.Init(

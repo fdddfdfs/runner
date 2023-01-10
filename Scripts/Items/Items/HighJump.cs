@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
-using StarterAssets;
-using UnityEngine;
+﻿using StarterAssets;
 
-public class HighJump : ActivatableItem<HighJump>
+public sealed class HighJump : ActivatableItem<HighJump>
 {
     private const float Multiplayer = 3;
     
