@@ -6,18 +6,19 @@ using Object = UnityEngine.Object;
 public abstract class PoolMono<T> where T: MonoBehaviour
 { 
     protected const int DefaultStartCount = 20;
-    
-    protected List<T> _pool;
-    
-    private readonly bool _isExpandable;
-    
-    protected int _poolSize;
-    protected bool _isInitialized;
 
-    protected PoolMono(bool isExpandable = false)
+    private readonly bool _isExpandable;
+    private readonly int _startCount;
+    private readonly int _poolSize;
+    
+    protected bool _isInitialized;
+    protected List<T> _pool;
+
+    protected PoolMono(bool isExpandable = false, int startCount = DefaultStartCount)
     {
         _pool = new List<T>();
         _isExpandable = isExpandable;
+        _poolSize = startCount;
     }
 
     public T GetItem()

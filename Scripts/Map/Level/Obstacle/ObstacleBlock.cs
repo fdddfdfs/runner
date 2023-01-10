@@ -4,11 +4,15 @@ using UnityEngine;
 public class ObstacleBlock : MonoBehaviour, IMapBlock
 {
     private List<Obstacle> _obstacles;
+    private float _blockSize;
 
-    public void Init(List<Obstacle> obstacles, Factories factories, RunProgress runProgress)
+    public float BlockSize => _blockSize;
+
+    public void Init(List<Obstacle> obstacles, Factories factories, RunProgress runProgress, float blockSize)
     {
         _obstacles = obstacles;
-
+        _blockSize = blockSize;
+        
         foreach (Obstacle obstacle in obstacles)
         {
             if (obstacle is MovingObstacle movingObstacle)

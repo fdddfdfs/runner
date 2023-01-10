@@ -11,11 +11,10 @@ public class GameObjectPoolMono<T> : PoolMono<T> where T: MonoBehaviour
         Transform parent = null,
         bool isExpandable = false,
         int startPoolSize = DefaultStartCount) 
-        : base(isExpandable)
+        : base(isExpandable, startPoolSize)
     {
         _prefab = prefab;
         _parent = parent;
-        _poolSize = startPoolSize;
     }
 
     public GameObjectPoolMono(List<T> spawnedPrefabs)

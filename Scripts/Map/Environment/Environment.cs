@@ -3,17 +3,23 @@ using UnityEngine;
 
 public class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock>
 {
-    private const int EnvironmentBlocksGenerationCount = 10;
+    private readonly List<EnvironmentBlockInfo> _environmentBlocks;
     
-    public Environment(List<EnvironmentBlockInfo> blocks, Transform player):
-        base(blocks, player, EnvironmentBlocksGenerationCount)
+    public Environment(List<EnvironmentBlockInfo> environmentBlocks, Transform player)
+        : base(environmentBlocks, player)
     {
-        
+        _environmentBlocks = environmentBlocks;
     }
 
-    protected override float GenerateBlock(EnvironmentBlockInfo block, EnvironmentBlock parent)
+    protected override Dictionary<int, FactoryPoolMono<EnvironmentBlock>> InitializeBlockPools()
     {
-        Object.Instantiate(block.Prefab, parent.transform);
-        return block.Terrain.terrainData.size.z * block.Prefab.transform.localScale.z;
+        Dictionary<int, FactoryPoolMono<EnvironmentBlock>> blockPools = new();
+        for (var i = 0; i < _environmentBlocks.Count; i++)
+        {
+            AbstractFactory<EnvironmentBlock> factory = new EnvironmentBlockFactory(_environmentBlocks[i]);
+            blockPools.Add(i, new FactoryPoolMono<EnvironmentBlock>(factory, null, true, 0));
+        }
+
+        return blockPools;
     }
 }

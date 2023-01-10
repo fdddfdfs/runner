@@ -5,55 +5,43 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     where TBlockInfo: ScriptableObject, IWeightable
     where TBlock: MonoBehaviour, IMapBlock 
 {
-    private const int BaseBlocksGenerationCount = 20;
     private const int ViewDistance = 400;
     private const float BaseYPosition = 0;
     private const float HideBlockOffset = 5;
 
-    private Dictionary<int, BlocksPools> _blocks;
+    private Dictionary<int, AbstractFactory<TBlock>> _blocks;
+    private Dictionary<int, FactoryPoolMono<TBlock>> _blockPools;
 
-    private readonly Queue<SettedBlock> _blocksPositions;
+    private readonly Queue<TBlock> _blocksPositions;
     private readonly WeightRandom _weightRandom;
-    private readonly List<TBlockInfo> _blocksInfo;
     private readonly Transform _player;
-    private readonly int _blocksGenerationCount;
-    
-    private SettedBlock _firstBlock;
+
+    private TBlock _firstBlock;
     private float _lastBlockPosition;
     private float _firstBlockPosition;
-    
-    private record BlocksPools(PoolMono<TBlock> BlockPool, float SizeZ);
-    
-    private record SettedBlock(TBlock Block, float SizeZ);
 
-    private Dictionary<int, BlocksPools> Blocks
+    private Dictionary<int, FactoryPoolMono<TBlock>> BlockPools
     {
         get
         {
-            if (_blocks != null) return _blocks;
-            InitializeBlocks();
-            return _blocks;
-
+            _blockPools ??= InitializeBlockPools();
+            return _blockPools;
         }
-        set => _blocks = value;
     }
 
     protected MapPart(
         List<TBlockInfo> blocksInfo,
-        Transform player,
-        int blocksGenerationCount = BaseBlocksGenerationCount)
+        Transform player)
     {
         // TODO: change it to false when make more SO
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
-        _blocksPositions = new Queue<SettedBlock>();
-        _blocksInfo = blocksInfo;
+        _blocksPositions = new Queue<TBlock>();
         _player = player;
-        _blocksGenerationCount = blocksGenerationCount;
     }
     
     public void CheckToHideBlock()
     {
-        if (_player.transform.position.z > _firstBlockPosition + _firstBlock.SizeZ)
+        if (_player.transform.position.z > _firstBlockPosition + _firstBlock.BlockSize)
         {
             HideCurrentBlock();
         }
@@ -68,12 +56,13 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
 
     public void EndRun()
     {
-        _firstBlock?.Block.HideBlock();
+        _firstBlock?.HideBlock();
+
         _firstBlock = null;
         
         while (_blocksPositions.Count != 0)
         {
-            _blocksPositions.Dequeue().Block.HideBlock();
+            _blocksPositions.Dequeue().HideBlock();
         }
     }
 
@@ -95,11 +84,12 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
     }
     
-    protected abstract float GenerateBlock(TBlockInfo block, TBlock parent);
-    
+    protected abstract Dictionary<int, FactoryPoolMono<TBlock>> InitializeBlockPools();
+
     private void HideCurrentBlock()
     {
-        _firstBlock?.Block.HideBlock();
+        _firstBlock?.HideBlock();
+
         UpdateFirstBlock();
         
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
@@ -107,28 +97,9 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
 
     private void UpdateFirstBlock()
     {
-        _firstBlockPosition += _firstBlock?.SizeZ ?? 0;
+        _firstBlockPosition += _firstBlock?.BlockSize ?? 0;
         _firstBlock = _blocksPositions.Dequeue();
-        _firstBlock.Block.EnterBlock();
-    }
-
-    private void InitializeBlocks()
-    {
-        Blocks = new Dictionary<int, BlocksPools>();
-        for (int i = 0; i < _blocksInfo.Count; i++)
-        {
-            float endPosition = 0;
-            List<TBlock> generatedBlocks = new();
-            for (int j = 0; j < _blocksGenerationCount; j++)
-            {
-                GameObject parent = new($"MapPartParent_{_blocksInfo[i].name}+{j}");
-                TBlock obstacleBlock = parent.AddComponent<TBlock>();
-                endPosition = GenerateBlock(_blocksInfo[i], obstacleBlock);
-                generatedBlocks.Add(obstacleBlock);
-            }
-            
-            Blocks.Add(i, new BlocksPools(new GameObjectPoolMono<TBlock>(generatedBlocks), endPosition));
-        }
+        _firstBlock.EnterBlock();
     }
 
     private float SetNewBlocks(float startPosition, float lastBlockPosition)
@@ -139,19 +110,19 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         while (currentGeneratedDistance < endPosition)
         {
             int blockID = _weightRandom.GetRandom();
-            SettedBlock newBlock = SetBlock(blockID, currentGeneratedDistance);
-            currentGeneratedDistance += newBlock.SizeZ;
+            TBlock newBlock = SetBlock(blockID, currentGeneratedDistance);
+            currentGeneratedDistance += newBlock.BlockSize;
             _blocksPositions.Enqueue(newBlock);
         }
 
         return currentGeneratedDistance;
     }
     
-    private SettedBlock SetBlock(int blockId, float positionZ)
+    private TBlock SetBlock(int blockId, float positionZ)
     {
-        TBlock obstacleBlock = Blocks[blockId].BlockPool.GetItem();
+        TBlock obstacleBlock = BlockPools[blockId].GetItem();
         obstacleBlock.transform.localPosition = new Vector3(0, BaseYPosition, positionZ);
 
-        return new SettedBlock(obstacleBlock, Blocks[blockId].SizeZ);
+        return obstacleBlock;
     }
 }

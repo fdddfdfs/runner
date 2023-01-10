@@ -1,22 +1,35 @@
-﻿using UnityEngine;
-public class Stats : MonoBehaviour
+﻿public class Stats
 {
     public const int MaxLevel = 10;
     
     private const int StartMoneyValue = 0;
     private const int StartLevel = 1;
     private const int StartBoardsCount = 5;
+    
+    public static Stats Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                Instance = new Stats();
+                Initialize();
+            }
 
-    public static Stats Instance;
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
-    private int _money;
-    private int _highJumpLevel;
-    private int _magnetLevel;
-    private int _doubleMoneyLevel;
-    private int _immuneLevel;
-    private int _flyLevel;
-    private int _boardCount;
-    private int _doubleScoreLevel;
+    private static Stats _instance;
+    private static int _money;
+    private static int _highJumpLevel;
+    private static int _magnetLevel;
+    private static int _doubleMoneyLevel;
+    private static int _immuneLevel;
+    private static int _flyLevel;
+    private static int _boardCount;
+    private static int _doubleScoreLevel;
 
     public int Money
     {
@@ -27,7 +40,7 @@ public class Stats : MonoBehaviour
             Prefs.SaveVariable(_money, nameof(_money));
         }
     }
-    
+
     public int HighJumpLevel
     {
         get => _magnetLevel;
@@ -88,20 +101,6 @@ public class Stats : MonoBehaviour
         }
     }
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            Initialize();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-    
     public int DoubleScoreLevel
     {
         get => _doubleScoreLevel;
@@ -112,7 +111,7 @@ public class Stats : MonoBehaviour
         }
     }
 
-    private void Initialize()
+    private static void Initialize()
     {
         Prefs.LoadVariable(out _money, nameof(_money), StartMoneyValue);
         Prefs.LoadVariable(out _highJumpLevel, nameof(_highJumpLevel), StartLevel);

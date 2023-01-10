@@ -5,8 +5,12 @@ public sealed class FactoryPoolMono<T> : PoolMono<T> where T: MonoBehaviour
     private readonly AbstractFactory<T> _factory;
     private readonly Transform _parent;
     
-    public FactoryPoolMono(AbstractFactory<T> factory, Transform parent = null, bool isExpandable = false) :
-        base(isExpandable)
+    public FactoryPoolMono(
+        AbstractFactory<T> factory,
+        Transform parent = null,
+        bool isExpandable = false,
+        int startCount = DefaultStartCount) :
+        base(isExpandable, startCount)
     {
         _factory = factory;
         _parent = parent;
