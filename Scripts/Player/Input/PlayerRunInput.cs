@@ -1,12 +1,17 @@
-﻿using UnityEngine.InputSystem;
+﻿using System.Threading.Tasks;
+using UnityEngine.InputSystem;
 
 public sealed class PlayerRunInput : IRunnable
 {
+    private const float JumpTimeoutLength = 0.5f;
+    
     private bool _isLeftPressed;
     private bool _isRightPressed;
     private bool _isRollPressed;
     private bool _isJumpPressed;
     private bool _isBoardPressed;
+
+    private bool _isJumpTimeout;
 
     private bool _isRun;
     
@@ -50,6 +55,7 @@ public sealed class PlayerRunInput : IRunnable
             if (!_isJumpPressed) return false;
             
             _isJumpPressed = false;
+            JumpTimeout();
             return true;
         }
     }
@@ -69,7 +75,7 @@ public sealed class PlayerRunInput : IRunnable
     {
         if (!_isRun) return;
         
-        if (!_isJumpPressed)
+        if (!_isJumpPressed && !_isJumpTimeout)
         {
             _isJumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
         }
@@ -109,5 +115,14 @@ public sealed class PlayerRunInput : IRunnable
         _isRightPressed = false;
         _isRollPressed = false;
         _isBoardPressed = false;
+    }
+
+    private async void JumpTimeout()
+    {
+        _isJumpTimeout = true;
+
+        await Task.Delay((int)(1000 * JumpTimeoutLength), GlobalCancellationToken.Instance.CancellationToken);
+
+        _isJumpTimeout = false;
     }
 }
