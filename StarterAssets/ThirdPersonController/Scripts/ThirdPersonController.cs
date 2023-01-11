@@ -106,7 +106,6 @@ namespace StarterAssets
         private float _terminalVelocity = 53.0f;
         
         private Animator _animator;
-        private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
         private PlayerAnimator _playerAnimator;
@@ -120,7 +119,6 @@ namespace StarterAssets
         private Dictionary<Type, IGravitable> _gravitables;
 
         private HorizontalMoveRestriction _horizontalMoveRestriction;
-        private Dictionary<Type, HorizontalMoveRestriction> _horizontalMoveRestrictions;
 
         private bool _isPause;
         private Vector3 _startPosition;
@@ -130,18 +128,26 @@ namespace StarterAssets
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
-
-        public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions => _horizontalMoveRestrictions;
-
-        public CharacterController Controller => _controller;
-
+        
         public Transform PlayerMesh => _playerMesh;
+
+        public CharacterController Controller { get; private set; }
+
+        public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions { get; private set; }
+
+        public bool IsRoll { get; private set; }
 
         public void EndRoll()
         {
             _rollable?.EndRoll();
+            IsRoll = false;
         }
-        
+
+        public void StartRoll()
+        {
+            IsRoll = true;
+        }
+
         public void Pause()
         {
             _isPause = true;
@@ -179,7 +185,7 @@ namespace StarterAssets
 
             _isPause = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
-            ChangeHorizontalMoveRestriction(_horizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+            ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
@@ -187,7 +193,7 @@ namespace StarterAssets
         {
             _playerRunInput.EndRun();
             
-            _controller.Move(_startPosition - transform.localPosition);
+            Controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
             _isMovingX = false;
             _movingXDir = 0;
@@ -208,7 +214,7 @@ namespace StarterAssets
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
 
-            _horizontalMoveRestrictions = new Dictionary<Type, HorizontalMoveRestriction>
+            HorizontalMoveRestrictions = new Dictionary<Type, HorizontalMoveRestriction>
             {
                 { typeof(HorizontalMoveRestriction), new HorizontalMoveRestriction() },
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
@@ -221,7 +227,7 @@ namespace StarterAssets
             
             TryGetComponent(out _animator);
             _animator.keepAnimatorControllerStateOnDisable = true;
-            _controller = GetComponent<CharacterController>();
+            Controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
 
             _playerAnimator = new PlayerAnimator(_animator, this);
@@ -359,7 +365,7 @@ namespace StarterAssets
 
             _playerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, inputDirection.x);
 
-            _controller.Move(
+            Controller.Move(
                 new Vector3(inputMove.x,0,0) * 
                 (_speed * _runProgress.HalfSpeedMultiplier * Time.fixedDeltaTime) +
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
@@ -382,7 +388,7 @@ namespace StarterAssets
             else if (_isMovingX)
             {
                 Vector3 position = transform.localPosition;
-                _controller.Move(new Vector3(
+                Controller.Move(new Vector3(
                     _movingDestination,
                     position.y,
                     position.z) - position);
@@ -458,7 +464,7 @@ namespace StarterAssets
                     var index = Random.Range(0, FootstepAudioClips.Length);
                     AudioSource.PlayClipAtPoint(
                         FootstepAudioClips[index],
-                        transform.TransformPoint(_controller.center),
+                        transform.TransformPoint(Controller.center),
                         FootstepAudioVolume);
                 }
             }
@@ -470,7 +476,7 @@ namespace StarterAssets
             {
                 AudioSource.PlayClipAtPoint(
                     LandingAudioClip,
-                    transform.TransformPoint(_controller.center),
+                    transform.TransformPoint(Controller.center),
                     FootstepAudioVolume);
             }
         }

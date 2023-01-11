@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Animations;
 
 public sealed class RollBehaviour : StateMachineBehaviour
 {
@@ -7,7 +8,12 @@ public sealed class RollBehaviour : StateMachineBehaviour
     {
         _thirdPersonController = FindObjectOfType<StarterAssets.ThirdPersonController>();
     }
-    
+
+    public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    {
+        _thirdPersonController.StartRoll();
+    }
+
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         _thirdPersonController.EndRoll();

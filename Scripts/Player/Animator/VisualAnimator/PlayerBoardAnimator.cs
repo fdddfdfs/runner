@@ -8,12 +8,15 @@ public sealed class PlayerBoardAnimator : PlayerVisualAnimator
 
     protected override string VisualResourceName => "BoardVisual";
 
-    public PlayerBoardAnimator(Animator playerAnimator, ThirdPersonController player) : base(playerAnimator, player)
+    public PlayerBoardAnimator(
+        Animator playerAnimator,
+        IReadOnlyDictionary<AnimationType, int> animationsID,
+        ThirdPersonController player) 
+        : base(playerAnimator, player)
     {
-        //TODO: make roll animation for board 
-        _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>()
+        _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>
         {
-            { AnimationType.Roll, new EmptyTriggerAnimation() },
+            { AnimationType.Roll, new InstantTriggerAnimation(playerAnimator, animationsID[AnimationType.Roll]) },
         };
 
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>

@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public sealed class PlayerRunInput : IRunnable
 {
     private const float JumpTimeoutLength = 0.5f;
+    private const float RollTimeoutLength = 0.5f;
     
     private bool _isLeftPressed;
     private bool _isRightPressed;
@@ -12,7 +13,8 @@ public sealed class PlayerRunInput : IRunnable
     private bool _isBoardPressed;
 
     private bool _isJumpTimeout;
-
+    private bool _isRollTimeout;
+    
     private bool _isRun;
     
     public bool IsBoardPressed
@@ -67,6 +69,7 @@ public sealed class PlayerRunInput : IRunnable
             if (!_isRollPressed) return false;
             
             _isRollPressed = false;
+            RollTimeout();
             return true;
         }
     }
@@ -124,5 +127,14 @@ public sealed class PlayerRunInput : IRunnable
         await Task.Delay((int)(1000 * JumpTimeoutLength), GlobalCancellationToken.Instance.CancellationToken);
 
         _isJumpTimeout = false;
+    }
+
+    private async void RollTimeout()
+    {
+        _isRollTimeout = true;
+
+        await Task.Delay((int)(1000 * RollTimeoutLength), GlobalCancellationToken.Instance.CancellationToken);
+
+        _isRollTimeout = false;
     }
 }
