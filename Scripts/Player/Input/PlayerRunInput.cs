@@ -93,7 +93,7 @@ public sealed class PlayerRunInput : IRunnable
             _isRightPressed = Keyboard.current.dKey.wasPressedThisFrame;
         }
 
-        if (!_isRollPressed)
+        if (!_isRollPressed && !_isRollTimeout)
         {
             _isRollPressed = Keyboard.current.sKey.wasPressedThisFrame;
         }
