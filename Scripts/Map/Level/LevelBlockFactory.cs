@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 {
     private const float EmptyFieldSizeZ = 5;
+    private const float StartSpawnModificator = 1000;
     private const string EmptyObstacleName = "Empty";
     private const string NullObstacleName = "Null";
     
@@ -13,6 +14,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
     private readonly LevelBlockInfo _levelBlockInfo;
     private readonly WeightRandom _weightRandom;
     private readonly SimpleMoneySpawner _simpleMoneySpawner;
+    private readonly Vector3 _startSpawnPoint = Vector3.one * StartSpawnModificator;
 
     private int _count;
 
@@ -101,9 +103,9 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
         return (obstacle, GetSizeZ(createdObstacle));
     }
 
-    private static GameObject InstantiateObstacle(GameObject prefab, Transform parent,float spawnPosX, float spawnPosZ)
+    private GameObject InstantiateObstacle(GameObject prefab, Transform parent,float spawnPosX, float spawnPosZ)
     {
-        GameObject obstacle = Object.Instantiate(prefab, new Vector3(1000,1000,100), Quaternion.identity);
+        GameObject obstacle = Object.Instantiate(prefab, _startSpawnPoint, Quaternion.identity);
         obstacle.transform.parent = parent;
         obstacle.transform.position = new Vector3(spawnPosX, 0, spawnPosZ);
 
