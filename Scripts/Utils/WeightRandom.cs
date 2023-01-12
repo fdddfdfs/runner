@@ -6,10 +6,11 @@ public sealed class WeightRandom
 {
     private readonly int[] _weights;
     private readonly bool _canRepeatValues;
+    private readonly int _totalWeights;
     
     private int _lastValue = -1;
     
-    public WeightRandom(List<IWeightable> weigtables, bool canRepeatValues = false)
+    public WeightRandom(IReadOnlyList<IWeightable> weigtables, bool canRepeatValues = false)
     {
         _canRepeatValues = canRepeatValues;
         
@@ -20,9 +21,11 @@ public sealed class WeightRandom
             currentTotalWeight += weigtables[i].Weight;
             _weights[i] = currentTotalWeight;
         }
+
+        _totalWeights = currentTotalWeight;
     }
 
-    public WeightRandom(List<int> weights, bool canRepeatValues = false)
+    public WeightRandom(IReadOnlyList<int> weights, bool canRepeatValues = false)
     {
         _canRepeatValues = canRepeatValues;
         
@@ -33,6 +36,8 @@ public sealed class WeightRandom
             currentTotalWeight += weights[i];
             _weights[i] = currentTotalWeight;
         }
+
+        _totalWeights = currentTotalWeight;
     }
     
     public int GetRandom()
@@ -40,7 +45,7 @@ public sealed class WeightRandom
         int blockID;
         do
         {
-            int r = Random.Range(0, _weights[^1]);
+            int r = Random.Range(0, _totalWeights);
             blockID = Array.BinarySearch(_weights, r);
             blockID = blockID < 0 ? ~blockID : blockID;
         } while (blockID == _lastValue && !_canRepeatValues);

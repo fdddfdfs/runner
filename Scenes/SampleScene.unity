@@ -1666,6 +1666,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e057d97a2da0739448fd066677649dcb, type: 2}
   - {fileID: 11400000, guid: 72cde31d4476f034793fc65f409587db, type: 2}
   - {fileID: 11400000, guid: d9c4aa2812348f747a9872add0406215, type: 2}
+  _startLevelBlock: {fileID: 11400000, guid: 701ee843c7b2686408ea0eb210f11729, type: 2}
   _environmentBlockInfos:
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
@@ -2613,7 +2614,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00010697989}
+  m_AnchoredPosition: {x: 0, y: 0.00018695985}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395

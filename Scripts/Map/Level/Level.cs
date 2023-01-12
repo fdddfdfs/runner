@@ -6,17 +6,20 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
     private readonly Factories _factories;
     private readonly RunProgress _runProgress;
     private readonly List<LevelBlockInfo> _levelBlock;
-    
+    private readonly LevelBlockInfo _startBlock;
+
     public Level(
         List<LevelBlockInfo> levelBlocks,
+        LevelBlockInfo startBlock,
         Factories factories,
         Transform player,
         RunProgress runProgress) :
-        base(levelBlocks, player)
+        base(levelBlocks, player, true)
     {
         _factories = factories;
         _runProgress = runProgress;
         _levelBlock = levelBlocks;
+        _levelBlock.Insert(0, startBlock);
     }
 
     protected override Dictionary<int, FactoryPoolMono<LevelBlock>> InitializeBlockPools()

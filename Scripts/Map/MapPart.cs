@@ -15,6 +15,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private readonly Queue<TBlock> _blocksPositions;
     private readonly WeightRandom _weightRandom;
     private readonly Transform _player;
+    private readonly TBlockInfo _startBlock;
+    private readonly bool _haveStartBlock;
 
     private TBlock _firstBlock;
     private float _lastBlockPosition;
@@ -29,14 +31,13 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
     }
 
-    protected MapPart(
-        List<TBlockInfo> blocksInfo,
-        Transform player)
+    protected MapPart(IEnumerable<TBlockInfo> blocksInfo, Transform player, bool haveStartBlock = false)
     {
         // TODO: change it to false when make more SO
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
         _blocksPositions = new Queue<TBlock>();
         _player = player;
+        _haveStartBlock = haveStartBlock;
     }
     
     public void CheckToHideBlock()
@@ -50,8 +51,17 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     public void StartRun()
     {
         _firstBlockPosition = 0;
-        _lastBlockPosition = SetNewBlocks(0, 0);
-        UpdateFirstBlock();
+        if (_haveStartBlock)
+        {
+            _lastBlockPosition = SetStartBlock();
+            UpdateFirstBlock();
+        }
+        _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
+
+        if (!_haveStartBlock)
+        {
+            UpdateFirstBlock();
+        }
     }
 
     public void EndRun()
@@ -109,13 +119,20 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         
         while (currentGeneratedDistance < endPosition)
         {
-            int blockID = _weightRandom.GetRandom();
+            int blockID = _weightRandom.GetRandom() + (_haveStartBlock ? 1 : 0);
             TBlock newBlock = SetBlock(blockID, currentGeneratedDistance);
             currentGeneratedDistance += newBlock.BlockSize;
             _blocksPositions.Enqueue(newBlock);
         }
 
         return currentGeneratedDistance;
+    }
+
+    private float SetStartBlock()
+    {
+        TBlock newBlock = SetBlock(0, 0);
+        _blocksPositions.Enqueue(newBlock);
+        return newBlock.BlockSize;
     }
     
     private TBlock SetBlock(int blockId, float positionZ)
