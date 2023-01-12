@@ -5,6 +5,8 @@ public sealed class Fly : ActivatableItem<Fly>
 {
     private static ThirdPersonController _player;
     
+    public static int Weight => 1;
+    
     protected override float ActiveTime => 10;
 
     protected override ItemType ActiveItemType => ItemType.Fly;

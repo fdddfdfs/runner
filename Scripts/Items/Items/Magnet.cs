@@ -14,6 +14,8 @@ public sealed class Magnet : Item
 
     private static Coroutine _magnetActive;
     private static bool _isActive;
+    
+    public static int Weight => 1;
 
     public void Init(ActiveItemsUI activeItemsUI)
     {

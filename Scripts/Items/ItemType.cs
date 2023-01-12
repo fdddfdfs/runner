@@ -1,8 +1,11 @@
+using System;
+
+[Flags]
 public enum ItemType
 {
-    None,
     Money,
     RandomBoost,
+    WeightedRandomBoost,
     HighJump,
     Magnet,
     DoubleMoney,

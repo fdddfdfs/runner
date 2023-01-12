@@ -8,6 +8,8 @@ public abstract class ItemFactory<T> : AbstractFactory<T> where T : MonoBehaviou
     
     protected ItemFactory()
     {
+        if (PrefabName == null) return;
+        
         _prefab = Resources.Load(PrefabName) as GameObject;
     }
 }

@@ -10,6 +10,8 @@ public sealed class Money : Item
 
     private Vector3 _startPosition;
     private RunProgress _runProgress;
+    
+    public static int Weight => 10;
 
     public void Init(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
     {

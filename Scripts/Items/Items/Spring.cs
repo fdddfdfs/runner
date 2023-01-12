@@ -2,6 +2,8 @@
 
 public sealed class Spring : Item
 {
+    public static int Weight => 1;
+    
     public void Init()
     {
         base.Init();

@@ -1,6 +1,8 @@
 ﻿public sealed class DoubleScore : ActivatableItem<DoubleMoney>
 {
     private RunProgress _runProgress;
+    
+    public static int Weight => 1;
 
     protected override float ActiveTime => 10;
     

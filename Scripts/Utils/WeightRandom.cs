@@ -14,10 +14,23 @@ public sealed class WeightRandom
         _canRepeatValues = canRepeatValues;
         
         _weights = new int[weigtables.Count];
-        int currentTotalWeight = 0;
-        for (int i = 0; i < weigtables.Count; i++)
+        var currentTotalWeight = 0;
+        for (var i = 0; i < weigtables.Count; i++)
         {
             currentTotalWeight += weigtables[i].Weight;
+            _weights[i] = currentTotalWeight;
+        }
+    }
+
+    public WeightRandom(List<int> weights, bool canRepeatValues = false)
+    {
+        _canRepeatValues = canRepeatValues;
+        
+        _weights = new int[weights.Count];
+        var currentTotalWeight = 0;
+        for (var i = 0; i < weights.Count; i++)
+        {
+            currentTotalWeight += weights[i];
             _weights[i] = currentTotalWeight;
         }
     }

@@ -2,6 +2,8 @@
 
 public sealed class HighJump : ActivatableItem<HighJump>
 {
+    public static int Weight => 1;
+    
     private const float Multiplayer = 3;
     
     private static float _baseHeight = -1;
