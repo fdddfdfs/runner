@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
-public sealed class ItemParent : MonoBehaviour
+public class ItemParent : MonoBehaviour
 {
     private const float Speed = 1;
 
-    [SerializeField] private ItemType _itemType;
+    [SerializeField] protected ItemType _itemType;
     
     private readonly Quaternion _rotation = Quaternion.Euler(0,Speed,0);
 

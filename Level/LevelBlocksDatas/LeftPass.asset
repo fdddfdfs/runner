@@ -16,31 +16,31 @@ MonoBehaviour:
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 3887714271037000061, guid: 26c1e1b3a1e470044965a19590c8ba42, type: 3}
     _obstacle2: {fileID: 1057357767983207169, guid: 0ae598d7a7664bd479c4f23d6343a59a, type: 3}
     _obstacle3: {fileID: 1057357767983207169, guid: 0ae598d7a7664bd479c4f23d6343a59a, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   _weight: 100

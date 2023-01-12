@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -21,13 +20,13 @@ public sealed class LineDrawer : PropertyDrawer
             }
         };
         
-        List<EnumField> enumFields = CreateItemEnums();
+        List<Toggle> toggles = CreateToggles();
         List<ObjectField> obstacleFields = CreateObstaclesFields();
         
         Toggle toggle = new Toggle();
-        _toggles.Add(toggle);
-        container.Add(toggle);
-        toggle.RegisterValueChangedCallback((ChangeEvent<bool> arg) =>
+        //_toggles.Add(toggle);
+        //container.Add(toggle);
+        toggle.RegisterValueChangedCallback((arg) =>
         {
             for (int i = 0; i < _toggles.Count; i++)
             {
@@ -69,8 +68,16 @@ public sealed class LineDrawer : PropertyDrawer
             }
         });
 
-        AddObstaclesFieldsInContainer(container, obstacleFields);
-        AddEnumFieldsInContainer(container, enumFields);
+        //AddObstaclesFieldsInContainer(container, obstacleFields);
+        //AddTogglesInContainer(container, toggles);
+
+        for (int i = 0; i < obstacleFields.Count; i++)
+        {
+            container.Add(obstacleFields[i]);
+            container.Add(toggles[i]);
+            toggles[i].style.display = DisplayStyle.Flex;
+        }
+        
 
         return container;
     }
@@ -83,26 +90,27 @@ public sealed class LineDrawer : PropertyDrawer
         }
     }
 
-    private void AddEnumFieldsInContainer(VisualElement container, List<EnumField> enumFields)
+    private void AddTogglesInContainer(VisualElement container, List<Toggle> toggles)
     {
-        for (int i = 0; i < enumFields.Count; i++)
+        for (int i = 0; i < toggles.Count; i++)
         {
-            container.Add(enumFields[i]);
+            container.Add(toggles[i]);
         }
     }
 
-    private List<EnumField> CreateItemEnums()
+    private List<Toggle> CreateToggles()
     {
-        List<EnumField> toggles = new();
+        List<Toggle> toggles = new();
         for (int i = 1; i < 4; i++)
         {
-            toggles.Add(new EnumField()
+            toggles.Add(new Toggle()
             {
-                bindingPath = $"_itemType{i}",
+                bindingPath = $"_needSpawnItems{i}",
                 style =
                 {
-                    flexGrow = 1,
-                    flexShrink = 10,
+                    flexGrow = 0,
+                    flexShrink = 1,
+                    //flexBasis = 100,
                     display = DisplayStyle.None,
                 },
             });
@@ -123,7 +131,7 @@ public sealed class LineDrawer : PropertyDrawer
                 {
                     flexGrow = 0,
                     flexShrink = 1,
-                    flexBasis = 100,
+                    flexBasis = 200,
                 },
                 objectType = typeof(GameObject),
             });

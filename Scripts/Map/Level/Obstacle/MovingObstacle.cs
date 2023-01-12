@@ -12,9 +12,9 @@ public sealed class MovingObstacle : Obstacle
     
     private RunProgress _runProgress;
 
-    public void Init(Factories factories, RunProgress runProgress)
+    public void Init(Factories factories, bool needShowItems, RunProgress runProgress)
     {
-        base.Init(factories);
+        base.Init(factories, needShowItems);
 
         _runProgress = runProgress;
         

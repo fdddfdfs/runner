@@ -11,8 +11,8 @@ public abstract class Visual : MonoBehaviour
     
     [SerializeField] private List<Transform> _rotators;
 
-    private ThirdPersonController _player;
-    
+    protected ThirdPersonController _player;
+
     private float _xVelocity;
     private float _yVelocity;
     private float _zVelocity;
@@ -31,12 +31,15 @@ public abstract class Visual : MonoBehaviour
             rotator.localRotation *= Quaternion.Euler(RotatorAngle.eulerAngles * (BaseSpeed * speed * Time.timeScale));
         }
         
-        transform.position = _player.transform.position;
+        transform.position = _player.transform.position + _player.PlayerMesh.localPosition.y * Vector3.up;
     }
     
-    public void ChangeActiveState(bool state)
+    public virtual void ChangeActiveState(bool state)
     {
         gameObject.SetActive(state);
+        
+        transform.rotation = Quaternion.identity;
+        _player.PlayerMesh.localRotation = Quaternion.identity;
     }
 
     public void MoveX(float dir)
@@ -52,13 +55,13 @@ public abstract class Visual : MonoBehaviour
             ref _xVelocity,
             _player.RotationSmoothTime);
 
-        var objectRotation = transform.rotation.eulerAngles;
+        Vector3 objectRotation = transform.rotation.eulerAngles;
         transform.rotation = Quaternion.Euler(
             rotation,
             objectRotation.y,
             objectRotation.z);
 
-        var playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
+        Vector3 playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
         _player.PlayerMesh.localRotation = Quaternion.Euler(
             rotation,
             playerRotation.y,
@@ -78,13 +81,13 @@ public abstract class Visual : MonoBehaviour
             ref _yVelocity,
             _player.RotationSmoothTime);
 
-        var objectRotation = transform.rotation.eulerAngles;
+        Vector3 objectRotation = transform.rotation.eulerAngles;
         transform.rotation = Quaternion.Euler(
             objectRotation.x,
             rotation,
             objectRotation.z);
 
-        var playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
+        Vector3 playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
         _player.PlayerMesh.localRotation = Quaternion.Euler(
             playerRotation.x,
             rotation,
@@ -104,13 +107,13 @@ public abstract class Visual : MonoBehaviour
             ref _zVelocity,
             _player.RotationSmoothTime);
 
-        var objectRotation = transform.rotation.eulerAngles;
+        Vector3 objectRotation = transform.rotation.eulerAngles;
         transform.rotation = Quaternion.Euler(
             objectRotation.x,
             objectRotation.y,
             rotation);
 
-        var playerRotation = _player.PlayerMesh.rotation.eulerAngles;
+        Vector3 playerRotation = _player.PlayerMesh.rotation.eulerAngles;
         _player.PlayerMesh.rotation = Quaternion.Euler(
             playerRotation.x,
             playerRotation.y,

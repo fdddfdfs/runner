@@ -21,7 +21,7 @@ public abstract class PlayerVisualAnimator : PlayerBaseAnimator
         visual = Object.Instantiate(visual);
         _visual = visual.GetComponent<Visual>();
         _visual.Init(player);
-        _visual.ChangeActiveState(false);
+        _visual.gameObject.SetActive(false);
     }
     
     public override void EnterAnimator()

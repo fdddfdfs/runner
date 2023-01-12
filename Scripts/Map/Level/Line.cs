@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
@@ -8,15 +6,15 @@ public sealed class Line
     [SerializeField] private GameObject _obstacle1;
     [SerializeField] private GameObject _obstacle2;
     [SerializeField] private GameObject _obstacle3;
-    [SerializeField] private ItemType _itemType1;
-    [SerializeField] private ItemType _itemType2;
-    [SerializeField] private ItemType _itemType3;
+    [SerializeField] private bool _needSpawnItems1;
+    [SerializeField] private bool _needSpawnItems2;
+    [SerializeField] private bool _needSpawnItems3;
 
-    public ItemType ItemType1 => _itemType1;
+    public bool NeedSpawnItems1 => _needSpawnItems1;
 
-    public ItemType ItemType2 => _itemType2;
+    public bool NeedSpawnItems2 => _needSpawnItems2;
 
-    public ItemType ItemType3 => _itemType3;
+    public bool NeedSpawnItems3 => _needSpawnItems3;
 
     public GameObject Obstacle1 => _obstacle1;
 

@@ -5,12 +5,18 @@ public class Obstacle: MonoBehaviour
 {
     [SerializeField] protected List<ItemParent> _items;
 
-    public void Init(Factories factories)
+    private bool _needShowItems;
+
+    public void Init(Factories factories, bool needShowItems)
     {
-        foreach (var item in _items)
+        _needShowItems = needShowItems;
+        
+        if (!_needShowItems) return;
+        
+        foreach (ItemParent item in _items)
         {
             Item createdItem = factories.ItemFactories[item.ItemType].CreateItem();
-            var createdItemTransform = createdItem.transform;
+            Transform createdItemTransform = createdItem.transform;
             createdItemTransform.parent = item.transform;
             createdItemTransform.localPosition = Vector3.zero;
             item.ItemObject = createdItem;
@@ -19,7 +25,9 @@ public class Obstacle: MonoBehaviour
 
     public virtual void HideObstacle()
     {
-        foreach (var item in _items)
+        if (!_needShowItems) return;
+
+        foreach (ItemParent item in _items)
         {
             if (!item.ItemObject.gameObject.activeSelf)
             {
@@ -32,7 +40,9 @@ public class Obstacle: MonoBehaviour
 
     public virtual void EnterObstacle()
     {
-        foreach (var item in _items)
+        if (!_needShowItems) return;
+        
+        foreach (ItemParent item in _items)
         {
             item.EnterObstacle();
         }
