@@ -1,14 +1,16 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using StarterAssets;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider), typeof(MeshRenderer))]
+[RequireComponent(typeof(BoxCollider))]
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 10;
     private const float DeactivateTime = 30;
     
-    private MeshRenderer _meshRenderer;
+    private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;
     private bool _isAutoShowing;
 
@@ -17,7 +19,7 @@ public abstract class Item : MonoBehaviour
 
     protected void Init(bool isAutoShowing = true, bool isAutoHiding = true)
     {
-        _meshRenderer = GetComponent<MeshRenderer>();
+        _meshRenderers = GetComponents<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
 
@@ -66,7 +68,11 @@ public abstract class Item : MonoBehaviour
 
     private void ChangeItemVisible(bool state)
     {
-        _meshRenderer.enabled = state;
+        foreach (MeshRenderer meshRenderer in _meshRenderers)
+        {
+            meshRenderer.enabled = state;            
+        }
+
         _boxCollider.enabled = state;
     }
 }
