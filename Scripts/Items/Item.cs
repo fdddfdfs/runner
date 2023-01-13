@@ -19,7 +19,7 @@ public abstract class Item : MonoBehaviour
 
     protected void Init(bool isAutoShowing = true, bool isAutoHiding = true)
     {
-        _meshRenderers = GetComponents<MeshRenderer>().ToList();
+        _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
 
