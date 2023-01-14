@@ -51,6 +51,7 @@ public sealed class Money : Item
             else
             {
                 PickupItem(null);
+                ChangeColliderActive(true);
             }
         };
     }
