@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
@@ -11,6 +12,19 @@ public sealed class Money : Item
     private Vector3 _startPosition;
     private RunProgress _runProgress;
     
+    private readonly Action<Money, Transform, Tweener> _tweenerOnUpdate = (money, playerTransform, tweener) =>
+    {
+        if (Vector3.SqrMagnitude(money.transform.position - playerTransform.position) > SquaredMoneyStopMoveRadius)
+        {
+            tweener.ChangeEndValue(playerTransform.position, true);
+        }
+        else
+        {
+            money.PickupItem(null);
+            money.ChangeColliderActive(true);
+        }
+    };
+
     public static int Weight => 10;
 
     public void Init(RunProgress runProgress, bool isAutoActivating, bool isAutoHiding)
@@ -41,18 +55,8 @@ public sealed class Money : Item
 
         Tweener tweener = transform.DOMove(
             player.transform.position,
-            Speed/_runProgress.SpeedMultiplier).SetEase(Ease.OutExpo);
-        tweener.onUpdate += () =>
-        {
-            if (Vector3.SqrMagnitude(transform.position - player.transform.position) > SquaredMoneyStopMoveRadius)
-            {
-                tweener.ChangeEndValue(player.transform.position, true);
-            }
-            else
-            {
-                PickupItem(null);
-                ChangeColliderActive(true);
-            }
-        };
+            Speed / _runProgress.SpeedMultiplier).SetEase(Ease.OutExpo);
+        
+        tweener.onUpdate += () => _tweenerOnUpdate(this, player.transform, tweener);
     }
 }

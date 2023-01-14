@@ -116,7 +116,7 @@ public sealed class MoneySpawner
         {
             Vector3 tempPosition = new Vector3(
                 _spawnLines == null ? Map.GetClosestColumn(position.x) : _spawnLines[i],
-                currentGravity + _playerHalfHeight,
+                 position.y + currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
             _moneyPool.GetItem().transform.position = tempPosition;
         }
