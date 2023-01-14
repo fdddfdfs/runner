@@ -8,7 +8,7 @@ using UnityEngine;
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 1;
-    private const float DeactivateTime = 30;
+    private const float DeactivateTime = 20;
     
     private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;
@@ -17,18 +17,18 @@ public abstract class Item : MonoBehaviour
     private WaitForSeconds _activateWaiter;
     private WaitForSeconds _deactivateWaiter;
 
-    protected void Init(bool isAutoShowing = false, bool isAutoHiding = false)
+    protected void Init(bool isAutoShowing = false)
     {
         _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
+    }
 
-        if (isAutoHiding)
-        {
-            _deactivateWaiter ??= new WaitForSeconds(DeactivateTime);
+    public void StartDeactivating()
+    {
+        _deactivateWaiter ??= new WaitForSeconds(DeactivateTime);
 
-            Coroutines.StartRoutine(DeactivateItem());
-        }
+        Coroutines.StartRoutine(DeactivateItem());
     }
     
     public virtual void PickupItem(ThirdPersonController player)
@@ -61,7 +61,7 @@ public abstract class Item : MonoBehaviour
 
     private IEnumerator DeactivateItem()
     {
-        yield return _activateWaiter;
+        yield return _deactivateWaiter;
 
         gameObject.SetActive(false);
     }

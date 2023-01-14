@@ -13,7 +13,6 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
     private readonly RunProgress _runProgress;
     private readonly LevelBlockInfo _levelBlockInfo;
     private readonly WeightRandom _weightRandom;
-    private readonly SimpleMoneySpawner _simpleMoneySpawner;
     private readonly Vector3 _startSpawnPoint = Vector3.one * StartSpawnModificator;
 
     private int _count;
@@ -23,7 +22,6 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
         _factories = factories;
         _runProgress = runProgress;
         _levelBlockInfo = levelBlockInfo;
-        _simpleMoneySpawner = new SimpleMoneySpawner();
     }
 
     public override LevelBlock CreateItem()
@@ -123,7 +121,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
             }
         };
 
-        List<ItemParent> obstacleItems = _simpleMoneySpawner.SpawnMoneys(
+        List<ItemParent> obstacleItems = SimpleMoneySpawner.SpawnMoneys(
             obstacleObject.transform,
             new Vector3(0, 0, -EmptyFieldSizeZ / 2),
             EmptyFieldSizeZ);

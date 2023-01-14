@@ -252,7 +252,6 @@ namespace StarterAssets
                         JumpHeight * 10,
                         SprintSpeed,
                         this,
-                        _factories.ItemFactories[ItemType.Money] as MoneyItemFactory<Item>,
                         _map,
                         _runProgress,
                         _playerAnimator)
@@ -265,7 +264,6 @@ namespace StarterAssets
                         SprintSpeed,
                         this,
                         _playerRunInput,
-                        _factories.ItemFactories[ItemType.Money] as MoneyItemFactory<Item>,
                         _map,
                         _runProgress,
                         _playerAnimator)

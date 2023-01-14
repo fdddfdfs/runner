@@ -10,14 +10,13 @@ public sealed class MoneySpawner
     private readonly float _gravity;
     private readonly float _speed;
     private readonly float _playerHalfHeight;
-    private readonly FactoryPool<Item> _moneyPool;
+    private readonly FactoryPoolMono<RuntimeItemParent> _moneyPool;
     private readonly RunProgress _runProgress;
     private readonly RandomSpawnLine _randomSpawnLine;
     
     private float[] _spawnLines;
 
     public MoneySpawner(
-        MoneyItemFactory<Item> moneyItemFactory,
         float height,
         float gravity,
         float speed,
@@ -25,11 +24,15 @@ public sealed class MoneySpawner
         RunProgress runProgress,
         float[] spawnLines = null)
     {
+        MoneyItemFactory<Item> moneyItemFactory = new(runProgress, false, true);
         _height = height;
         _gravity = gravity;
         _speed = speed;
         _playerHalfHeight = playerHeight / 2;
-        _moneyPool = new FactoryPool<Item>(moneyItemFactory, null, true);
+        _moneyPool = new FactoryPoolMono<RuntimeItemParent>(
+            new RuntimeItemParentFactory(moneyItemFactory),
+            null,
+            true);
         _spawnLines = spawnLines;
         _runProgress = runProgress;
         _randomSpawnLine = new RandomSpawnLine();
@@ -112,13 +115,15 @@ public sealed class MoneySpawner
 
     private Vector3 SpawnMoneyItem(Vector3 position, float currentGravity)
     {
-        for (int i = 0; i < (_spawnLines?.Length ?? 1); i++)
+        for (var i = 0; i < (_spawnLines?.Length ?? 1); i++)
         {
             Vector3 tempPosition = new Vector3(
                 _spawnLines == null ? Map.GetClosestColumn(position.x) : _spawnLines[i],
                  position.y + currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
-            _moneyPool.GetItem().transform.position = tempPosition;
+            RuntimeItemParent itemParent = _moneyPool.GetItem();
+            itemParent.transform.position = tempPosition;
+            itemParent.ItemObject.StartDeactivating();
         }
 
         return position + MoneyDistance * Vector3.forward;

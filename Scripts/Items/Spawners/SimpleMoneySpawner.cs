@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class SimpleMoneySpawner
+public static class SimpleMoneySpawner
 {
     private const float MoneyDistance = 1f;
 
-    public List<ItemParent> SpawnMoneys(Transform parent, Vector3 startPosition, float sizeZ)
+    public static List<ItemParent> SpawnMoneys(Transform parent, Vector3 startPosition, float sizeZ)
     {
         List<ItemParent> items = new();
         float currentPositionZ = 0;

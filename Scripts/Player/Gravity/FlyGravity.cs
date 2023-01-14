@@ -18,7 +18,6 @@ public sealed class FlyGravity : IGravitable
         float flyHeight,
         float speed,
         ThirdPersonController player,
-        MoneyItemFactory<Item> moneyItemFactory,
         Map map,
         RunProgress runProgress,
         PlayerAnimator playerAnimator)
@@ -30,7 +29,6 @@ public sealed class FlyGravity : IGravitable
         _playerAnimator = playerAnimator;
 
         _moneySpawner = new MoneySpawner(
-            moneyItemFactory,
             flyHeight,
             gravity,
             speed,

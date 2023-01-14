@@ -18,7 +18,6 @@ public sealed class SpringGravity : IGravitable, IRollable
         float speed,
         ThirdPersonController player,
         PlayerRunInput playerRunInput,
-        MoneyItemFactory<Item> moneyItemFactory,
         Map map,
         RunProgress runProgress,
         PlayerAnimator playerAnimator)
@@ -30,7 +29,6 @@ public sealed class SpringGravity : IGravitable, IRollable
 
         _roll = new Roll(player, playerRunInput, springGravity * 10, playerAnimator);
         _moneySpawner = new MoneySpawner(
-            moneyItemFactory,
             springHeight,
             springGravity,
             speed,
