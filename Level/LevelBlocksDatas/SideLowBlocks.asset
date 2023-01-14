@@ -16,31 +16,43 @@ MonoBehaviour:
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
-  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _obstacle2: {fileID: 0}
-    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
-  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _obstacle2: {fileID: 0}
-    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
-  - _obstacle1: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
-    _obstacle2: {fileID: 0}
-    _obstacle3: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
+  - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
+  - _obstacle1: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 1384935213978801156, guid: 6ba05b3dec8aad64ca6595987458e219, type: 3}
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 1
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
+  - _obstacle1: {fileID: 0}
+    _obstacle2: {fileID: 0}
+    _obstacle3: {fileID: 0}
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   _weight: 100

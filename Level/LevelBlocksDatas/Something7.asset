@@ -16,271 +16,271 @@ MonoBehaviour:
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 1
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 1
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 1
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 1
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 0
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 4014364812217507851, guid: b160bf4fb008b00419354bb07b2fe092, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 6317378333170716078, guid: 3057e7ac54c7a2c46829173e0b7818d2, type: 3}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   - _obstacle1: {fileID: 0}
     _obstacle2: {fileID: 0}
     _obstacle3: {fileID: 0}
-    _itemType1: 0
-    _itemType2: 0
-    _itemType3: 0
+    _needSpawnItems1: 0
+    _needSpawnItems2: 1
+    _needSpawnItems3: 0
   _weight: 100

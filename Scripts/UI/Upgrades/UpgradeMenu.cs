@@ -21,12 +21,13 @@ public sealed class UpgradeMenu : MonoBehaviour
     {
         _upgradeActions = new Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)>
         {
-            { ItemType.Fly , (()=> Stats.Instance.FlyLevel, ()=> Stats.Instance.FlyLevel += 1) },
-            { ItemType.Immune , (()=> Stats.Instance.ImmuneLevel, ()=> Stats.Instance.ImmuneLevel += 1) },
-            { ItemType.Magnet , (()=> Stats.Instance.MagnetLevel, ()=> Stats.Instance.MagnetLevel += 1) },
-            { ItemType.DoubleMoney , (()=> Stats.Instance.DoubleMoneyLevel, ()=> Stats.Instance.DoubleMoneyLevel += 1) },
-            { ItemType.HighJump , (()=> Stats.Instance.HighJumpLevel, ()=> Stats.Instance.HighJumpLevel += 1) },
+            { ItemType.Fly, (()=> Stats.Instance.FlyLevel, ()=> Stats.Instance.FlyLevel += 1) },
+            { ItemType.Immune, (()=> Stats.Instance.ImmuneLevel, ()=> Stats.Instance.ImmuneLevel += 1) },
+            { ItemType.Magnet, (()=> Stats.Instance.MagnetLevel, ()=> Stats.Instance.MagnetLevel += 1) },
+            { ItemType.DoubleMoney, (()=> Stats.Instance.DoubleMoneyLevel, ()=> Stats.Instance.DoubleMoneyLevel += 1) },
+            { ItemType.HighJump, (()=> Stats.Instance.HighJumpLevel, ()=> Stats.Instance.HighJumpLevel += 1) },
             { ItemType.DoubleScore, (()=> Stats.Instance.DoubleScoreLevel, ()=> Stats.Instance.DoubleScoreLevel += 1) },
+            { ItemType.Board, (()=> Stats.Instance.BoardLevel, ()=> Stats.Instance.BoardLevel += 1) },
         };
 
         for (int i = 0; i < _itemTypes.Count; i++)

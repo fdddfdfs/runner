@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public abstract class Item : MonoBehaviour
 {
-    private const float ActivateTime = 10;
+    private const float ActivateTime = 1;
     private const float DeactivateTime = 30;
     
     private List<MeshRenderer> _meshRenderers;
@@ -17,7 +17,7 @@ public abstract class Item : MonoBehaviour
     private WaitForSeconds _activateWaiter;
     private WaitForSeconds _deactivateWaiter;
 
-    protected void Init(bool isAutoShowing = true, bool isAutoHiding = true)
+    protected void Init(bool isAutoShowing = false, bool isAutoHiding = false)
     {
         _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();

@@ -10,7 +10,10 @@ public sealed class PlayerFlyAnimator : PlayerVisualAnimator
 
     public PlayerFlyAnimator(Animator playerAnimator, ThirdPersonController player) : base(playerAnimator, player)
     {
-        _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>();
+        _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>
+        {
+            { AnimationType.Roll, new EmptyTriggerAnimation() },
+        };
         
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>
         {

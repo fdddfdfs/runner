@@ -24,7 +24,7 @@ public sealed class PlayerAnimator
             { typeof(PlayerImmuneAnimator), new PlayerImmuneAnimator(playerAnimator, animationsID, player) },
         };
         
-        ChangeAnimator(typeof(PlayerImmuneAnimator));
+        ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     public void ChangeAnimator(Type animatorType)

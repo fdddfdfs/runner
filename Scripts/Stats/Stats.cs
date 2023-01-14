@@ -29,6 +29,7 @@
     private static int _immuneLevel;
     private static int _flyLevel;
     private static int _boardCount;
+    private static int _boardLevel;
     private static int _doubleScoreLevel;
 
     public int Money
@@ -101,6 +102,16 @@
         }
     }
 
+    public int BoardLevel
+    {
+        get => _boardLevel;
+        set
+        {
+            _boardLevel = value;
+            Prefs.SaveVariable(_boardLevel, nameof(_boardLevel));
+        }
+    }
+
     public int DoubleScoreLevel
     {
         get => _doubleScoreLevel;
@@ -120,6 +131,7 @@
         Prefs.LoadVariable(out _immuneLevel, nameof(_immuneLevel), StartLevel);
         Prefs.LoadVariable(out _flyLevel, nameof(_flyLevel), StartLevel);
         Prefs.LoadVariable(out _boardCount, nameof(_boardCount), StartBoardsCount);
+        Prefs.LoadVariable(out _boardLevel, nameof(_boardLevel), StartLevel);
         Prefs.LoadVariable(out _doubleScoreLevel, nameof(_boardCount), StartLevel);
     }
 }

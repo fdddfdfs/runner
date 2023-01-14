@@ -28,7 +28,7 @@ public sealed class Factories : MonoBehaviour
         
         _itemFactories = new Dictionary<ItemType, ItemFactory<Item>>
         {
-            [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, true, false),
+            [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, false, false),
             [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI),
             [ItemType.HighJump] = new HighJumpItemFactory<Item>(_player, _activeItemsUI),
             [ItemType.DoubleMoney] = new DoubleMoneyItemFactory<Item>(_runProgress, _activeItemsUI),
