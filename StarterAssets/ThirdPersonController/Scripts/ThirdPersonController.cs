@@ -1,18 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
-#if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
-using UnityEngine.InputSystem;
-#endif
-
-/* Note: animations are called via the controller for both the character and capsule using animator null checks
- */
 
 namespace StarterAssets
 {
@@ -209,7 +198,7 @@ namespace StarterAssets
         private void Awake()
         {
             _playerRunInput = new PlayerRunInput();
-            
+
             _startPosition = transform.position;
             _isPause = true;
             

@@ -43,6 +43,9 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     
     public void CheckToHideBlock()
     {
+        if (!_firstBlock) return;
+            
+    
         if (_player.transform.position.z > _firstBlockPosition + _firstBlock.BlockSize)
         {
             HideCurrentBlock();
@@ -77,6 +80,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         {
             _blocksPositions.Dequeue().HideBlock();
         }
+
+        _lastBlockPosition = 0;
     }
 
     public void HideCurrentEnteredBlock()

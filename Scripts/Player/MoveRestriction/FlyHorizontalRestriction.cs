@@ -11,7 +11,6 @@ public sealed class FlyHorizontalRestriction : HorizontalMoveRestriction
     
     public override bool CheckHorizontalMoveRestriction(int moveDirection)
     {
-        Debug.Log(moveDirection +"    " + _currentMovingLine);
         if (_linesHalfCount >= Mathf.Abs(_currentMovingLine + moveDirection))
         {
             ChangeCurrentLine(moveDirection);

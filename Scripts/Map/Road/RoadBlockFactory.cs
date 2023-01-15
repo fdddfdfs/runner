@@ -26,8 +26,7 @@ public class RoadBlockFactory : AbstractFactory<RoadBlock>
         leftBorder.layer = LayerMask.NameToLayer("Obstacle");
         rightBorder.layer = LayerMask.NameToLayer("Obstacle");
         
-        var roadBlock = parent.GetComponent<RoadBlock>();
-        roadBlock ??= parent.AddComponent<RoadBlock>();
+        var roadBlock = parent.AddComponent<RoadBlock>();
         
         var roadCollider = road.GetComponent<BoxCollider>();
         if (!roadCollider)
@@ -37,8 +36,10 @@ public class RoadBlockFactory : AbstractFactory<RoadBlock>
         
         SetBoarderPosition(leftBorder, roadCollider, -1);
         SetBoarderPosition(rightBorder, roadCollider, 1);
+        Vector3 size = roadCollider.size;
+        road.transform.localPosition = new Vector3(0, -size.y / 2, 0);
         
-        roadBlock.Init(roadCollider.size.z);
+        roadBlock.Init(size.z);
         
         _count++;
         
