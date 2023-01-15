@@ -26,7 +26,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 
     public override LevelBlock CreateItem()
     {
-        GameObject parent = new($"MapPartParent_{_levelBlockInfo.name}{_count.ToString()}");
+        GameObject parent = new($"LevelBlock_{_levelBlockInfo.name}_{_count.ToString()}");
         var obstacleBlock = parent.AddComponent<LevelBlock>();
         CreateBlock(_levelBlockInfo, obstacleBlock);
         _count++;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class MapPart<TBlockInfo,TBlock> : IRunnable 
@@ -56,9 +57,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
             _lastBlockPosition = SetStartBlock();
             UpdateFirstBlock();
         }
+
+        float previousBlockPosition = _lastBlockPosition;
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
 
-        if (!_haveStartBlock)
+        if (!_haveStartBlock && Math.Abs(previousBlockPosition - _lastBlockPosition) > 0.1f)
         {
             UpdateFirstBlock();
         }

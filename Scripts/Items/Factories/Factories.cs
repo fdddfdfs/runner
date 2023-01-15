@@ -15,7 +15,6 @@ public sealed class Factories : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log(_run == null);
         Dictionary<ItemType, int> weights = new()
         {
             [ItemType.Money] = Money.Weight,

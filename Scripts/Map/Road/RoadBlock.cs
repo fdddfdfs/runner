@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public sealed class EnvironmentBlock : MonoBehaviour, IMapBlock
+public class RoadBlock : MonoBehaviour, IMapBlock
 {
     public float BlockSize { get; private set; }
 
