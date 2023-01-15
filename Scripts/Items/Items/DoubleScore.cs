@@ -8,9 +8,9 @@
     
     protected override ItemType ActiveItemType => ItemType.DoubleScore;
     
-    public void Init(RunProgress runProgress, ActiveItemsUI activeItemsUI)
+    public void Init(RunProgress runProgress, ActiveItemsUI activeItemsUI, Run run)
     {
-        base.Init(activeItemsUI);
+        base.Init(activeItemsUI, run);
 
         _runProgress = runProgress;
     }

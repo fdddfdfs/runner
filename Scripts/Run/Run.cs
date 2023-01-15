@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
@@ -16,7 +18,11 @@ public sealed class Run : MonoBehaviour, IRunnable
     private bool _isRun;
 
     private List<IRunnable> _runnables;
-    
+
+    private CancellationTokenSource _endRunTokenSource;
+
+    public CancellationToken EndRunToken => _endRunTokenSource.Token;
+
     public void StartRun()
     {
         foreach (IRunnable runnable in _runnables)
@@ -28,6 +34,8 @@ public sealed class Run : MonoBehaviour, IRunnable
         
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+
+        _endRunTokenSource = new CancellationTokenSource();
     }
 
     public void Lose()
@@ -65,6 +73,7 @@ public sealed class Run : MonoBehaviour, IRunnable
         }
 
         _isRun = false;
+        _endRunTokenSource.Cancel();
     }
 
     public void BackToMenu()
@@ -85,5 +94,13 @@ public sealed class Run : MonoBehaviour, IRunnable
     private void Awake()
     {
         _runnables = new List<IRunnable> { _map, _player, _runProgress, _follower };
+    }
+
+    private void OnDisable()
+    {
+        if (!_endRunTokenSource.IsCancellationRequested)
+        {
+            _endRunTokenSource.Cancel();
+        }
     }
 }

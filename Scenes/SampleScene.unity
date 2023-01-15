@@ -2615,7 +2615,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.00002560371}
+  m_AnchoredPosition: {x: 0, y: -0.0000340381}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395
@@ -3722,6 +3722,7 @@ MonoBehaviour:
   _runProgress: {fileID: 272269898}
   _player: {fileID: 8411479335077579615}
   _activeItemsUI: {fileID: 1263758780}
+  _run: {fileID: 257345775}
 --- !u!4 &1288113286
 Transform:
   m_ObjectHideFlags: 0
@@ -4975,7 +4976,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 327491353}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99996674
+  m_Size: 0.9999012
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

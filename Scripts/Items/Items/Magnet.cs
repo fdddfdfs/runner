@@ -17,9 +17,9 @@ public sealed class Magnet : Item
     
     public static int Weight => 1;
 
-    public void Init(ActiveItemsUI activeItemsUI)
+    public void Init(ActiveItemsUI activeItemsUI, Run run)
     {
-        base.Init();
+        base.Init(run);
 
         _activeItemsUI = activeItemsUI;
         _center = new Vector3(0, 0, 0);

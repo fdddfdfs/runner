@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -176,7 +177,9 @@ namespace StarterAssets
 
         public void ChangeHorizontalMoveRestriction(HorizontalMoveRestriction newRestriction)
         {
-            _horizontalMoveRestriction = _horizontalMoveRestriction?.ChangeRestriction(newRestriction) ?? newRestriction;
+            int currentLine = _horizontalMoveRestriction?.CurrentMovingLine ?? 0;
+            _horizontalMoveRestriction = newRestriction;
+            _horizontalMoveRestriction.Init(currentLine);
         }
 
         public void StartRun()
@@ -186,6 +189,7 @@ namespace StarterAssets
             _isPause = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
             ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+            _horizontalMoveRestriction.Init(0);
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
         }
 
@@ -254,6 +258,7 @@ namespace StarterAssets
                         this,
                         _map,
                         _runProgress,
+                        _run,
                         _playerAnimator)
                 },
                 {
@@ -266,6 +271,7 @@ namespace StarterAssets
                         _playerRunInput,
                         _map,
                         _runProgress,
+                        _run,
                         _playerAnimator)
                 },
             };

@@ -10,9 +10,9 @@ public sealed class HighJump : ActivatableItem<HighJump>
 
     private ThirdPersonController _player;
 
-    public void Init(float baseJumpHeight, ActiveItemsUI activeItemUI)
+    public void Init(float baseJumpHeight, ActiveItemsUI activeItemUI, Run run)
     {
-        base.Init(activeItemUI);
+        base.Init(activeItemUI, run);
 
         _baseHeight = baseJumpHeight;
     }

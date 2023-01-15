@@ -7,6 +7,7 @@ public sealed class Factories : MonoBehaviour
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private ActiveItemsUI _activeItemsUI;
+    [SerializeField] private Run _run;
     
     private Dictionary<ItemType, ItemFactory<Item>> _itemFactories;
 
@@ -14,6 +15,7 @@ public sealed class Factories : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log(_run == null);
         Dictionary<ItemType, int> weights = new()
         {
             [ItemType.Money] = Money.Weight,
@@ -28,14 +30,14 @@ public sealed class Factories : MonoBehaviour
         
         _itemFactories = new Dictionary<ItemType, ItemFactory<Item>>
         {
-            [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, false, false),
-            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI),
-            [ItemType.HighJump] = new HighJumpItemFactory<Item>(_player, _activeItemsUI),
-            [ItemType.DoubleMoney] = new DoubleMoneyItemFactory<Item>(_runProgress, _activeItemsUI),
-            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI),
-            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI),
-            [ItemType.DoubleScore] = new DoubleScoreItemFactory<Item>(_runProgress,_activeItemsUI),
-            [ItemType.Spring] = new SpringItemFactory<Item>(),
+            [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, _run, false, false),
+            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run),
+            [ItemType.HighJump] = new HighJumpItemFactory<Item>(_player, _activeItemsUI, _run),
+            [ItemType.DoubleMoney] = new DoubleMoneyItemFactory<Item>(_runProgress, _activeItemsUI, _run),
+            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run),
+            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run),
+            [ItemType.DoubleScore] = new DoubleScoreItemFactory<Item>(_runProgress,_activeItemsUI, _run),
+            [ItemType.Spring] = new SpringItemFactory<Item>(_run),
         };
         
         _itemFactories.Add(ItemType.RandomBoost, new RandomItemFactory<Item>(this));

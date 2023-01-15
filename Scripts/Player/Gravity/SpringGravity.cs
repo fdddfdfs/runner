@@ -20,6 +20,7 @@ public sealed class SpringGravity : IGravitable, IRollable
         PlayerRunInput playerRunInput,
         Map map,
         RunProgress runProgress,
+        Run run,
         PlayerAnimator playerAnimator)
     {
         _springGravity = springGravity;
@@ -34,6 +35,7 @@ public sealed class SpringGravity : IGravitable, IRollable
             speed,
             player.Controller.height,
             runProgress,
+            run,
             new float[] { -Map.ColumnOffset, 0, Map.ColumnOffset });
     }
 

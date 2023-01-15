@@ -20,6 +20,7 @@ public sealed class FlyGravity : IGravitable
         ThirdPersonController player,
         Map map,
         RunProgress runProgress,
+        Run run,
         PlayerAnimator playerAnimator)
     {
         _gravity = gravity;
@@ -33,7 +34,8 @@ public sealed class FlyGravity : IGravitable
             gravity,
             speed,
             player.Controller.height,
-            runProgress);
+            runProgress,
+            run);
     }
 
     public void SetGravityLength(float length)

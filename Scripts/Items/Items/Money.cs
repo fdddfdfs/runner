@@ -27,9 +27,9 @@ public sealed class Money : Item
 
     public static int Weight => 10;
 
-    public void Init(RunProgress runProgress, bool isAutoShowing)
+    public void Init(RunProgress runProgress, Run run, bool isAutoShowing)
     {
-        base.Init(isAutoShowing);
+        base.Init(run, isAutoShowing);
         
         _runProgress = runProgress;
     }

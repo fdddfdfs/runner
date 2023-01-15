@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using StarterAssets;
 using UnityEngine;
 
@@ -8,29 +10,26 @@ using UnityEngine;
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 1;
-    private const float DeactivateTime = 20;
-    
+    private const int DeactivateTime = 20 * 1000;
+
     private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;
     private bool _isAutoShowing;
 
-    private WaitForSeconds _activateWaiter;
-    private WaitForSeconds _deactivateWaiter;
+    private Run _run;
+    private CancellationTokenSource _cancellationTokenSource;
+    private bool _isDeactivating;
 
-    protected void Init(bool isAutoShowing = false)
+    private WaitForSeconds _activateWaiter;
+
+    protected void Init(Run run, bool isAutoShowing = false)
     {
         _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
+        _run = run;
     }
 
-    public void StartDeactivating()
-    {
-        _deactivateWaiter ??= new WaitForSeconds(DeactivateTime);
-
-        Coroutines.StartRoutine(DeactivateItem());
-    }
-    
     public virtual void PickupItem(ThirdPersonController player)
     {
         if (_isAutoShowing)
@@ -44,6 +43,11 @@ public abstract class Item : MonoBehaviour
         else
         {
             gameObject.SetActive(false);
+
+            if (_isDeactivating)
+            {
+                _cancellationTokenSource?.Cancel();
+            }
         }
     }
 
@@ -59,13 +63,6 @@ public abstract class Item : MonoBehaviour
         ChangeItemVisible(true);
     }
 
-    private IEnumerator DeactivateItem()
-    {
-        yield return _deactivateWaiter;
-
-        gameObject.SetActive(false);
-    }
-
     private void ChangeItemVisible(bool state)
     {
         foreach (MeshRenderer meshRenderer in _meshRenderers)
@@ -74,5 +71,25 @@ public abstract class Item : MonoBehaviour
         }
 
         _boxCollider.enabled = state;
+    }
+
+    public async void DeactivateInTime()
+    {
+        _isDeactivating = true;
+        
+        if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
+        {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+        }
+        
+        await Task.Delay(DeactivateTime, _cancellationTokenSource.Token)
+            .ContinueWith(GlobalCancellationToken.EmptyTask);
+
+        if (gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
+        }
+
+        _isDeactivating = false;
     }
 }

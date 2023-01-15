@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class MoneySpawner
 {
     private const float MoneyDistance = 1f;
     private const int MaxIterationsCount = 1000;
+    private const int MoneyDeactivateTimeMilliseconds = 10 * 1000;
 
     private readonly float _height;
     private readonly float _gravity;
@@ -13,7 +16,7 @@ public sealed class MoneySpawner
     private readonly FactoryPoolMono<RuntimeItemParent> _moneyPool;
     private readonly RunProgress _runProgress;
     private readonly RandomSpawnLine _randomSpawnLine;
-    
+
     private float[] _spawnLines;
 
     public MoneySpawner(
@@ -22,9 +25,10 @@ public sealed class MoneySpawner
         float speed,
         float playerHeight,
         RunProgress runProgress,
+        Run run,
         float[] spawnLines = null)
     {
-        MoneyItemFactory<Item> moneyItemFactory = new(runProgress, false, true);
+        MoneyItemFactory<Item> moneyItemFactory = new(runProgress, run, false, true);
         _height = height;
         _gravity = gravity;
         _speed = speed;
@@ -123,7 +127,7 @@ public sealed class MoneySpawner
                 position.z + MoneyDistance);
             RuntimeItemParent itemParent = _moneyPool.GetItem();
             itemParent.transform.position = tempPosition;
-            itemParent.ItemObject.StartDeactivating();
+            itemParent.ItemObject.DeactivateInTime();
         }
 
         return position + MoneyDistance * Vector3.forward;

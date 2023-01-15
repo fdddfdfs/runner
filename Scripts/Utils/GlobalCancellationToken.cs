@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class GlobalCancellationToken : MonoBehaviour
@@ -8,6 +10,8 @@ public sealed class GlobalCancellationToken : MonoBehaviour
     public CancellationToken CancellationToken => _source.Token;
     
     public static GlobalCancellationToken Instance { get; private set; }
+
+    public static Action<Task> EmptyTask => _ => { };
 
     private void Awake()
     {

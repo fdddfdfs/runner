@@ -10,9 +10,9 @@ public abstract class ActivatableItem<T> : Item
     private static Coroutine _activateRoutine;
     private static bool _isActive;
     
-    public void Init(ActiveItemsUI activeItemsUI)
+    public void Init(ActiveItemsUI activeItemsUI, Run run)
     {
-        base.Init();
+        base.Init(run);
 
         _waiter = new WaitForSeconds(ActiveTime);
         _activeItemsUI = activeItemsUI;
