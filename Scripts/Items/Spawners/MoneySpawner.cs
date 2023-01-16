@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class MoneySpawner
 {
     private const float MoneyDistance = 1f;
     private const int MaxIterationsCount = 1000;
-    private const int MoneyDeactivateTimeMilliseconds = 10 * 1000;
 
     private readonly float _height;
     private readonly float _gravity;
