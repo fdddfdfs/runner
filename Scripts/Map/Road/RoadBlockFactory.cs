@@ -56,7 +56,7 @@ public class RoadBlockFactory : AbstractFactory<RoadBlock>
 
         Vector3 borderSize = borderCollider.size;
         border.transform.localPosition = new Vector3(
-            dir * road.size.x / 2 + borderSize.x / 2,
+            dir * (road.size.x / 2 + borderSize.x / 2),
             borderSize.y / 2,
             0);
     }
