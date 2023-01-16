@@ -49,15 +49,11 @@ public sealed class FlyGravity : IGravitable
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
         _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
-        
-        _playerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
     }
 
     public void LeaveGravity()
     {
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
-        
-        _playerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     public float VerticalVelocity(bool isGrounded)

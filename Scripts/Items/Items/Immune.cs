@@ -20,10 +20,12 @@ public sealed class Immune : ActivatableItem<Immune>
     protected override void Activate()
     {
         _player.ChangeHittable(_player.Hittables[typeof(ImmuneHittable)]);
+        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerImmuneAnimator));
     }
 
     protected override void Deactivate()
     {
         _player.ChangeHittable(_player.Hittables[typeof(PlayerHittable)]);
+        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 }

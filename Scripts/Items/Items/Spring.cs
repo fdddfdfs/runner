@@ -2,7 +2,7 @@
 
 public sealed class Spring : Item
 {
-    public static int Weight => 100;
+    public static int Weight => 1;
     
     public void Init(Run run)
     {

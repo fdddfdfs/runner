@@ -27,10 +27,12 @@ public sealed class Fly : ActivatableItem<Fly>
 
         flyGravity.SetGravityLength(ActiveTime);
         _player.ChangeGravitable(flyGravity);
+        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
     }
 
     protected override void Deactivate()
     {
         _player.ChangeGravitable(_player.Gravitables[typeof(DefaultGravity)]);
+        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 }

@@ -98,7 +98,6 @@ namespace StarterAssets
         private Animator _animator;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
-        private PlayerAnimator _playerAnimator;
 
         private IHittable _hittable;
         private Dictionary<Type, IHittable> _hittables;
@@ -124,6 +123,8 @@ namespace StarterAssets
         public CharacterController Controller { get; private set; }
 
         public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions { get; private set; }
+
+        public PlayerAnimator PlayerAnimator { get; private set; }
 
         public bool IsRoll { get; private set; }
 
@@ -223,7 +224,7 @@ namespace StarterAssets
             Controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
 
-            _playerAnimator = new PlayerAnimator(_animator, this);
+            PlayerAnimator = new PlayerAnimator(_animator, this);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {
@@ -236,7 +237,7 @@ namespace StarterAssets
                         Gravity,
                         _playerRunInput,
                         this,
-                        _playerAnimator)
+                        PlayerAnimator)
                 },
                 {
                     typeof(FlyGravity),
@@ -248,7 +249,7 @@ namespace StarterAssets
                         _map,
                         _runProgress,
                         _run,
-                        _playerAnimator)
+                        PlayerAnimator)
                 },
                 {
                     typeof(SpringGravity),
@@ -261,11 +262,11 @@ namespace StarterAssets
                         _map,
                         _runProgress,
                         _run,
-                        _playerAnimator)
+                        PlayerAnimator)
                 },
             };
             
-            _board = new Board(this, _map, _activeItemsUI, _playerAnimator);
+            _board = new Board(this, _map, _activeItemsUI, PlayerAnimator);
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },
@@ -316,7 +317,7 @@ namespace StarterAssets
                 GroundLayers,
                 QueryTriggerInteraction.Ignore);
             
-            _playerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
+            PlayerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
         }
 
         private void CameraRotation()
@@ -356,7 +357,7 @@ namespace StarterAssets
                     inputDirection.z);
             }
 
-            _playerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, inputDirection.x);
+            PlayerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, inputDirection.x);
 
             Controller.Move(
                 new Vector3(inputMove.x,0,0) * 
@@ -364,7 +365,7 @@ namespace StarterAssets
                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime +
                 Vector3.forward * (_speed * _runProgress.SpeedMultiplier * Time.fixedDeltaTime));
             
-            _playerAnimator.ChangeAnimationFloat(AnimationType.Speed, _runProgress.HalfSpeedMultiplier);
+            PlayerAnimator.ChangeAnimationFloat(AnimationType.Speed, _runProgress.HalfSpeedMultiplier);
         }
 
         private int CheckForMovingX()
