@@ -50,7 +50,7 @@ public sealed class MoneySpawner
         float currentGravity = 0;
         float currentTime = 0;
         
-        _randomSpawnLine.Init(startPosition.x);
+        _spawnLines = _randomSpawnLine.Init(startPosition.x);
 
         while (currentTime < activeTime)
         {

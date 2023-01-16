@@ -7,21 +7,24 @@ public sealed class RandomSpawnLine
     private const int DoubleChanceToChangeLine = ChanceToChangeLine * 2;
     
     private readonly float[] _allSpawnLines;
+    private readonly float[] _spawnLines;
     
-    private float[] _spawnLines;
     private int _spawnedItemsCount;
     private int _currentLine;
 
     public RandomSpawnLine()
     {
         _allSpawnLines = Map.AllLinesCoordsX;
+        _spawnLines = new[] { 0f };
     }
 
-    public void Init(float startPositionX)
+    public float[] Init(float startPositionX)
     {
         _spawnedItemsCount = 0;
         _currentLine = Map.GetClosestColumnIndex(startPositionX);
-        _spawnLines = new[] { _allSpawnLines[_currentLine] };
+        _spawnLines[0] = _allSpawnLines[_currentLine];
+
+        return _spawnLines;
     }
 
     public float[] GetLines()
