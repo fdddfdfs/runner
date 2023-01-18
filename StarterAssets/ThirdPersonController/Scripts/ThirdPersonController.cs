@@ -492,6 +492,7 @@ namespace StarterAssets
                 {
                     _movingDestination = _previousMovingDestination;
                     _movingXDir *= -1;
+                    _horizontalMoveRestriction.CheckHorizontalMoveRestriction(_movingXDir);
                 }
             }
             else if (hit.gameObject.TryGetComponent(out Item item))
