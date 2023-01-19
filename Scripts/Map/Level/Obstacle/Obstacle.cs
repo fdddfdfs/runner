@@ -12,7 +12,7 @@ public class Obstacle: MonoBehaviour
         _needShowItems = needShowItems;
         
         if (!_needShowItems) return;
-        
+
         foreach (ItemParent item in _items)
         {
             Item createdItem = factories.ItemFactories[item.ItemType].CreateItem();

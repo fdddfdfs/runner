@@ -5,7 +5,8 @@ public sealed class MoneySpawner
 {
     private const float MoneyDistance = 1f;
     private const int MaxIterationsCount = 1000;
-
+    private const int RotationOffsetY = 5;
+    
     private readonly float _height;
     private readonly float _gravity;
     private readonly float _speed;
@@ -46,7 +47,8 @@ public sealed class MoneySpawner
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
         float currentGravity = 0;
         float currentTime = 0;
-        
+        int counter = 0;
+
         _spawnLines = _randomSpawnLine.Init(startPosition.x);
 
         while (currentTime < activeTime)
@@ -71,8 +73,9 @@ public sealed class MoneySpawner
                     _spawnLines = _randomSpawnLine.GetLines();
                 }
 
-                startPosition = SpawnMoneyItem(startPosition, currentGravity);
+                startPosition = SpawnMoneyItem(startPosition, currentGravity, counter);
                 currentPosition -= MoneyDistance;
+                counter++;
             }
         }
 
@@ -102,7 +105,7 @@ public sealed class MoneySpawner
             currentPosition += distance;
             if (currentPosition > MoneyDistance)
             {
-                startPosition = SpawnMoneyItem(startPosition, currentGravity);
+                startPosition = SpawnMoneyItem(startPosition, currentGravity, counter);
                 currentPosition -= MoneyDistance;
                 counter++;
             }
@@ -114,7 +117,7 @@ public sealed class MoneySpawner
         }
     }
 
-    private Vector3 SpawnMoneyItem(Vector3 position, float currentGravity)
+    private Vector3 SpawnMoneyItem(Vector3 position, float currentGravity, int counter)
     {
         for (var i = 0; i < (_spawnLines?.Length ?? 1); i++)
         {
@@ -123,6 +126,8 @@ public sealed class MoneySpawner
                  position.y + currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
             RuntimeItemParent itemParent = _moneyPool.GetItem();
+            itemParent.SetStartRotationOffset(Quaternion.Euler(0, counter * RotationOffsetY, 0));
+            itemParent.EnterObstacle();
             itemParent.transform.position = tempPosition;
             itemParent.ItemObject.DeactivateInTime();
         }

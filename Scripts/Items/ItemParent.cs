@@ -9,16 +9,22 @@ public class ItemParent : MonoBehaviour
     private readonly Quaternion _rotation = Quaternion.Euler(0,Speed,0);
 
     private Quaternion _startRotation;
+    private Quaternion _startRotationOffset = Quaternion.identity;
     private bool _isEntered;
 
     public ItemType ItemType => _itemType;
 
     public Item ItemObject { get; set; }
 
+    public void SetStartRotationOffset(Quaternion offset)
+    {
+        _startRotationOffset = offset;
+    }
+
     public void EnterObstacle()
     {
         _isEntered = true;
-        transform.localRotation = _startRotation;
+        transform.localRotation = _startRotation * _startRotationOffset;
     }
 
     public void HideObstacle()
