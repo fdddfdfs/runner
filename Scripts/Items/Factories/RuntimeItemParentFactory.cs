@@ -13,7 +13,6 @@ public class RuntimeItemParentFactory : AbstractFactory<RuntimeItemParent>
     {
         Item item = _factory.CreateItem();
         var itemParent = item.AddComponent<RuntimeItemParent>();
-        itemParent.EnterObstacle();
         itemParent.ItemObject = item;
 
         return itemParent;
