@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Gaia
 {
     [System.Serializable]
-    public enum GaiaResourceHelperOperation { CopyResources, RemoveResources }
+    public enum GaiaResourceHelperOperation { CopyResources, RemoveResources, TreesToGameObjects }
 
     /// <summary>
     /// Utility to copy or remove resources / prototypes from terrains in the scene
@@ -28,6 +28,7 @@ namespace Gaia
         private bool m_layersSelected = true;
         private bool m_terrainTreesSelected = true;
         private bool m_terrainDetailsSelected = true;
+        private bool m_removeTreesAfterConversion = false;
         Terrain m_targetTerrain;
         private GaiaSettings m_settings;
 
@@ -64,6 +65,9 @@ namespace Gaia
                     break;
                 case GaiaResourceHelperOperation.RemoveResources:
                     DrawRemoveOperation(helpEnabled);
+                    break;
+                case GaiaResourceHelperOperation.TreesToGameObjects:
+                    DrawTreesToGameObjectsOperation(helpEnabled);
                     break;
             }
 
@@ -202,6 +206,95 @@ namespace Gaia
             {
                 t.terrainData.detailPrototypes = m_sourceTerrain.terrainData.detailPrototypes;
             }
+            t.Flush();
+        }
+
+        private void DrawTreesToGameObjectsOperation(bool helpEnabled)
+        {
+            m_targetAllTerrains = m_editorUtils.Toggle("ConvertTreesForAllTerrains", m_targetAllTerrains, helpEnabled);
+            GUI.enabled = !m_targetAllTerrains;
+            m_targetTerrain = (Terrain)m_editorUtils.ObjectField("TargetTerrainConvertTrees", m_targetTerrain, typeof(Terrain), true, helpEnabled);
+            GUI.enabled = true;
+            m_removeTreesAfterConversion = m_editorUtils.Toggle("RemoveTreesAfterConversion", m_removeTreesAfterConversion, helpEnabled);
+            Color normalBGColor = GUI.backgroundColor;
+            if (m_settings == null)
+            {
+                m_settings = GaiaUtils.GetGaiaSettings();
+            }
+
+            GUI.backgroundColor = m_settings.GetActionButtonColor();
+            if (m_editorUtils.Button("StartTreeConversion"))
+            {
+                string message = "This will create one independent Game Object for each terrain tree on the selected terrain(s). Your terrain should look the same after this operation, but all terrain trees will then be rendered as independent Game Objects instead.\r\n\r\n";
+                if (m_removeTreesAfterConversion)
+                {
+                    message += "You selected to remove the original trees from the terrain, please note that those will be deleted permanently so that only the Game Object trees remain. If you intend to keep the original terrain trees, please uncheck this option before proceeding.";
+                }
+                else
+                {
+                    message += "You selected to keep the original trees from the terrain, please note that each tree will be displayed twice afterwards - once as Game Object and once as Terrain Tree. If you are happy with the conversion results you can then consider removing the terrain trees at some point so that only the Game Object trees remain.";
+
+                }
+
+                if (EditorUtility.DisplayDialog("Convert Trees to Game Objects?", message, "Continue", "Cancel"))
+                {
+                    if (m_targetAllTerrains)
+                    {
+                        if (GaiaUtils.HasDynamicLoadedTerrains())
+                        {
+                            GaiaUtils.CallFunctionOnDynamicLoadedTerrains(ConvertTreesOnTerrain, true);
+                        }
+                        foreach (Terrain t in Terrain.activeTerrains)
+                        {
+                            ConvertTreesOnTerrain(t);
+                        }
+                    }
+                    else
+                    {
+                        if (m_targetTerrain == null)
+                        {
+                            EditorUtility.DisplayDialog("No Terrain Selected!", "You currently have no terrain selected to perform the conversion on. Please select a terrain or activate the 'Convert on all terrains' option.", "OK");
+                            return;
+                        }
+                        else
+                        {
+                            ConvertTreesOnTerrain(m_targetTerrain);
+                        }
+                    }
+
+                    if (m_removeTreesAfterConversion)
+                    {
+                        if (m_targetAllTerrains)
+                        {
+                            if (GaiaUtils.HasDynamicLoadedTerrains())
+                            {
+                                GaiaUtils.CallFunctionOnDynamicLoadedTerrains(RemoveTreesFromTerrain, true);
+                            }
+                            foreach (Terrain t in Terrain.activeTerrains)
+                            {
+                                RemoveTreesFromTerrain(t);
+                            }
+                        }
+                        else
+                        {
+                             RemoveTreesFromTerrain(m_targetTerrain);
+                        }
+                    }
+
+
+                }
+            }
+        }
+
+        private void ConvertTreesOnTerrain(Terrain t)
+        {
+            Transform treeTransform = GaiaUtils.ConvertTreesToGameObjects(t, t.transform);
+        }
+
+        private void RemoveTreesFromTerrain(Terrain t)
+        {
+            t.terrainData.SetTreeInstances(new TreeInstance[0], false);
+            t.terrainData.treePrototypes = new TreePrototype[0];
             t.Flush();
         }
     }

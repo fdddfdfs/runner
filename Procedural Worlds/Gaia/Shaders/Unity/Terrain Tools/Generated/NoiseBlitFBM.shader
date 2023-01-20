@@ -56,7 +56,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
         //     #pragma vertex vert
         //     #pragma fragment frag
 
-        //     #include "../NoiseLib/Fbm/Billow.hlsl"
+        //     #include "../NoiseLib/FBM/Billow.hlsl"
 
         //     float4 frag( v2f i ) : SV_Target
         //     {
@@ -79,7 +79,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib/Fbm/Billow.hlsl"
+            #include "../NoiseLib/FBM/Billow.hlsl"
 
             float4 frag( v2f i ) : SV_Target
             {
@@ -107,7 +107,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib/Fbm/Billow.hlsl"
+            #include "../NoiseLib/FBM/Billow.hlsl"
 
             float _UVY;
 
@@ -135,7 +135,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
         //     #pragma vertex vert
         //     #pragma fragment frag
 
-        //     #include "../NoiseLib//Fbm/Perlin.hlsl"
+        //     #include "../NoiseLib//FBM/Perlin.hlsl"
 
         //     float4 frag( v2f i ) : SV_Target
         //     {
@@ -158,7 +158,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Perlin.hlsl"
+            #include "../NoiseLib//FBM/Perlin.hlsl"
 
             float4 frag( v2f i ) : SV_Target
             {
@@ -186,7 +186,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Perlin.hlsl"
+            #include "../NoiseLib//FBM/Perlin.hlsl"
 
             float _UVY;
 
@@ -214,7 +214,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
         //     #pragma vertex vert
         //     #pragma fragment frag
 
-        //     #include "../NoiseLib//Fbm/Ridge.hlsl"
+        //     #include "../NoiseLib//FBM/Ridge.hlsl"
 
         //     float4 frag( v2f i ) : SV_Target
         //     {
@@ -237,7 +237,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Ridge.hlsl"
+            #include "../NoiseLib//FBM/Ridge.hlsl"
 
             float4 frag( v2f i ) : SV_Target
             {
@@ -265,7 +265,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Ridge.hlsl"
+            #include "../NoiseLib//FBM/Ridge.hlsl"
 
             float _UVY;
 
@@ -293,7 +293,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
         //     #pragma vertex vert
         //     #pragma fragment frag
 
-        //     #include "../NoiseLib//Fbm/Value.hlsl"
+        //     #include "../NoiseLib//FBM/Value.hlsl"
 
         //     float4 frag( v2f i ) : SV_Target
         //     {
@@ -316,7 +316,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Value.hlsl"
+            #include "../NoiseLib//FBM/Value.hlsl"
 
             float4 frag( v2f i ) : SV_Target
             {
@@ -344,7 +344,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Value.hlsl"
+            #include "../NoiseLib//FBM/Value.hlsl"
 
             float _UVY;
 
@@ -372,7 +372,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
         //     #pragma vertex vert
         //     #pragma fragment frag
 
-        //     #include "../NoiseLib//Fbm/Voronoi.hlsl"
+        //     #include "../NoiseLib//FBM/Voronoi.hlsl"
 
         //     float4 frag( v2f i ) : SV_Target
         //     {
@@ -395,7 +395,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Voronoi.hlsl"
+            #include "../NoiseLib//FBM/Voronoi.hlsl"
 
             float4 frag( v2f i ) : SV_Target
             {
@@ -423,7 +423,7 @@ Shader "Hidden/TerrainTools/Noise/NoiseBlit/NoiseBlitFbm"
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "../NoiseLib//Fbm/Voronoi.hlsl"
+            #include "../NoiseLib//FBM/Voronoi.hlsl"
 
             float _UVY;
 

@@ -116,6 +116,8 @@ namespace Gaia
         /// </summary>
         void OnEnable()
         {
+            SceneView.duringSceneGui += DuringSceneGUI;
+
             if (m_gaiaSettings == null)
             {
                 m_gaiaSettings = Gaia.GaiaUtils.GetGaiaSettings();
@@ -227,7 +229,7 @@ namespace Gaia
         private void DrawAutoSpawnerListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
             bool changeBool = false;
-            StamperAutoSpawnerListEditor.DrawListElement(rect, m_stamper.m_autoSpawners[index], ref changeBool);
+            StamperAutoSpawnerListEditor.DrawListElement(rect, m_stamper.m_autoSpawners[index], m_stamper, ref changeBool);
         }
 
         private float OnElementHeightAutoSpawnerListEntry(int index)
@@ -457,6 +459,7 @@ namespace Gaia
         /// </summary>
         void OnDisable()
         {
+            SceneView.duringSceneGui -= DuringSceneGUI;
             m_stamper = (Stamper)target;
             if (m_stamper != null)
             {
@@ -1911,7 +1914,7 @@ namespace Gaia
             return new Vector2(u,v);
         }
 
-        private void OnSceneGUI()
+        private void DuringSceneGUI(SceneView obj)
         {
             if (m_stamper.m_openedFromTerrainGenerator)
             {

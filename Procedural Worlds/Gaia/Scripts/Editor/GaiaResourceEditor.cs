@@ -10,7 +10,6 @@ using System.Linq;
 using static Gaia.GaiaConstants;
 
 #if FLORA_PRESENT
-using static ProceduralWorlds.Flora.DetailObjectData;
 using static ProceduralWorlds.Flora.DetailObject;
 using ProceduralWorlds.Flora;
 #endif
@@ -140,8 +139,14 @@ namespace Gaia
             }
             else
             {
-                resourceProtoTexture.m_sizeX = editorUtils.FloatField("TextureProtoSizeX", resourceProtoTexture.m_sizeX, showHelp);
-                resourceProtoTexture.m_sizeY = editorUtils.FloatField("TextureProtoSizeY", resourceProtoTexture.m_sizeY, showHelp);
+
+                if (resourceProtoTexture.m_sizeX < 2 || resourceProtoTexture.m_sizeX % 1 != 0 || !Mathf.IsPowerOfTwo((int)resourceProtoTexture.m_sizeX) ||
+                    resourceProtoTexture.m_sizeY < 2 || resourceProtoTexture.m_sizeY % 1 != 0 || !Mathf.IsPowerOfTwo((int)resourceProtoTexture.m_sizeY))
+                {
+                    EditorGUILayout.HelpBox(editorUtils.GetTextValue("TextureNotPowerOfTwo"), MessageType.Warning);
+                }
+                resourceProtoTexture.m_sizeX = editorUtils.DelayedFloatField("TextureProtoSizeX", resourceProtoTexture.m_sizeX, showHelp);
+                resourceProtoTexture.m_sizeY = editorUtils.DelayedFloatField("TextureProtoSizeY", resourceProtoTexture.m_sizeY, showHelp);
                 resourceProtoTexture.m_offsetX = editorUtils.FloatField("TextureProtoOffsetX", resourceProtoTexture.m_offsetX, showHelp);
                 resourceProtoTexture.m_offsetY = editorUtils.FloatField("TextureProtoOffsetY", resourceProtoTexture.m_offsetY, showHelp);
                 resourceProtoTexture.m_normalScale = editorUtils.Slider("TextureProtoNormalScale", resourceProtoTexture.m_normalScale, 0f, 10f, showHelp);
@@ -175,7 +180,7 @@ namespace Gaia
                     EditorGUI.indentLevel--;
                 }
 #else
-                 resourceProtoTexture.m_channelRemapFoldedOut = editorUtils.Foldout(resourceProtoTexture.m_channelRemapFoldedOut, "TextureProtoChannelRemapFoldout", showHelp);
+                resourceProtoTexture.m_channelRemapFoldedOut = editorUtils.Foldout(resourceProtoTexture.m_channelRemapFoldedOut, "TextureProtoChannelRemapFoldout", showHelp);
                 if (resourceProtoTexture.m_channelRemapFoldedOut)
                 {
                     EditorGUI.indentLevel++;
@@ -272,21 +277,27 @@ namespace Gaia
                         instance.m_minInstances = editorUtils.IntField("GameObjectProtoInstanceMinInstances", instance.m_minInstances, showHelp);
                         instance.m_maxInstances = editorUtils.IntField("GameObjectProtoInstanceMaxInstances", instance.m_maxInstances, showHelp);
                         //Display failure rate as Probability and with %
-                        instance.m_failureRate = 1f-editorUtils.Slider("GameObjectProtoInstanceProbabilityRate", (1f-instance.m_failureRate) * 100, 0, 100f, showHelp) / 100f;
+                        instance.m_failureRate = 1f - editorUtils.Slider("GameObjectProtoInstanceProbabilityRate", (1f - instance.m_failureRate) * 100, 0, 100f, showHelp) / 100f;
                         EditorGUI.indentLevel--;
                         editorUtils.LabelField("GameObjectProtoHeadingOffset", EditorStyles.boldLabel);
                         EditorGUI.indentLevel++;
                         editorUtils.SliderRange("GameObjectProtoInstanceSpawnOffsetX", ref instance.m_minSpawnOffsetX, ref instance.m_maxSpawnOffsetX, -100, 100, showHelp);
+                        instance.m_yOffsetBasedOn = (YOffsetBasedOn)editorUtils.EnumPopup("GamObjectProtoInstanceYOffsetBasedOn", instance.m_yOffsetBasedOn, showHelp);
+                        if (instance.m_yOffsetBasedOn == YOffsetBasedOn.Custom)
+                        {
+                            instance.m_customOffset = editorUtils.FloatField("GamObjectProtoInstanceCustomOffsetBase", instance.m_customOffset, showHelp);
+                        }
                         editorUtils.SliderRange("GameObjectProtoInstanceSpawnOffsetY", ref instance.m_minSpawnOffsetY, ref instance.m_maxSpawnOffsetY, -100, 100, showHelp);
                         editorUtils.SliderRange("GameObjectProtoInstanceSpawnOffsetZ", ref instance.m_minSpawnOffsetZ, ref instance.m_maxSpawnOffsetZ, -100, 100, showHelp);
                         instance.m_yOffsetToSlope = editorUtils.Toggle("GameObjectProtoInstanceYOffsetToSlope", instance.m_yOffsetToSlope, showHelp);
                         EditorGUI.indentLevel--;
                         editorUtils.LabelField("GameObjectProtoHeadingRotation", EditorStyles.boldLabel);
                         EditorGUI.indentLevel++;
+                        instance.m_rotateToSlope = editorUtils.Toggle("GameObjectProtoInstanceRotateToSlope", instance.m_rotateToSlope, showHelp);
+                        instance.m_alignForwardVectorToSlope = editorUtils.Toggle("GameObjectProtoInstanceAlignForwardVectorToSlope", instance.m_alignForwardVectorToSlope, showHelp);
                         editorUtils.SliderRange("GameObjectProtoInstanceRotationOffsetX", ref instance.m_minRotationOffsetX, ref instance.m_maxRotationOffsetX, 0, 360, showHelp);
                         editorUtils.SliderRange("GameObjectProtoInstanceRotationOffsetY", ref instance.m_minRotationOffsetY, ref instance.m_maxRotationOffsetY, 0, 360, showHelp);
                         editorUtils.SliderRange("GameObjectProtoInstanceRotationOffsetZ", ref instance.m_minRotationOffsetZ, ref instance.m_maxRotationOffsetZ, 0, 360, showHelp);
-                        instance.m_rotateToSlope = editorUtils.Toggle("GameObjectProtoInstanceRotateToSlope", instance.m_rotateToSlope, showHelp);
                         EditorGUI.indentLevel--;
                         editorUtils.LabelField("GameObjectProtoHeadingScale", EditorStyles.boldLabel);
                         EditorGUI.indentLevel++;
@@ -337,19 +348,19 @@ namespace Gaia
                                 {
                                     instance.m_minScale = editorUtils.Slider("GameObjectProtoInstanceMinScale", instance.m_minScale, 0, 100, showHelp);
                                     instance.m_maxScale = editorUtils.Slider("GameObjectProtoInstanceMaxScale", instance.m_maxScale, 0, 100, showHelp);
-                                    instance.m_scaleRandomPercentage = editorUtils.Slider("GameObjectProtoInstanceRandomScalePercentage", instance.m_scaleRandomPercentage * 100f, 0, 100, showHelp) /100f;
+                                    instance.m_scaleRandomPercentage = editorUtils.Slider("GameObjectProtoInstanceRandomScalePercentage", instance.m_scaleRandomPercentage * 100f, 0, 100, showHelp) / 100f;
                                 }
                                 else
                                 {
                                     instance.m_minXYZScale = editorUtils.Vector3Field("GameObjectProtoInstanceMinScale", instance.m_minXYZScale, showHelp);
                                     instance.m_maxXYZScale = editorUtils.Vector3Field("GameObjectProtoInstanceMaxScale", instance.m_maxXYZScale, showHelp);
-                                    instance.m_XYZScaleRandomPercentage = editorUtils.Vector3Field("GameObjectProtoInstanceRandomScalePercentage", instance.m_XYZScaleRandomPercentage * 100f, showHelp) /100f;
+                                    instance.m_XYZScaleRandomPercentage = editorUtils.Vector3Field("GameObjectProtoInstanceRandomScalePercentage", instance.m_XYZScaleRandomPercentage * 100f, showHelp) / 100f;
                                 }
                                 break;
-                                
+
                         }
                         EditorGUI.indentLevel--;
-                        
+
                         instance.m_scaleByDistance = editorUtils.CurveField("GameObjectProtoInstanceScaleByDistance", instance.m_scaleByDistance);
 
                         //instance.m_localBounds = editorUtils.FloatField("GameObjectProtoInstanceLocalBounds", instance.m_localBounds);
@@ -481,13 +492,13 @@ namespace Gaia
                                 {
                                     instance.m_minScale = editorUtils.Slider("GameObjectProtoInstanceMinScale", instance.m_minScale, 0, 100, showHelp);
                                     instance.m_maxScale = editorUtils.Slider("GameObjectProtoInstanceMaxScale", instance.m_maxScale, 0, 100, showHelp);
-                                    instance.m_scaleRandomPercentage = editorUtils.Slider("GameObjectProtoInstanceRandomScalePercentage", instance.m_scaleRandomPercentage * 100f, 0, 100f, showHelp) /100f;
+                                    instance.m_scaleRandomPercentage = editorUtils.Slider("GameObjectProtoInstanceRandomScalePercentage", instance.m_scaleRandomPercentage * 100f, 0, 100f, showHelp) / 100f;
                                 }
                                 else
                                 {
                                     instance.m_minXYZScale = editorUtils.Vector3Field("GameObjectProtoInstanceMinScale", instance.m_minXYZScale, showHelp);
                                     instance.m_maxXYZScale = editorUtils.Vector3Field("GameObjectProtoInstanceMaxScale", instance.m_maxXYZScale, showHelp);
-                                    instance.m_XYZScaleRandomPercentage = editorUtils.Vector3Field("GameObjectProtoInstanceRandomScalePercentage", instance.m_XYZScaleRandomPercentage*100f, showHelp) /100f;
+                                    instance.m_XYZScaleRandomPercentage = editorUtils.Vector3Field("GameObjectProtoInstanceRandomScalePercentage", instance.m_XYZScaleRandomPercentage * 100f, showHelp) / 100f;
                                 }
                                 break;
                         }
@@ -541,14 +552,14 @@ namespace Gaia
                 probabilityCurveChanged = true;
             }
             resourceProtoStamp.m_inputHeightToStampHeightMapping = editorUtils.CurveField("InputHeightToStampHeightMapping", resourceProtoStamp.m_inputHeightToStampHeightMapping, showHelp);
-         
+
             if (selectedStampCategoryID >= 0)
             {
                 resourceProtoStamp.m_featureType = stampCategoryNames[selectedStampCategoryID];
             }
             //resourceProtoStamp.m_stampInfluence = (ImageMaskInfluence)editorUtils.EnumPopup("MaskInfluence", resourceProtoStamp.m_stampInfluence, showHelp);
             //resourceProtoStamp.m_borderMaskType = stampCategoryNames[selectedBorderMaskCategoryID];
-            resourceProtoStamp.m_invertChance =  editorUtils.Slider("FeatureTypeInvertChance", resourceProtoStamp.m_invertChance, 0, 100, showHelp);
+            resourceProtoStamp.m_invertChance = editorUtils.Slider("FeatureTypeInvertChance", resourceProtoStamp.m_invertChance, 0, 100, showHelp);
             editorUtils.MinMaxSliderWithFields("FeatureTypeWidth", ref resourceProtoStamp.m_minWidth, ref resourceProtoStamp.m_maxWidth, 0, 100, showHelp);
             //resourceProtoStamp.m_tieWidthToStrength = editorUtils.Toggle("FeatureTypeTieWidth", resourceProtoStamp.m_tieWidthToStrength, showHelp);
             if (resourceProtoStamp.m_operation != GaiaConstants.TerrainGeneratorFeatureOperation.MixHeight)
@@ -568,7 +579,7 @@ namespace Gaia
                 editorUtils.MinMaxSliderWithFields("FeatureTypeMixMidpoint", ref resourceProtoStamp.m_minMixMidPoint, ref resourceProtoStamp.m_maxMixMidPoint, 0, 1, showHelp);
             }
 
-                
+
             //}
             EditorGUI.indentLevel++;
         }
@@ -703,7 +714,7 @@ namespace Gaia
             editorUtils.LabelField("StampSpace", GUILayout.Width(EditorGUIUtility.labelWidth));
             terrainModifierStampPrototype.m_stamperInputImageMask.m_imageMaskSpace = (ImageMaskSpace)EditorGUILayout.EnumPopup(terrainModifierStampPrototype.m_stamperInputImageMask.m_imageMaskSpace, GUILayout.Width(EditorGUIUtility.labelWidth * 0.68f));
             GUILayout.Space(10);
-            editorUtils.LabelField("StampTiling", GUILayout.Width(55));
+            editorUtils.LabelField("StampTiling", GUILayout.Width(75));
             terrainModifierStampPrototype.m_stamperInputImageMask.m_tiling = EditorGUILayout.Toggle(terrainModifierStampPrototype.m_stamperInputImageMask.m_tiling);
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -730,8 +741,8 @@ namespace Gaia
             editorUtils.InlineHelp("StampScale", showHelp);
             terrainModifierStampPrototype.m_stamperInputImageMask.m_rotationDegrees = editorUtils.Slider("StampRotation", terrainModifierStampPrototype.m_stamperInputImageMask.m_rotationDegrees, -180f, 180f, showHelp);
 
-            if (terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.RaiseHeight || 
-                terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.LowerHeight || 
+            if (terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.RaiseHeight ||
+                terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.LowerHeight ||
                 terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.BlendHeight ||
                 terrainModifierStampPrototype.m_operation == GaiaConstants.FeatureOperation.SetHeight
                 )
@@ -755,12 +766,12 @@ namespace Gaia
                     if (terrainModifierStampPrototype.m_absoluteHeightValue < 0 && terrainModifierStampPrototype.m_operation != GaiaConstants.FeatureOperation.SubtractHeight)
                     {
                         terrainModifierStampPrototype.m_operation = GaiaConstants.FeatureOperation.SubtractHeight;
-                  //      m_absoluteHeightOPSwitch = true;
+                        //      m_absoluteHeightOPSwitch = true;
                     }
                     if (terrainModifierStampPrototype.m_absoluteHeightValue > 0 && terrainModifierStampPrototype.m_operation != GaiaConstants.FeatureOperation.AddHeight)
                     {
                         terrainModifierStampPrototype.m_operation = GaiaConstants.FeatureOperation.AddHeight;
-                    //    m_absoluteHeightOPSwitch = true;
+                        //    m_absoluteHeightOPSwitch = true;
                     }
                     //m_stamper.SetStampScaleByMeter(terrainModifierStampPrototype.m_absoluteHeightValue);
                 }
@@ -814,54 +825,54 @@ namespace Gaia
 
         }
 
-        private void DrawTrees(bool showHelp)
-        {
-            EditorGUI.indentLevel++;
-            for (int treeProtoIndex = 0; treeProtoIndex < m_resource.m_treePrototypes.Length; treeProtoIndex++)
-            {
-                int resourceIndex = GetResourceIndexFromPrototypeIndex(GaiaConstants.SpawnerResourceType.TerrainTree, treeProtoIndex);
+        //private void DrawTrees(bool showHelp)
+        //{
+        //    EditorGUI.indentLevel++;
+        //    for (int treeProtoIndex = 0; treeProtoIndex < m_resource.m_treePrototypes.Length; treeProtoIndex++)
+        //    {
+        //        int resourceIndex = GetResourceIndexFromPrototypeIndex(GaiaConstants.SpawnerResourceType.TerrainTree, treeProtoIndex);
 
-                m_resourceProtoFoldOutStatus[resourceIndex] = EditorGUILayout.Foldout(m_resourceProtoFoldOutStatus[resourceIndex], m_resource.m_treePrototypes[treeProtoIndex].m_name);
-                if (m_resourceProtoFoldOutStatus[resourceIndex])
-                {
-                    DrawTreePrototype(m_resource.m_treePrototypes[treeProtoIndex], m_editorUtils, showHelp);
+        //        m_resourceProtoFoldOutStatus[resourceIndex] = EditorGUILayout.Foldout(m_resourceProtoFoldOutStatus[resourceIndex], m_resource.m_treePrototypes[treeProtoIndex].m_name);
+        //        if (m_resourceProtoFoldOutStatus[resourceIndex])
+        //        {
+        //            DrawTreePrototype(m_resource.m_treePrototypes[treeProtoIndex], m_editorUtils, showHelp);
 
-                    if (m_editorUtils.Button("DeleteTree"))
-                    {
-                        m_resource.m_treePrototypes = GaiaUtils.RemoveArrayIndexAt<ResourceProtoTree>(m_resource.m_treePrototypes, treeProtoIndex);
-                        m_resourceProtoFoldOutStatus = GaiaUtils.RemoveArrayIndexAt<bool>(m_resourceProtoFoldOutStatus, resourceIndex);
-                        //Correct the index since we just removed one texture
-                        treeProtoIndex--;
-                    }
+        //            if (m_editorUtils.Button("DeleteTree"))
+        //            {
+        //                m_resource.m_treePrototypes = GaiaUtils.RemoveArrayIndexAt<ResourceProtoTree>(m_resource.m_treePrototypes, treeProtoIndex);
+        //                m_resourceProtoFoldOutStatus = GaiaUtils.RemoveArrayIndexAt<bool>(m_resourceProtoFoldOutStatus, resourceIndex);
+        //                //Correct the index since we just removed one texture
+        //                treeProtoIndex--;
+        //            }
 
-                    //Rect maskRect;
-                    //m_resourceIndexBeingDrawn = treeProtoIndex;
-                    //if (m_resourceProtoMasksExpanded[resourceIndex])
-                    //{
-                    //    m_maskListBeingDrawn = m_resource.m_treePrototypes[treeProtoIndex].m_imageMasks;
-                    //    maskRect = EditorGUILayout.GetControlRect(true, m_resourceProtoReorderableLists[resourceIndex].GetHeight());
-                    //    m_resourceProtoReorderableLists[resourceIndex].DoList(maskRect);
-                    //}
-                    //else
-                    //{
-                    //    int oldIndent = EditorGUI.indentLevel;
-                    //    EditorGUI.indentLevel = 1;
-                    //    m_resourceProtoMasksExpanded[resourceIndex] = EditorGUILayout.Foldout(m_resourceProtoMasksExpanded[resourceIndex], ImageMaskListEditor.PropertyCount("MaskSettings", m_resource.m_treePrototypes[treeProtoIndex].m_imageMasks, m_editorUtils), true);
-                    //    maskRect = GUILayoutUtility.GetLastRect();
-                    //    EditorGUI.indentLevel = oldIndent;
-                    //}
-                }
-            }
-            EditorGUI.indentLevel--;
-            if (m_editorUtils.Button("AddTree"))
-            {
-                m_resource.m_treePrototypes = GaiaUtils.AddElementToArray<ResourceProtoTree>(m_resource.m_treePrototypes, new ResourceProtoTree());
-                m_resource.m_treePrototypes[m_resource.m_treePrototypes.Length - 1].m_name = "New Tree Prototype";
-                m_resourceProtoFoldOutStatus = GaiaUtils.AddElementToArray<bool>(m_resourceProtoFoldOutStatus, false);
-            }
-        }
+        //            //Rect maskRect;
+        //            //m_resourceIndexBeingDrawn = treeProtoIndex;
+        //            //if (m_resourceProtoMasksExpanded[resourceIndex])
+        //            //{
+        //            //    m_maskListBeingDrawn = m_resource.m_treePrototypes[treeProtoIndex].m_imageMasks;
+        //            //    maskRect = EditorGUILayout.GetControlRect(true, m_resourceProtoReorderableLists[resourceIndex].GetHeight());
+        //            //    m_resourceProtoReorderableLists[resourceIndex].DoList(maskRect);
+        //            //}
+        //            //else
+        //            //{
+        //            //    int oldIndent = EditorGUI.indentLevel;
+        //            //    EditorGUI.indentLevel = 1;
+        //            //    m_resourceProtoMasksExpanded[resourceIndex] = EditorGUILayout.Foldout(m_resourceProtoMasksExpanded[resourceIndex], ImageMaskListEditor.PropertyCount("MaskSettings", m_resource.m_treePrototypes[treeProtoIndex].m_imageMasks, m_editorUtils), true);
+        //            //    maskRect = GUILayoutUtility.GetLastRect();
+        //            //    EditorGUI.indentLevel = oldIndent;
+        //            //}
+        //        }
+        //    }
+        //    EditorGUI.indentLevel--;
+        //    if (m_editorUtils.Button("AddTree"))
+        //    {
+        //        m_resource.m_treePrototypes = GaiaUtils.AddElementToArray<ResourceProtoTree>(m_resource.m_treePrototypes, new ResourceProtoTree());
+        //        m_resource.m_treePrototypes[m_resource.m_treePrototypes.Length - 1].m_name = "New Tree Prototype";
+        //        m_resourceProtoFoldOutStatus = GaiaUtils.AddElementToArray<bool>(m_resourceProtoFoldOutStatus, false);
+        //    }
+        //}
 
-        public static void DrawTreePrototype(ResourceProtoTree resourceProtoTree, EditorUtils editorUtils, bool showHelp)
+        public static void DrawTreePrototype(ResourceProtoTree resourceProtoTree, Spawner spawner, EditorUtils editorUtils, bool showHelp)
         {
             editorUtils.LabelField("TreeProtoHeadingPrefab", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
@@ -872,9 +883,25 @@ namespace Gaia
             resourceProtoTree.m_healthyColour = editorUtils.ColorField("TreeProtoHealthyColour", resourceProtoTree.m_healthyColour, showHelp);
             resourceProtoTree.m_dryColour = editorUtils.ColorField("TreeProtoDryColour", resourceProtoTree.m_dryColour, showHelp);
             EditorGUI.indentLevel--;
+            editorUtils.LabelField("TreeProtoHeadingPosition", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            resourceProtoTree.m_snapToTerrain = editorUtils.Toggle("TreeProtoSnapToTerrain", resourceProtoTree.m_snapToTerrain, showHelp);
+            bool currentGUIState = GUI.enabled;
+            if (resourceProtoTree.m_snapToTerrain)
+            {
+                GUI.enabled = false;
+            }
+            resourceProtoTree.m_yOffsetBasedOn = (YOffsetBasedOn)editorUtils.EnumPopup("TreeProtoyOffsetBasedOn", resourceProtoTree.m_yOffsetBasedOn, showHelp);
+            if (resourceProtoTree.m_yOffsetBasedOn == YOffsetBasedOn.Custom)
+            {
+                resourceProtoTree.m_customOffset = editorUtils.FloatField("TreePrototypeCustomOffsetBase", resourceProtoTree.m_customOffset, showHelp);
+            }
+            editorUtils.MinMaxSliderWithFields("TreeProtoMinMaxYOffset", ref resourceProtoTree.m_minYOffset, ref resourceProtoTree.m_maxYOffset, -50f, 50f, showHelp);
+            GUI.enabled = currentGUIState;
+            EditorGUI.indentLevel--;
             editorUtils.LabelField("TreeProtoHeadingScale", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            resourceProtoTree.m_spawnScale = (SpawnScale)editorUtils.EnumPopup("ProtoSpawnScale", resourceProtoTree.m_spawnScale,showHelp);
+            resourceProtoTree.m_spawnScale = (SpawnScale)editorUtils.EnumPopup("ProtoSpawnScale", resourceProtoTree.m_spawnScale, showHelp);
             EditorGUI.indentLevel++;
             switch (resourceProtoTree.m_spawnScale)
             {
@@ -892,22 +919,148 @@ namespace Gaia
                     break;
                 case SpawnScale.FitnessRandomized:
                     editorUtils.MinMaxSliderWithFields("TreeProtoMinMaxWidth", ref resourceProtoTree.m_minWidth, ref resourceProtoTree.m_maxWidth, 0f, 10f, showHelp);
-                    resourceProtoTree.m_widthRandomPercentage = editorUtils.Slider("TreeProtoWidthRandomPercentage", resourceProtoTree.m_widthRandomPercentage *100f, 0f, 100f) /100f;
+                    resourceProtoTree.m_widthRandomPercentage = editorUtils.Slider("TreeProtoWidthRandomPercentage", resourceProtoTree.m_widthRandomPercentage * 100f, 0f, 100f) / 100f;
                     editorUtils.MinMaxSliderWithFields("TreeProtoMinMaxHeight", ref resourceProtoTree.m_minHeight, ref resourceProtoTree.m_maxHeight, 0f, 10f, showHelp);
-                    resourceProtoTree.m_heightRandomPercentage = editorUtils.Slider("TreeProtoHeightRandomPercentage", resourceProtoTree.m_heightRandomPercentage *100f, 0f, 100f) /100f;
+                    resourceProtoTree.m_heightRandomPercentage = editorUtils.Slider("TreeProtoHeightRandomPercentage", resourceProtoTree.m_heightRandomPercentage * 100f, 0f, 100f) / 100f;
                     break;
             }
             EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
-             //resourceProtoTree.m_dna.m_boundsRadius = editorUtils.FloatField("GameObjectProtoDNABoundsRadius", resourceProtoTree.m_dna.m_boundsRadius, showHelp);
 
-            //resourceProtoTree.m_dnaFoldedOut = editorUtils.Foldout("GameObjectProtoDNA", resourceProtoTree.m_dnaFoldedOut, showHelp);
-            //if (resourceProtoTree.m_dnaFoldedOut)
-            //{
-            //    DrawDNA(resourceProtoTree.m_dna, editorUtils, showHelp);
-            //}
+
+#pragma warning disable 162
+#if FLORA_PRESENT
+
+
+            if (FloraGlobalData.TreesEnabled)
+            {
+                editorUtils.LabelField("DetailProtoHeadingPWGrass", EditorStyles.boldLabel);
+                EditorGUI.indentLevel++;
+                bool oldGrassEnable = resourceProtoTree.m_useFlora;
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(45);
+                editorUtils.Label("TreeEnableFlora", GUILayout.Width(EditorGUIUtility.labelWidth - 90));
+                resourceProtoTree.m_useFlora = EditorGUILayout.Toggle(resourceProtoTree.m_useFlora);
+
+                GUILayout.FlexibleSpace();
+                bool disabledByButton = false;
+
+                if (GUILayout.Button(editorUtils.GetContent("TreeButtonEnableFloraAll")))
+                {
+                    if (EditorUtility.DisplayDialog("Enable All Flora Spawn Rules?", "Do you want to enable the Flora setting for all tree spawn rules in this spawner?", "Yes, Enable All", "Cancel"))
+                    {
+                        bool autoGenerate = false;
+                        bool autoGenerateQuestionAsked = false;
+
+                        foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules.FindAll(x => x.m_resourceType == SpawnerResourceType.TerrainTree))
+                        {
+                            if (spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_floraLODs != null && spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_floraLODs.Count > 0)
+                            {
+                                spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_useFlora = true;
+                            }
+                            else
+                            {
+                                if (!autoGenerateQuestionAsked)
+                                {
+                                    autoGenerate = EditorUtility.DisplayDialog("Auto-Generate Flora settings?", "It looks like some of the spawn rules do not use Flora settings yet. Do you want to auto-generate Flora settings based on the existing resource in this case?", "Yes, Create settings", "No, Skip those rules");
+                                    autoGenerateQuestionAsked = true;
+                                }
+                                if (autoGenerate)
+                                {
+                                    ResourceProtoTree treeProtoSR = spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx];
+                                    treeProtoSR.m_useFlora = true;
+                                    FloraUtils.CreateConfigFromPrefab(treeProtoSR.m_desktopPrefab, treeProtoSR.m_floraLODs, treeProtoSR.m_name, SpawnerResourceType.TerrainTree);
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+                if (GUILayout.Button(editorUtils.GetContent("TreeButtonDisableFloraAll")))
+                {
+                    if (EditorUtility.DisplayDialog("Disable All Flora Spawn Rules?", "Do you want to disable the Flora setting for all tree spawn rules in this spawner?", "Yes, Disable All", "Cancel"))
+                    {
+                        disabledByButton = true;
+
+                        bool completeRemoval = false;
+                        if (EditorUtility.DisplayDialog("Remove from Terrain as well?", "Do you also want to remove any already spawned items from the Flora configuration on the terrain? These trees will then not be rendered by Flora anymore during runtime.", "Remove from Terrain", "Keep On Terrain"))
+                        {
+                            completeRemoval = true;
+                        }
+
+                        foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules.FindAll(x => x.m_resourceType == SpawnerResourceType.TerrainTree))
+                        {
+                            if (spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_floraLODs != null)
+                            {
+                                if (completeRemoval)
+                                {
+                                    FloraUtils.RemoveSettingsSOFromAllTerrains(spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_floraLODs);
+                                }
+                                spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx].m_useFlora = false;
+                            }
+
+                        }
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+                editorUtils.InlineHelp("DetailEnablePWGrass", showHelp);
+
+
+                if (oldGrassEnable != resourceProtoTree.m_useFlora && !resourceProtoTree.m_useFlora && !disabledByButton)
+                {
+                    if (EditorUtility.DisplayDialog("Remove this detail from the terrains?", "Do you want to remove this detail configuration from the terrains? This will essentially switch off this PW detail item on all terrains from being displayed in runtime.", "Yes, remove it", "No, keep it on the terrains"))
+                    {
+                        FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoTree.m_floraLODs);
+                    }
+                }
+#endif
+                if (resourceProtoTree.m_useFlora)
+                {
+#if !FLORA_PRESENT
+                EditorGUILayout.HelpBox("The advanced Flora Tree settings are only available in Gaia Pro.", MessageType.Warning);
+#else
+                    EditorGUILayout.BeginHorizontal();
+                    {
+                        GUILayout.FlexibleSpace();
+                        if (GUILayout.Button(editorUtils.GetContent("FloraCreateFromResource")))
+                        {
+                            if (EditorUtility.DisplayDialog("Create the flora config from the tree prefab?", "Do you want to remove the existing flora configuration and instead automatically create a new config from the prefab?", "Yes, create from prefab", "No, keep it as it is"))
+                            {
+                                FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoTree.m_floraLODs);
+                                FloraUtils.CreateConfigFromPrefab(resourceProtoTree.m_desktopPrefab, resourceProtoTree.m_floraLODs, resourceProtoTree.m_name, SpawnerResourceType.TerrainTree);
+                            }
+                        }
+                        if (GUILayout.Button(editorUtils.GetContent("FloraResetConfig")))
+                        {
+                            if (EditorUtility.DisplayDialog("Reset the flora configuration?", "Do you want to remove the existing flora configuration and reset it to an empty configuration?", "Yes, reset the config", "No, keep it as it is"))
+                            {
+                                FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoTree.m_floraLODs);
+                                resourceProtoTree.m_floraLODs.Clear();
+                                FloraUtils.AddNewDetailerSettingsObject(resourceProtoTree.m_floraLODs, resourceProtoTree.m_name, SpawnerResourceType.TerrainTree);
+                            }
+                        }
+
+                    }
+                    EditorGUILayout.EndHorizontal();
+
+                    if (resourceProtoTree.m_floraLODs == null || resourceProtoTree.m_floraLODs.Count <= 0)
+                    {
+                        FloraUtils.CreateConfigFromPrefab(resourceProtoTree.m_desktopPrefab, resourceProtoTree.m_floraLODs, resourceProtoTree.m_name, SpawnerResourceType.TerrainTree);
+                    }
+
+
+                    FloraEditorUtils.DisplayFloraLODs(resourceProtoTree.m_floraLODs, resourceProtoTree.m_name, SpawnerResourceType.TerrainTree, editorUtils, showHelp);
+#endif
+                }
+                EditorGUI.indentLevel--;
+#if FLORA_PRESENT
+            }
+#endif
+#pragma warning restore 162
+
         }
-
         //private void DrawTerrainDetails(bool showHelp)
         //{
         //    EditorGUI.indentLevel++;
@@ -968,16 +1121,30 @@ namespace Gaia
             //        resourceProtoDetail.m_PWGrassSettingsObject.name = resourceProtoDetail.m_name;
             //    }
             //}
-            resourceProtoDetail.m_renderMode = (DetailRenderMode)editorUtils.EnumPopup("DetailProtoRenderMode", resourceProtoDetail.m_renderMode, showHelp);
+#if UNITY_2021_2_OR_NEWER
+            resourceProtoDetail.m_useInstancing = editorUtils.Toggle("DetailProtoUseInstancing", resourceProtoDetail.m_useInstancing, showHelp);
 
-            if (resourceProtoDetail.m_renderMode == DetailRenderMode.VertexLit || resourceProtoDetail.m_renderMode == DetailRenderMode.Grass)
+            if (!resourceProtoDetail.m_useInstancing)
+            {
+#endif
+                resourceProtoDetail.m_renderMode = (DetailRenderMode)editorUtils.EnumPopup("DetailProtoRenderMode", resourceProtoDetail.m_renderMode, showHelp);
+
+                if (resourceProtoDetail.m_renderMode == DetailRenderMode.VertexLit || resourceProtoDetail.m_renderMode == DetailRenderMode.Grass)
+                {
+                    resourceProtoDetail.m_detailProtoype = (GameObject)editorUtils.ObjectField("DetailProtoModel", resourceProtoDetail.m_detailProtoype, typeof(GameObject), false, showHelp);
+                }
+                if (resourceProtoDetail.m_renderMode != DetailRenderMode.VertexLit)
+                {
+                    resourceProtoDetail.m_detailTexture = (Texture2D)editorUtils.ObjectField("DetailProtoTexture", resourceProtoDetail.m_detailTexture, typeof(Texture2D), false, showHelp, GUILayout.MaxHeight(16));
+                }
+#if UNITY_2021_2_OR_NEWER
+            }
+            else
             {
                 resourceProtoDetail.m_detailProtoype = (GameObject)editorUtils.ObjectField("DetailProtoModel", resourceProtoDetail.m_detailProtoype, typeof(GameObject), false, showHelp);
             }
-            if (resourceProtoDetail.m_renderMode != DetailRenderMode.VertexLit)
-            {
-                resourceProtoDetail.m_detailTexture = (Texture2D)editorUtils.ObjectField("DetailProtoTexture", resourceProtoDetail.m_detailTexture, typeof(Texture2D), false, showHelp, GUILayout.MaxHeight(16));
-            }
+#endif
+
             editorUtils.LabelField("ProtoSpawnScale", "ProtoSpawnScaleRandom", showHelp);
             editorUtils.MinMaxSliderWithFields("DetailProtoMinMaxWidth", ref resourceProtoDetail.m_minWidth, ref resourceProtoDetail.m_maxWidth, 0, 20, showHelp);
             editorUtils.MinMaxSliderWithFields("DetailProtoMinMaxHeight", ref resourceProtoDetail.m_minHeight, ref resourceProtoDetail.m_maxHeight, 0, 20, showHelp);
@@ -986,15 +1153,21 @@ namespace Gaia
             resourceProtoDetail.m_healthyColour = editorUtils.ColorField("DetailProtoHealthyColour", resourceProtoDetail.m_healthyColour, showHelp);
             resourceProtoDetail.m_dryColour = editorUtils.ColorField("DetailProtoDryColour", resourceProtoDetail.m_dryColour, showHelp);
             EditorGUI.indentLevel--;
-            editorUtils.LabelField("DetailProtoHeadingPWGrass", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            editorUtils.LabelField("DetailProtoHeadingPWGrass", EditorStyles.boldLabel, GUILayout.Width(150));
+            GUILayout.Space(-40);
+            EditorGUILayout.LabelField($"[{resourceProtoDetail.m_floraLODs.Count}]", GUILayout.Width(50));
+            GUILayout.FlexibleSpace();
+
+            EditorGUILayout.EndHorizontal();
             EditorGUI.indentLevel++;
 #if FLORA_PRESENT
-            bool oldGrassEnable = resourceProtoDetail.m_usePWGrass;
+            bool oldGrassEnable = resourceProtoDetail.m_useFlora;
 #endif
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(45);
             editorUtils.Label("DetailEnablePWGrass", GUILayout.Width(EditorGUIUtility.labelWidth - 90));
-            resourceProtoDetail.m_usePWGrass = EditorGUILayout.Toggle(resourceProtoDetail.m_usePWGrass);
+            resourceProtoDetail.m_useFlora = EditorGUILayout.Toggle(resourceProtoDetail.m_useFlora);
 
             GUILayout.FlexibleSpace();
 #if FLORA_PRESENT
@@ -1002,13 +1175,31 @@ namespace Gaia
 
             if (GUILayout.Button(editorUtils.GetContent("DetailsButtonEnablePWGrassAll")))
             {
-                if (EditorUtility.DisplayDialog("Enable All Flora Spawn Rules?", "Do you want to enable the Flora setting for all spawn rules in this spawner with an existing Flora configuration?", "Yes, Enable All", "Cancel"))
+                if (EditorUtility.DisplayDialog("Enable All Flora Spawn Rules?", "Do you want to enable the Flora setting for all terrain detail spawn rules in this spawner?", "Yes, Enable All", "Cancel"))
                 {
+                    bool autoGenerate = false;
+                    bool autoGenerateQuestionAsked = false;
+
                     foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules.FindAll(x => x.m_resourceType == SpawnerResourceType.TerrainDetail))
                     {
-                        if (spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].DetailerSettingsObject != null)
+                        if (spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_floraLODs != null && spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_floraLODs.Count > 0)
                         {
-                            spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_usePWGrass = true;
+                            spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_useFlora = true;
+                        }
+                        else
+                        {
+                            if (!autoGenerateQuestionAsked)
+                            {
+                                autoGenerate = EditorUtility.DisplayDialog("Auto-Generate Flora settings?", "It looks like some of the spawn rules do not use Flora settings yet. Do you want to auto-generate Flora settings based on the existing resource in this case?", "Yes, Create settings", "No, Skip those rules");
+                                autoGenerateQuestionAsked = true;
+                            }
+                            if (autoGenerate)
+                            {
+                                ResourceProtoDetail detailProtoSR = spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx];
+                                detailProtoSR.m_useFlora = true;
+                                CreateFloraTerrainDetailSettings(detailProtoSR);
+                            }
+
                         }
 
                     }
@@ -1028,13 +1219,13 @@ namespace Gaia
 
                     foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules.FindAll(x => x.m_resourceType == SpawnerResourceType.TerrainDetail))
                     {
-                        if (spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].DetailerSettingsObject != null)
+                        if (spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_floraLODs != null && spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_floraLODs.Count > 0)
                         {
                             if (completeRemoval)
                             {
-                                spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].RemoveSettingsSOFromAllTerrains();
+                                FloraUtils.RemoveSettingsSOFromAllTerrains(spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_floraLODs);
                             }
-                            spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_usePWGrass = false;
+                            spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx].m_useFlora = false;
                         }
 
                     }
@@ -1045,17 +1236,17 @@ namespace Gaia
             editorUtils.InlineHelp("DetailEnablePWGrass", showHelp);
 
 #if FLORA_PRESENT
-            if (oldGrassEnable != resourceProtoDetail.m_usePWGrass && !resourceProtoDetail.m_usePWGrass && !disabledByButton)
+            if (oldGrassEnable != resourceProtoDetail.m_useFlora && !resourceProtoDetail.m_useFlora && !disabledByButton)
             {
                 if (EditorUtility.DisplayDialog("Remove this detail from the terrains?", "Do you want to remove this detail configuration from the terrains? This will essentially switch off this PW detail item on all terrains from being displayed in runtime.", "Yes, remove it", "No, keep it on the terrains"))
                 {
-                    resourceProtoDetail.RemoveSettingsSOFromAllTerrains();
+                    FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoDetail.m_floraLODs);
                 }
             }
 #endif
             bool currentGUIState = GUI.enabled;
 
-            if (resourceProtoDetail.m_usePWGrass)
+            if (resourceProtoDetail.m_useFlora)
             {
 #if !FLORA_PRESENT
                 EditorGUILayout.HelpBox("The advanced PW Grass settings are only available in Gaia Pro.", MessageType.Warning);
@@ -1128,78 +1319,64 @@ namespace Gaia
                 editorUtils.FloatField("DetailPWGrassDebugCellSize", 0.2f, showHelp);
                 GUI.enabled = currentGUIState;
 #else
-                if (resourceProtoDetail.DetailerSettingsObject == null)
+                if (resourceProtoDetail.m_floraLODs == null || resourceProtoDetail.m_floraLODs.Count <= 0)
                 {
-                    resourceProtoDetail.CreateNewDetailerSettingsObject();
-                }
-
-                DetailScriptableObject oldObject = resourceProtoDetail.DetailerSettingsObject;
-
-                if (Application.isPlaying)
-                {
-                    GUI.enabled = false;
+                    CreateFloraTerrainDetailSettings(resourceProtoDetail);
                 }
 
                 EditorGUILayout.BeginHorizontal();
-
-                EditorGUILayout.LabelField(editorUtils.GetContent("DetailPWGrassSettingsObject"), GUILayout.Width(EditorGUIUtility.labelWidth - EditorGUI.indentLevel *15));
-                resourceProtoDetail.DetailerSettingsObject = (DetailScriptableObject)EditorGUILayout.ObjectField(resourceProtoDetail.DetailerSettingsObject, typeof(DetailScriptableObject), false);
-
-                if(resourceProtoDetail.DetailerSettingsObject != null && oldObject !=null && oldObject != resourceProtoDetail.DetailerSettingsObject)
                 {
-                    if (EditorUtility.DisplayDialog("Work with the original settings object?", "It looks like you assigned a Detail Settings object to this spawner. The spawner can directly work with the file you just assigned. If you then change settings like color etc. those will be changed in the original file as well. \r\n Alternatively, the spawner can copy the settings over into the already existing settings object that was used before. In this case you would not overwrite the original file when changing settings.\r\n\r\n Do you want to copy the settings over, or rather work directly with the original file?", "Copy Settings", "Work With Original"))
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button(editorUtils.GetContent("FloraCreateFromResource")))
                     {
-                        resourceProtoDetail.CopySettingsAndApply(oldObject);
-                    }
-                    else
-                    {
-                        if (EditorUtility.DisplayDialog("Update terrains with new settings file?", "You have just swapped to a new settings file to work with. Do you want to swap out the old detail setting on all terrains in your scene as well? This will update the details that were spawned while using the old file to the new settings.", "Yes, update terrains", "No, keep terrains"))
+                        if (EditorUtility.DisplayDialog("Create the flora config from the terrain detail resource?", "Do you want to remove the existing flora configuration and instead automatically create a new config from the terrain detail resource?", "Yes, create", "No, keep it as it is"))
                         {
-                            resourceProtoDetail.UpdateAllTerrainsWithNewSettingsSO(oldObject);
+                            FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoDetail.m_floraLODs);
+                            CreateFloraTerrainDetailSettings(resourceProtoDetail);
+
                         }
                     }
-                }
-
-                if (GUILayout.Button(editorUtils.GetContent("DetailPWGrassSettingsNewButton"), GUILayout.Width(50)))
-                {
-                    if (EditorUtility.DisplayDialog("Create new settings file?", "Do you want to create a new settings file with the default settings?", "Create new file", "Cancel"))
+                    if (GUILayout.Button(editorUtils.GetContent("FloraResetConfig")))
                     {
-                        resourceProtoDetail.CreateNewDetailerSettingsObject();
+                        if (EditorUtility.DisplayDialog("Reset the flora configuration?", "Do you want to remove the existing flora configuration and reset it to an empty configuration?", "Yes, reset the config", "No, keep it as it is"))
+                        {
+                            FloraUtils.RemoveSettingsSOFromAllTerrains(resourceProtoDetail.m_floraLODs);
+                            resourceProtoDetail.m_floraLODs.Clear();
+                            FloraUtils.AddNewDetailerSettingsObject(resourceProtoDetail.m_floraLODs, resourceProtoDetail.m_name, SpawnerResourceType.TerrainDetail);
+                        }
                     }
-                }
 
-                if (resourceProtoDetail.DetailerSettingsObject == null )
-                {
-                    resourceProtoDetail.CreateNewDetailerSettingsObject();
                 }
                 EditorGUILayout.EndHorizontal();
-
-                GUI.enabled = currentGUIState;
-
-                editorUtils.InlineHelp("DetailPWGrassSettingsObject", showHelp);
-
-                EditorGUI.BeginChangeCheck();
-
-                FloraEditorUtility.HelpEnabled = showHelp;
-                FloraEditorUtility.DetailerEditor(resourceProtoDetail.DetailerSettingsObject.m_data);
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    //During runtime we need to inform the detail object instances that the settings object has been updated
-                    if (Application.isPlaying)
-                    {
-                        foreach (DetailObject detailObject in Resources.FindObjectsOfTypeAll<DetailObject>())
-                        {
-                            if (detailObject.m_data.DetailScriptableObject == resourceProtoDetail.DetailerSettingsObject.m_data)
-                            {
-                                detailObject.RefreshAll();
-                            }
-                        }
-                    }
-                 }
+                resourceProtoDetail.m_useFlora = FloraEditorUtils.DisplayFloraLODs(resourceProtoDetail.m_floraLODs, resourceProtoDetail.m_name, SpawnerResourceType.TerrainDetail, editorUtils, showHelp);
 #endif
             }
             EditorGUI.indentLevel--;
+        }
+
+        public static void CreateFloraTerrainDetailSettings(ResourceProtoDetail resourceProtoDetail)
+        {
+#if FLORA_PRESENT
+            if (resourceProtoDetail.m_detailProtoype != null)
+            {
+                FloraUtils.CreateConfigFromPrefab(resourceProtoDetail.m_detailProtoype, resourceProtoDetail.m_floraLODs, resourceProtoDetail.m_name, SpawnerResourceType.TerrainDetail);
+            }
+            else
+            {
+                DetailPrototype newTerrainDetail = new DetailPrototype();
+                newTerrainDetail.renderMode = resourceProtoDetail.m_renderMode;
+                newTerrainDetail.prototypeTexture = resourceProtoDetail.m_detailTexture;
+                newTerrainDetail.prototype = resourceProtoDetail.m_detailProtoype;
+                newTerrainDetail.dryColor = resourceProtoDetail.m_dryColour;
+                newTerrainDetail.healthyColor = resourceProtoDetail.m_healthyColour;
+                newTerrainDetail.maxHeight = resourceProtoDetail.m_maxHeight;
+                newTerrainDetail.maxWidth = resourceProtoDetail.m_maxWidth;
+                newTerrainDetail.minHeight = resourceProtoDetail.m_minHeight;
+                newTerrainDetail.minWidth = resourceProtoDetail.m_minWidth;
+                newTerrainDetail.noiseSpread = resourceProtoDetail.m_noiseSpread;
+                FloraUtils.CreateConfigFromTexture(newTerrainDetail, resourceProtoDetail.m_floraLODs, resourceProtoDetail.m_name, SpawnerResourceType.TerrainDetail);
+            }
+#endif
         }
 
         public void DropAreaGUI()

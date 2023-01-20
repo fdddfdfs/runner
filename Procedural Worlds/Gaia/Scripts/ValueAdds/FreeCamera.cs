@@ -55,7 +55,7 @@ namespace Gaia
             if (lockAndHideCursor)
             {
                 Cursor.lockState = CursorLockMode.Locked;
-                //Cursor.visible = false;
+                Cursor.visible = false;
             }
             m_inputCaptured = true;
 
@@ -68,7 +68,7 @@ namespace Gaia
             if (lockAndHideCursor)
             {
                 Cursor.lockState = CursorLockMode.None;
-                //Cursor.visible = true;
+                Cursor.visible = true;
             }
             m_inputCaptured = false;
         }

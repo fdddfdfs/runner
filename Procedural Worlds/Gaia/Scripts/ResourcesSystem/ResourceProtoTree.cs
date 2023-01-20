@@ -5,6 +5,11 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+#if FLORA_PRESENT
+using ProceduralWorlds.Flora;
+using static ProceduralWorlds.Flora.CoreCommonFloraData;
+using System.Linq;
+#endif
 
 namespace Gaia
 {
@@ -30,6 +35,16 @@ namespace Gaia
         public Color m_healthyColour = Color.white;
         [Tooltip("The colour of dry trees - only used by unity tree creator trees, ignored by SpeedTree trees.")]
         public Color m_dryColour = Color.white;
+        [Tooltip("Whether the tree should snap to the terrain height when being spawned - if not, it is possible to set a custom Y Offset")]
+        public bool m_snapToTerrain = true;
+        [Tooltip("The custom height used when the Y-Offset is based on a custom value.")]
+        public float m_customOffset = 0.0f;
+        [Tooltip("The min y-offset used for this tree")]
+        public float m_minYOffset = -2.0f;
+        [Tooltip("The min y-offset used for this tree")]
+        public float m_maxYOffset = 2.0f;
+        [Tooltip("The basis for the y-offset - the final y-position for this tree will be this basis plus the applied offset.")]
+        public YOffsetBasedOn m_yOffsetBasedOn = YOffsetBasedOn.TerrainHeight;
         [Tooltip("The spawn scale used for this tree")]
         public SpawnScale m_spawnScale = SpawnScale.Fitness;
         [Tooltip("Minimum width in world units.")]
@@ -64,6 +79,78 @@ namespace Gaia
         //public ImageMask[] m_imageMasks = new ImageMask[0];
         public bool m_instancesFoldOut;
         public bool m_dnaFoldedOut;
+        public bool m_useFlora;
+
+        public List<FloraLOD> m_floraLODs = new List<FloraLOD>();
+
+
+        //#if FLORA_PRESENT
+        //        public DetailScriptableObject DetailerSettingsObject
+        //        {
+        //            get
+        //            {
+        //                if (m_pwDetailerSettingsObject == null)
+        //                {
+        //                    if (!string.IsNullOrEmpty(m_detailerSettingsObjectAssetGUID))
+        //                    {
+        //#if UNITY_EDITOR
+        //                        string assetPath = AssetDatabase.GUIDToAssetPath(m_detailerSettingsObjectAssetGUID);
+
+        //                        //This can be multiple objects since the scriptable object can be embedded in a spawner settings file
+        //                        UnityEngine.Object[] allObjects = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+        //                        //Looking for the object via the instance ID
+        //                        foreach (UnityEngine.Object obj in allObjects)
+        //                        {
+        //                            if (obj.GetType() == typeof(DetailScriptableObject) && obj.GetInstanceID() == m_detailerSettingsObjectInstanceID)
+        //                            {
+        //                                //found it, cast it into the correct type to store it
+        //                                m_pwDetailerSettingsObject = (DetailScriptableObject)obj;
+        //                                //is this a file that was embedded within other assets at this path?
+        //                                if (allObjects.Count() > 1)
+        //                                {
+        //                                    //we need to create a copy and save it to not work with the embedded file
+        //                                    m_pwDetailerSettingsObject = ScriptableObject.Instantiate(m_pwDetailerSettingsObject);
+        //                                    FloraUtils.SaveSettingsFile(DetailerSettingsObject, ref m_detailerSettingsObjectAssetGUID, ref m_detailerSettingsObjectInstanceID, false, m_name, GaiaDirectories.GetTerrainDetailsPath());
+        //                                }
+        //                            }
+        //                        }
+        //#endif
+        //                    }
+        //                }
+        //                return m_pwDetailerSettingsObject;
+        //            }
+        //            set
+        //            {
+        //                if (value != m_pwDetailerSettingsObject)
+        //                {
+        //                    m_pwDetailerSettingsObject = value;
+        //                    if (value != null)
+        //                    {
+        //#if UNITY_EDITOR
+        //                        m_detailerSettingsObjectAssetGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(value));
+        //                        m_detailerSettingsObjectInstanceID = value.GetInstanceID();
+        //#endif
+        //                    }
+        //                    else
+        //                    {
+        //                        m_detailerSettingsObjectAssetGUID = "";
+        //                        m_detailerSettingsObjectInstanceID = -1;
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //#endif
+
+        //This needs to be serialized still to survive recompiles, etc.!
+#if FLORA_PRESENT
+        [SerializeField]
+        private DetailScriptableObject m_pwDetailerSettingsObject;
+#endif
+
+        public string m_detailerSettingsObjectAssetGUID;
+        public int m_detailerSettingsObjectInstanceID;
 
 
 
@@ -104,7 +191,7 @@ namespace Gaia
         {
             bool isModified = false;
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (m_desktopPrefab != null)
             {
                 string fileName = Path.GetFileName(AssetDatabase.GetAssetPath(m_desktopPrefab));
@@ -141,7 +228,7 @@ namespace Gaia
             //    }
             //}
 
-            #endif
+#endif
             return isModified;
         }
 
@@ -154,7 +241,7 @@ namespace Gaia
         {
             bool isModified = false;
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (m_desktopPrefab == null)
             {
                 if (!string.IsNullOrEmpty(m_desktopPrefabFileName))
@@ -178,7 +265,7 @@ namespace Gaia
             //        }
             //    }
             //}
-            #endif
+#endif
             return isModified;
         }
 

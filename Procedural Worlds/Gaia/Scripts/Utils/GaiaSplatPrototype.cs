@@ -270,9 +270,12 @@ namespace Gaia
             string path = GaiaDirectories.GetTerrainLayerPath(gsm.m_session) + "/" + terrainName + "_" + layerId + ".asset";
 
             AssetDatabase.CreateAsset(terrainLayer, path);
-            AssetDatabase.ImportAsset(path);
 
-            return AssetDatabase.LoadAssetAtPath<TerrainLayer>(path);
+            //not needed anymore in new asset database system
+            //AssetDatabase.ImportAsset(path);
+            //AssetDatabase.LoadAssetAtPath<TerrainLayer>(path);
+
+            return terrainLayer; 
 
 #else
             Debug.LogError("Runtime Gaia operation is not supported");

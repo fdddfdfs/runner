@@ -17,6 +17,7 @@ namespace Gaia
     {
         #region Variables
 
+        public bool m_disableSystem = false;
         public bool m_interactWithPlayer = true;
         public GaiaConstants.EnvironmentRenderer m_renderPipeLine = GaiaConstants.EnvironmentRenderer.BuiltIn;
         public GaiaConstants.DOFTrackingType m_trackingType = GaiaConstants.DOFTrackingType.FollowScreen;
@@ -83,6 +84,11 @@ namespace Gaia
         /// </summary>
         private void Update()
         {
+            if (m_disableSystem)
+            {
+                return;
+            }
+
             switch (m_renderPipeLine)
             {
                 case GaiaConstants.EnvironmentRenderer.BuiltIn:

@@ -70,7 +70,7 @@ namespace Gaia
         {
             if (controller != null)
             {
-                controller.m_seasonData = GaiaAPI.GetWeaterSeasonSettings();
+                controller.m_seasonData = GaiaAPI.GetWeatherSeasonSettings();
             }
         }
         private void LoadWind(DemoAPIController controller)
@@ -252,7 +252,7 @@ namespace Gaia
             EditorGUI.indentLevel--;
             if (EditorGUI.EndChangeCheck())
             {
-                GaiaAPI.SetWeaterSeasonSettings(m_controller.m_seasonData);
+                GaiaAPI.SetWeatherSeasonSettings(m_controller.m_seasonData);
             }
             EditorGUILayout.EndVertical();
         }

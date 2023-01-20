@@ -7,7 +7,6 @@ using UnityEngine.SceneManagement;
 #if !UNITY_2021_2_OR_NEWER
 using UnityEngine.Experimental.TerrainAPI;
 #endif
-using System.Text;
 using System.Linq;
 using static Gaia.GaiaConstants;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -15,8 +14,15 @@ using UnityEngine.Scripting;
 using UnityEngine.Assertions.Must;
 
 #if UNITY_EDITOR
+#if PW_ADDRESSABLES
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+#endif
 using UnityEditor.SceneManagement;
 using UnityEditor;
+using ProceduralWorlds;
+using ProceduralWorlds.Addressables1;
 #endif
 
 namespace Gaia
@@ -142,6 +148,8 @@ namespace Gaia
         /// </summary>
         private bool savingSubscribed;
 
+        private static GaiaSessionManager m_sessionManager;
+
         private GaiaSettings m_gaiaSettings;
 
         private GaiaSettings GaiaSettings
@@ -191,6 +199,11 @@ namespace Gaia
         private Spawner m_spawnerToWaitFor;
         private List<Spawner> m_worldCreationspawners;
         public bool m_worldCreationRunning;
+
+#if UNITY_EDITOR
+        public delegate void WorldCreationCancelCallback();
+        public static event WorldCreationCancelCallback OnWorldCreationCancelled;
+#endif
 
         public delegate void WorldCreatedCallback();
         public static event WorldCreatedCallback OnWorldCreated;
@@ -287,6 +300,14 @@ namespace Gaia
             {
                 return;
             }
+
+            if (m_worldCreationRunning)
+            {
+                //No heightmap change processing while world creation is running
+                //this only complicates everything, since we already force a min max recalculation after the stamping
+                return;
+            }
+
 #if UNITY_EDITOR
             //as soon as the heightmap changes for whatever reason, we need to flag this terrain for min max height recalculation
             string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(terrain.terrainData));
@@ -320,6 +341,10 @@ namespace Gaia
         /// </summary>
         public static GaiaSessionManager GetSessionManager(bool pickupExistingTerrain = false, bool createSession = true)
         {
+            if (m_sessionManager != null)
+            {
+                return m_sessionManager;
+            }
             GaiaSessionManager sessionMgr = null;
             GameObject mgrObj = GameObject.Find("Session Manager");
             if (mgrObj == null)
@@ -339,7 +364,10 @@ namespace Gaia
             {
                 sessionMgr = mgrObj.GetComponent<GaiaSessionManager>();
             }
-            return sessionMgr;
+
+            m_sessionManager = sessionMgr;
+
+            return m_sessionManager;
         }
 
         public void DirtyWorldMapMinMax()
@@ -352,6 +380,10 @@ namespace Gaia
         /// </summary>
         public void CheckForNewTerrainsForMinMax()
         {
+            if (m_session == null)
+            {
+                return;
+            }
 #if UNITY_EDITOR
             //Are there any new terrains that are not part of the cache yet?
             foreach (Terrain t in Terrain.activeTerrains)
@@ -796,8 +828,11 @@ namespace Gaia
         public void SaveSession()
         {
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(m_session);
-            AssetDatabase.SaveAssets();
+            if (m_session != null)
+            {
+                EditorUtility.SetDirty(m_session);
+                AssetDatabase.SaveAssets();
+            }
 #endif
         }
 
@@ -1836,16 +1871,12 @@ namespace Gaia
                 m_regenerateRun = true;
 
                 //Regenerate run - start the session playback only from the last world creation entry onwards
-                //For regeneration we are only interested in the operations which were executed after the terrain tiles were created
+                //For regeneration we are only interested in the operation which created the terrain tile, and then anything following that
                 int lastCreationIndex = sessionManager.m_session.m_operations.FindLastIndex(x => x.m_operationType == GaiaOperation.OperationType.CreateWorld && !x.WorldCreationSettings.m_isWorldMap);
-                for (int i = lastCreationIndex + 1; i < sessionManager.m_session.m_operations.Count; i++)
+                for (int i = lastCreationIndex; i < sessionManager.m_session.m_operations.Count; i++)
                 {
                     GaiaOperation op = sessionManager.m_session.m_operations[i];
-                    //Skip all world map operations - not interested in those
-                    if (op.m_operationType == GaiaOperation.OperationType.CreateWorld)
-                    {
-                        continue;
-                    }
+
                     if (op.m_operationType == GaiaOperation.OperationType.Stamp && op.StamperSettings.m_isWorldmapStamper == true)
                     {
                         continue;
@@ -3255,7 +3286,7 @@ namespace Gaia
 
 #if UNITY_EDITOR
             AssetDatabase.CreateAsset(terrainData, GaiaDirectories.GetTerrainDataScenePath() + "/" + terrainData.name + ".asset");
-            AssetDatabase.ImportAsset(GaiaDirectories.GetTerrainDataScenePath() + "/" + terrainData.name + ".asset");
+            //AssetDatabase.ImportAsset(GaiaDirectories.GetTerrainDataScenePath() + "/" + terrainData.name + ".asset");
 #endif
 
             terrain = Terrain.CreateTerrainGameObject(terrainData).GetComponent<Terrain>();
@@ -3811,7 +3842,7 @@ namespace Gaia
                         Debug.LogError("Could not find or create a Session Manager in the scene. A session manager is required for world creation.");
                         return false;
                     }
-                    sessionMgr.StartCreateWorld(op.WorldCreationSettings);
+                    sessionMgr.StartCreateWorld(op);
                     return true;
                 case GaiaOperation.OperationType.UpdateWorld:
                     GaiaSessionManager updsessionMgr = GaiaSessionManager.GetSessionManager();
@@ -3850,10 +3881,10 @@ namespace Gaia
             return true;
         }
 
-        private bool StartCreateWorld(WorldCreationSettings worldCreationSettings)
+        private bool StartCreateWorld(GaiaOperation op)
         {
             m_waitForSpawningDuringTerrainCreation = false;
-            m_updateOperationCoroutine = ExecuteCreateWorld(worldCreationSettings);
+            m_updateOperationCoroutine = ExecuteCreateWorld(op);
             StartEditorUpdates();
             return true;
         }
@@ -3867,13 +3898,15 @@ namespace Gaia
         }
 
         #region OPERATION EXECUTION
-        private IEnumerator ExecuteCreateWorld(WorldCreationSettings worldCreationSettings)
+        private IEnumerator ExecuteCreateWorld(GaiaOperation op)
         {
 #if UNITY_EDITOR
+            WorldCreationSettings worldCreationSettings = op.WorldCreationSettings;
             m_worldCreationRunning = true;
             GaiaStopwatch.StartEvent("Session Manager Create World Execution");
             m_waitForSpawningDuringTerrainCreation = false;
-            m_regenerateRun = false;
+            List<string> affectedTerrainNames = new List<string>();
+
             GaiaSettings gaiaSettings = GaiaUtils.GetGaiaSettings();
 
             if (worldCreationSettings == null)
@@ -3936,7 +3969,7 @@ namespace Gaia
             //only remove the existing terrain scene storage if it is NOT a worldmap we are creating, or if there are no terrains stored in it anyways.
             //We would not want to overwrite the existing storage if a world map is being created later in the scene creation process.
             TerrainSceneStorage terrainSceneStorage = TerrainLoaderManager.Instance.TerrainSceneStorage;
-            if (!worldCreationSettings.m_isWorldMap || TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.Count == 0)
+            if (!m_regenerateRun && !worldCreationSettings.m_isWorldMap || TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.Count == 0)
             {
                 //Has the original scene been saved before? If yes, delete old potential terrain scene storage
                 terrainSceneStoragePath = GaiaDirectories.GetScenePath(m_session) + "/TerrainScenes.asset";
@@ -3959,6 +3992,11 @@ namespace Gaia
             {
                 for (int z = 0; z < worldCreationSettings.m_zTiles; z++)
                 {
+                    //skip non-affected terrain tiles if it is a regenerate run
+                    if (m_regenerateRun && !m_terrainNamesFlaggedForRegeneration.Exists(k=>k.Contains($"Terrain_{x}_{z}-")))
+                    {
+                        continue;
+                    }
 
                     if (worldCreationSettings.m_terrainCreationToggles != null && worldCreationSettings.m_terrainCreationToggles.GetLength(0) > x && worldCreationSettings.m_terrainCreationToggles.GetLength(1) > z && worldCreationSettings.m_terrainCreationToggles[x, z] == false)
                     {
@@ -3974,17 +4012,68 @@ namespace Gaia
                         break;
                     }
 
-                    GameObject terrainGO = CreateTile(x, z, worldCreationSettings, ref world, terrainLayers, terrainDetails, terrainTrees);
+                    //only create a terrain tile if it is not a regeneration run
+                    GameObject terrainGO = null;
+                    if (!m_regenerateRun)
+                    {
+                        terrainGO = CreateTile(x, z, worldCreationSettings, ref world, terrainLayers, terrainDetails, terrainTrees);
+                    }
+                    else
+                    {
+                        if (GaiaUtils.HasDynamicLoadedTerrains())
+                        {
+                            //We need to make sure the terrain GO is loaded
+                            TerrainScene terrainScene = TerrainLoaderManager.Instance.GetTerrainSceneByIndices(x, z);
+                            if (terrainScene.m_regularLoadState != LoadState.Loaded)
+                            {
+                                terrainScene.AddRegularReference(this.gameObject);
+                            }
+                            Scene scene = EditorSceneManager.GetSceneByPath(terrainScene.m_scenePath);
+                            foreach (GameObject go in scene.GetRootGameObjects())
+                            {
+                                //go can be null if just deleted before this call
+                                if (go == null)
+                                {
+                                    continue;
+                                }
+                                if (go.GetComponent<Terrain>())
+                                {
+                                    terrainGO = go;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //No dynamic loaded terrains, find the existing terrain object by name in the scene instead
+                            terrainGO = GaiaUtils.FindObjectDeactivated($"Terrain_{x}_{z}-", false);
+                        }
+                    }
+                    if (terrainGO == null)
+                    {
+                        continue;
+                    }
 
+                    Terrain t = terrainGO.GetComponent<Terrain>();
+
+                    if (t == null)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        affectedTerrainNames.Add(t.name);
+                    }
                     //if we have world map stamp settings, let's stamp this terrain right away before it is unloaded again
                     if (worldMapStampSettings != null)
                     {
-                        Terrain t = terrainGO.GetComponent<Terrain>();
                         //We want the stamper to be centered on terrain, with range=100 while keeping the original height scaling
                         worldMapStampSettings.m_baseTerrainStamperSettings.m_x = t.transform.position.x + t.terrainData.size.x * 0.5f;
                         worldMapStampSettings.m_baseTerrainStamperSettings.m_z = t.transform.position.z + t.terrainData.size.z * 0.5f;
                         worldMapStampSettings.m_baseTerrainStamperSettings.m_width = 100f;
                         ExecuteStamp(new GaiaOperation(), null, true, worldMapStampSettings, true);
+                        yield return null;
+                        //we just stamped on this terrain - force a min max update NOW while the terrain is still loaded
+                        ForceTerrainMinMaxCalculation(t);
                         yield return null;
                         cancel = ProgressBar.Show(ProgressBarPriority.WorldCreation, "Creating World", "Creating Terrains", currentTerrain, totalTerrains, true, true);
                     }
@@ -3992,7 +4081,6 @@ namespace Gaia
                     //if we have spawner entries and direct spawning is enabled, we can spawn on this tile right away
                     if (worldCreationSettings.m_autoSpawnBiome && m_worldCreationspawners != null && m_worldCreationspawners.Count > 0)
                     {
-                        Terrain t = terrainGO.GetComponent<Terrain>();
                         Spawner firstSpawner = m_worldCreationspawners[0];
                         m_waitForSpawningDuringTerrainCreation = true;
                         m_spawnerToWaitFor = firstSpawner;
@@ -4005,39 +4093,55 @@ namespace Gaia
                         cancel = ProgressBar.Show(ProgressBarPriority.WorldCreation, "Creating World", "Creating Terrains", currentTerrain, totalTerrains, true, true);
                     }
 
-                    if (worldCreationSettings.m_createInScene && !worldCreationSettings.m_isWorldMap)
+                    if (m_regenerateRun)
                     {
-#if GAIA_PRO_PRESENT
-                        cancel = ProgressBar.Show(ProgressBarPriority.WorldCreation, "Creating World", "Creating Terrain Scene...", currentTerrain, totalTerrains, true, true);
-                        terrainSceneStorage.m_terrainScenes.Add(TerrainSceneCreator.CreateTerrainScene(originalScene, terrainSceneStorage, m_session, terrainGO, worldCreationSettings));
-#endif
+                        //on a regenerate run we are done here, just force unload the terrain scene
+                        if (GaiaUtils.HasDynamicLoadedTerrains())
+                        {
+                            TerrainScene terrainScene = TerrainLoaderManager.Instance.GetTerrainSceneByIndices(x, z);
+                            if (terrainScene.m_regularLoadState == LoadState.Loaded || terrainScene.m_regularLoadState == LoadState.Cached)
+                            {
+                                terrainScene.RemoveAllReferences(true);
+                            }
+                        }
                     }
                     else
                     {
-                        if (worldCreationSettings.m_isWorldMap)
+                        if (worldCreationSettings.m_createInScene && !worldCreationSettings.m_isWorldMap)
                         {
-                            GameObject wme = GaiaUtils.GetOrCreateWorldDesigner(true, false);
-                            terrainGO.transform.SetParent(wme.transform);
-                            terrainGO.GetComponent<Terrain>().terrainData.terrainLayers = new TerrainLayer[1] { gaiaSettings.m_worldmapLayer };
-                            terrainGO.GetComponent<Terrain>().basemapDistance = 10000;
+#if GAIA_PRO_PRESENT
+                            cancel = ProgressBar.Show(ProgressBarPriority.WorldCreation, "Creating World", "Creating Terrain Scene...", currentTerrain, totalTerrains, true, true);
+                            TerrainScene newScene = TerrainSceneCreator.CreateTerrainScene(originalScene, terrainSceneStorage, m_session, terrainGO, worldCreationSettings);
+                            terrainSceneStorage.m_terrainScenes.Add(newScene);
+#endif
                         }
                         else
                         {
-                            GameObject gaiaObj = GaiaUtils.GetTerrainObject();
-                            terrainGO.transform.SetParent(gaiaObj.transform);
-                        }
+                            if (worldCreationSettings.m_isWorldMap)
+                            {
+                                GameObject wme = GaiaUtils.GetOrCreateWorldDesigner(true, false);
+                                terrainGO.transform.SetParent(wme.transform);
+                                terrainGO.GetComponent<Terrain>().terrainData.terrainLayers = new TerrainLayer[1] { gaiaSettings.m_worldmapLayer };
+                                terrainGO.GetComponent<Terrain>().basemapDistance = 10000;
+                            }
+                            else
+                            {
+                                GameObject gaiaObj = GaiaUtils.GetTerrainObject();
+                                terrainGO.transform.SetParent(gaiaObj.transform);
+                            }
 #if GAIA_PRO_PRESENT
-                        //we need to attach a floating point fix member component to these terrain tiles if the user wants the floating point fix
-                        //- but not when it is a scenario with dynamic loaded terrains, those will shift automatically with the origin
-                        if (worldCreationSettings.m_applyFloatingPointFix && !worldCreationSettings.m_createInScene)
-                        {
-                            terrainGO.AddComponent<FloatingPointFixMember>();
-                            terrainGO.isStatic = false;
-                        }
+                            //we need to attach a floating point fix member component to these terrain tiles if the user wants the floating point fix
+                            //- but not when it is a scenario with dynamic loaded terrains, those will shift automatically with the origin
+                            if (worldCreationSettings.m_applyFloatingPointFix && !worldCreationSettings.m_createInScene)
+                            {
+                                terrainGO.AddComponent<FloatingPointFixMember>();
+                                terrainGO.isStatic = false;
+                            }
 #endif
+                        }
+                        currentTerrain++;
+                        yield return null;
                     }
-                    currentTerrain++;
-                    yield return null;
                 }
                 if (cancel)
                 {
@@ -4051,86 +4155,109 @@ namespace Gaia
                 ProgressBar.Clear(ProgressBarPriority.WorldCreation);
                 StopEditorUpdates();
                 AfterSessionPlaybackCleanup();
+                if (OnWorldCreationCancelled!=null)
+                {
+                    OnWorldCreationCancelled();
+                }
+                //if (OnWorldCreated != null)
+                //{
+                //    OnWorldCreated();
+                //}
+                yield return null;
+            }
+
+            if (!m_regenerateRun)
+            {
+                //Is this still the default sea level? If yes, adjust it according to terrain tile height
+                if (GetSeaLevel() == worldCreationSettings.m_gaiaDefaults.m_seaLevel)
+                {
+                    SetSeaLevel(worldCreationSettings.m_tileHeight / 2048 * 50);
+                }
+
+                if (!worldCreationSettings.m_isWorldMap)
+                {
+                    terrainSceneStorage.m_terrainTilesX = worldCreationSettings.m_xTiles;
+                    terrainSceneStorage.m_terrainTilesZ = worldCreationSettings.m_zTiles;
+                    terrainSceneStorage.m_terrainTilesSize = worldCreationSettings.m_tileSize;
+                    if (worldCreationSettings.m_applyFloatingPointFix)
+                    {
+                        terrainSceneStorage.m_useFloatingPointFix = true;
+                    }
+                    else
+                    {
+                        terrainSceneStorage.m_useFloatingPointFix = false;
+                    }
+                }
+
+                TerrainLoaderManager.Instance.m_cacheMemoryThreshold = gaiaSettings.m_terrainUnloadMemoryTreshold;
+
+
+                if (createNewTSStorage)
+                {
+                    //permanently save the multi-scene data in a TerrainScenes storage file
+                    AssetDatabase.CreateAsset(terrainSceneStorage, terrainSceneStoragePath);
+                    AssetDatabase.ImportAsset(terrainSceneStoragePath);
+                    TerrainLoaderManager.Instance.LoadStorageData();
+#if GAIA_PRO_PRESENT
+                    if (worldCreationSettings.m_createInScene)
+                    {
+                        Double regularRange = TerrainLoaderManager.GetDefaultLoadingRangeForTilesize(worldCreationSettings.m_tileSize);
+                        TerrainLoaderManager.Instance.SetLoadingRange(regularRange, regularRange * 3f);
+                        TerrainLoaderManager.Instance.UpdateTerrainLoadState();
+#if PW_ADDRESSABLES
+                        BuildConfig buildConfig = GaiaUtils.GetOrCreateBuildConfig();
+
+                        if (buildConfig.m_publicationType != PublicationType.Addressables)
+                        {
+                            //If we are not using addressables, the scenes need to be added to the build settings
+                            AddTerrainScenesToBuildSettings(TerrainLoaderManager.TerrainScenes);
+                        }
+                        else
+                        {
+                            TerrainLoaderManager.Instance.TerrainSceneStorage.m_useAddressables = true;
+                        }
+#endif
+                    }
+#endif
+                }
+
+                if (!worldCreationSettings.m_isWorldMap)
+                {
+
+                    TerrainLoaderManager.Instance.SwitchToLocalMap();
+                }
+                else
+                {
+                    TerrainLoaderManager.Instance.SwitchToWorldMap();
+                }
+                //Store the affected terrains
+                if (!m_regenerateRun)
+                {
+                    op.m_affectedTerrainNames = affectedTerrainNames.ToArray();
+                }
+
+                //Save the session (in case we added terrainScenes)
+                SaveSession();
+
+                ProgressBar.Clear(ProgressBarPriority.WorldCreation);
+                StopEditorUpdates();
+
+                //If this utilizes terrain scenes, we should save the main scene to save the terrain loading setup
+                //otherwise if this scene is closed and re-opened without saving, it will miss the Terrain Loader etc. and will appear broken
+                if (worldCreationSettings.m_createInScene)
+                {
+                    EditorSceneManager.SaveScene(originalScene);
+                }
+
+
+                m_worldCreationRunning = false;
                 if (OnWorldCreated != null)
                 {
                     OnWorldCreated();
                 }
-                yield return null;
+                GaiaStopwatch.EndEvent("Session Manager Create World Execution");
+                GaiaStopwatch.Stop();
             }
-
-            //Is this still the default sea level? If yes, adjust it according to terrain tile height
-            if (GetSeaLevel() == worldCreationSettings.m_gaiaDefaults.m_seaLevel)
-            {
-                SetSeaLevel(worldCreationSettings.m_tileHeight / 2048 * 50);
-            }
-
-            if (!worldCreationSettings.m_isWorldMap)
-            {
-                terrainSceneStorage.m_terrainTilesX = worldCreationSettings.m_xTiles;
-                terrainSceneStorage.m_terrainTilesZ = worldCreationSettings.m_zTiles;
-                terrainSceneStorage.m_terrainTilesSize = worldCreationSettings.m_tileSize;
-                if (worldCreationSettings.m_applyFloatingPointFix)
-                {
-                    terrainSceneStorage.m_useFloatingPointFix = true;
-                }
-                else
-                {
-                    terrainSceneStorage.m_useFloatingPointFix = false;
-                }
-            }
-
-            TerrainLoaderManager.Instance.m_cacheMemoryThreshold = gaiaSettings.m_terrainUnloadMemoryTreshold;
-
-
-            if (createNewTSStorage)
-            {
-                //permanently save the multi-scene data in a TerrainScenes storage file
-                AssetDatabase.CreateAsset(terrainSceneStorage, terrainSceneStoragePath);
-                AssetDatabase.ImportAsset(terrainSceneStoragePath);
-                TerrainLoaderManager.Instance.LoadStorageData();
-#if GAIA_PRO_PRESENT
-                if (worldCreationSettings.m_createInScene)
-                {
-                    Double regularRange = TerrainLoaderManager.GetDefaultLoadingRangeForTilesize(worldCreationSettings.m_tileSize);
-                    TerrainLoaderManager.Instance.SetLoadingRange(regularRange, regularRange * 3f);
-                    TerrainLoaderManager.Instance.UpdateTerrainLoadState();
-                    AddTerrainScenesToBuildSettings(TerrainLoaderManager.TerrainScenes);
-                }
-#endif
-            }
-
-            if (!worldCreationSettings.m_isWorldMap)
-            {
-
-                TerrainLoaderManager.Instance.SwitchToLocalMap();
-            }
-            else
-            {
-                TerrainLoaderManager.Instance.SwitchToWorldMap();
-            }
-
-            //Save the session (in case we added terrainScenes)
-            SaveSession();
-
-            ProgressBar.Clear(ProgressBarPriority.WorldCreation);
-            StopEditorUpdates();
-
-            //If this utilizes terrain scenes, we should save the main scene to save the terrain loading setup
-            //otherwise if this scene is closed and re-opened without saving, it will miss the Terrain Loader etc. and will appear broken
-            if (worldCreationSettings.m_createInScene)
-            {
-                EditorSceneManager.SaveScene(originalScene);
-            }
-#endif
-
-            m_worldCreationRunning = false;
-            if (OnWorldCreated != null)
-            {
-                OnWorldCreated();
-            }
-            GaiaStopwatch.EndEvent("Session Manager Create World Execution");
-            GaiaStopwatch.Stop();
-
             //Are there still session entries queued for execution? If yes, we must continue playback after the terrain creation
             if (m_session.m_operations.Exists(x => x.sessionPlaybackState == SessionPlaybackState.Queued))
             {
@@ -4141,7 +4268,7 @@ namespace Gaia
                 AfterSessionPlaybackCleanup();
             }
 
-
+#endif
             yield return null;
         }
 
@@ -4564,6 +4691,7 @@ namespace Gaia
 
                 }
                 TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.RemoveAll(x => x.m_scenePath == "");
+                TerrainLoaderManager.Instance.UpdateImpostorStateInBuildSettings();
                 TerrainLoaderManager.Instance.SaveStorageData();
                 AssetDatabase.Refresh();
             }
@@ -5094,6 +5222,7 @@ namespace Gaia
             TerrainLoaderManager.TerrainScenes.Clear();
             //Clear the min max cache (except world map)
             sessionMgr.m_session.m_terrainMinMaxCache.RemoveAll(x => !x.isWorldmap);
+            TerrainLoaderManager.Instance.UpdateImpostorStateInBuildSettings();
             TerrainLoaderManager.Instance.SaveStorageData();
             AssetDatabase.Refresh();
 #endif
@@ -5495,7 +5624,11 @@ namespace Gaia
             }
             else
             {
-                return spawnerList[0].gameObject;
+                if (spawnerList.Count > 0)
+                {
+                    return spawnerList[0].gameObject;
+                }
+                else return null;
             }
         }
 #if GAIA_PRO_PRESENT
@@ -5549,11 +5682,33 @@ namespace Gaia
         }
 
 
-
         /// <summary>
-        /// Adds only the collider scenes to build settings, will remove the regular / impostor scenes
+        /// Removes all Terrain Scenes from the Build Settings.
         /// </summary>
-        public static void AddOnlyColliderScenesToBuildSettings(List<TerrainScene> allTerrainScenes)
+        /// <param name="allTerrainScenes"></param>
+        public static void RemoveTerrainScenesFromBuildSettings(List<TerrainScene> allTerrainScenes)
+        {
+#if GAIA_PRO_PRESENT
+#if UNITY_EDITOR
+            List<EditorBuildSettingsScene> sceneSettings = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            for (int i = sceneSettings.Count-1; i >= 0; i--)
+            {
+                if (allTerrainScenes.Exists(x => x.m_scenePath == sceneSettings[i].path || x.m_impostorScenePath == sceneSettings[i].path || x.m_colliderScenePath == sceneSettings[i].path))
+                {
+                    sceneSettings.RemoveAt(i);
+                }
+            }
+            EditorBuildSettings.scenes = sceneSettings.ToArray();
+#endif
+#endif
+        }
+
+
+            /// <summary>
+            /// Adds only the collider scenes to build settings, will remove the regular / impostor scenes
+            /// </summary>
+            public static void AddOnlyColliderScenesToBuildSettings(List<TerrainScene> allTerrainScenes)
         {
 #if GAIA_PRO_PRESENT
 #if UNITY_EDITOR
@@ -5696,11 +5851,131 @@ namespace Gaia
 #endif
         }
 
+        /// <summary>
+        /// Adds a single scene to the build settings
+        /// </summary>
+        /// <param name="path"></param>
+        public static void AddSceneToBuildSettings(string path)
+        {
+#if UNITY_EDITOR
+            List<EditorBuildSettingsScene> sceneSettings = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            if (!sceneSettings.Exists(x => x.path == path))
+            {
+                sceneSettings.Add(new EditorBuildSettingsScene() { enabled = true, path = path});
+            }
+            EditorBuildSettings.scenes = sceneSettings.ToArray();
+#endif
+        }
+
+        /// <summary>
+        /// Adds all Placeholders to build settings
+        /// </summary>
+        public static void AddTerrainScenesToBuildSettings(List<TerrainScene> allTerrainScenes, bool noPrompts = false)
+        {
+#if GAIA_PRO_PRESENT
+#if UNITY_EDITOR
+            List<EditorBuildSettingsScene> sceneSettings = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            Scene mainScene = TerrainLoaderManager.Instance.gameObject.scene;
+            bool mainSceneExists = false;
+            bool mainSceneFirstInLoadOrder = false;
+
+            int mainSceneIndex = -99;
+
+            //Look for the presence / position of main scene first
+            int index = 0;
+            foreach (EditorBuildSettingsScene oldScene in sceneSettings)
+            {
+                if (oldScene.path == mainScene.path)
+                {
+                    mainSceneExists = true;
+                    mainSceneIndex = index;
+                    if (index == 0)
+                    {
+                        mainSceneFirstInLoadOrder = true;
+                    }
+                    break;
+                }
+                index++;
+            }
+
+            foreach (TerrainScene terrainScene in allTerrainScenes)
+            {
+                EditorBuildSettingsScene regularSceneSettings = new EditorBuildSettingsScene(terrainScene.m_scenePath, true);
+                EditorBuildSettingsScene impostorSceneSettings = null;
+                bool hasImpostor = !String.IsNullOrEmpty(terrainScene.m_impostorScenePath);
+                if (hasImpostor)
+                {
+                    impostorSceneSettings = new EditorBuildSettingsScene(terrainScene.m_impostorScenePath, true);
+                }
+                bool sceneExists = false;
+                bool impostorSceneExists = false;
+
+                foreach (EditorBuildSettingsScene oldScene in sceneSettings)
+                {
+
+                    if (oldScene.path == terrainScene.m_scenePath)
+                    {
+                        sceneExists = true;
+                        oldScene.enabled = true;
+                    }
+                    if (hasImpostor)
+                    {
+                        if (oldScene.path == terrainScene.m_impostorScenePath)
+                        {
+                            impostorSceneExists = true;
+                            oldScene.enabled = true;
+                        }
+                    }
+                    if (sceneExists && (impostorSceneExists || !hasImpostor))
+                    {
+                        break;
+                    }
+
+                }
+                if (!sceneExists)
+                {
+                    sceneSettings.Add(regularSceneSettings);
+                }
+                if (!impostorSceneExists && hasImpostor)
+                {
+                    sceneSettings.Add(impostorSceneSettings);
+                }
+            }
+
+            if (!mainSceneExists)
+            {
+                if (noPrompts || GaiaUtils.DisplayDialogNoEditor("Main Scene not found in Build Settings", "Gaia could not find the scene of terrain loader (" + mainScene.name + ") in the Build Settings. Unless you load up this scene with other means (e.g. from a main menu) you would want the Terrain Loader Scene to be the first scene in the build settings so the terrains start loading on start of the build. Do you want Gaia to put the Main Scene on the top of the included scenes in the build settings?", "Yes, Add the scene", "No thanks"))
+                {
+                    sceneSettings.Insert(0, new EditorBuildSettingsScene(mainScene.path, true));
+                }
+            }
+            else
+            {
+                if (!mainSceneFirstInLoadOrder)
+                {
+                    if (noPrompts || GaiaUtils.DisplayDialogNoEditor("Main Scene not at first position in Build Settings", "Gaia did find the scene of terrain loader (" + mainScene.name + ") in the Build Settings, but it is not in the first position in the scene list. Unless you load up this scene with other means (e.g. from a main menu) you would want the Terrain Loader Scene to be the first scene in the build settings so the terrains start loading on start of the build. Do you want Gaia to put the Main Scene on the top of the included scenes in the build settings?", "Yes, move to top", "No thanks"))
+                    {
+                        //Remove & Insert to keep the other scenes in the same order.
+                        EditorBuildSettingsScene temp = sceneSettings[mainSceneIndex];
+                        sceneSettings.Remove(temp);
+                        sceneSettings.Insert(0, temp);
+                    }
+                }
+            }
+
+
+            // Save off the accumulated build settings
+            EditorBuildSettings.scenes = sceneSettings.ToArray();
+#endif
+#endif
+        }
+
         public bool CheckIfHeightmapRestoreISAllowed(List<Spawner> spawnersToCheck, GaiaSettings gaiaSettings = null)
         {
             //check if the spawners contain at least one Terrain Modifier stamp rule and if there is already a backup taken - 
             //if yes we need to warn the user that the heightmap will be restored in the process
-            List<Spawner> spawnersWithTerrainModification = spawnersToCheck.FindAll(x => x.m_settings.m_spawnerRules.Exists(y => y.m_isActive && (y.m_resourceType == SpawnerResourceType.TerrainModifierStamp || y.m_changesHeightmap)));
+            List<Spawner> spawnersWithTerrainModification = spawnersToCheck.FindAll(x => x!=null && x.m_settings.m_spawnerRules.Exists(y => y.m_isActive && (y.m_resourceType == SpawnerResourceType.TerrainModifierStamp || y.m_changesHeightmap)));
             if (spawnersWithTerrainModification.Count > 0 && DoesStamperBackupExist())
             {
                 if (gaiaSettings == null)

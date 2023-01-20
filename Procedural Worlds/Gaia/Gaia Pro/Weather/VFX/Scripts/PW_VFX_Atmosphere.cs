@@ -105,12 +105,22 @@ namespace Gaia
             }
             
         }
+
         private void LateUpdate()
         {
             if (!m_weatherManagerExists)
             {
-                Debug.LogError("Gaia Weather System could not be found in the scene.");
-                return;
+                m_weatherManagerExists = ProceduralWorldsGlobalWeather.Instance;
+                if (!m_weatherManagerExists)
+                {
+                    Debug.LogError("Gaia Weather System could not be found in the scene.");
+                    return;
+                }
+            }
+
+            if (WeatherSystem == null)
+            {
+                WeatherSystem = ProceduralWorldsGlobalWeather.Instance;
             }
 
             m_currentTime = GaiaGlobal.GetTimeOfDayMainValue();
@@ -122,14 +132,14 @@ namespace Gaia
             if (WeatherSystem.m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
             {
 #if HDPipeline
-                if (HDRPVolumeProfile == null)
-                {
-                    HDRPVolumeProfile = GaiaUtils.GetVolumeProfile(false, "Environment", "Processing");
-                }
-                if (HDRPVolumeProfile == null)
-                {
-                    return;
-                }
+            if (HDRPVolumeProfile == null)
+            {
+                HDRPVolumeProfile = GaiaUtils.GetVolumeProfile(false, "Environment", "Processing");
+            }
+            if (HDRPVolumeProfile == null)
+            {
+                return;
+            }
 #endif
             }
             else

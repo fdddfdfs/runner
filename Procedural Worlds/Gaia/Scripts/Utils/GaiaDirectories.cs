@@ -27,16 +27,18 @@ namespace Gaia
         public const string STAMP_DIRECTORY = "/Stamps";
         public const string USER_STAMP_DIRECTORY = "/My Saved Stamps";
         public const string TERRAIN_LAYERS_DIRECTORY = "/Terrain Layers";
-        public const string TERRAIN_DETAILS_DIRECTORY = "/Terrain Details";
+        public const string FLORA_DATA_DIRECTORY = "/Flora Data";
         public const string EXPORT_DIRECTORY = "/Exports";
+        public const string FLORA_SHADER_DIRECTORY = "/Content Resources/Shaders";
+        public const string GAIA_SHADER_DIRECTORY = "/Shaders/PW_General";
         public const string STAMPER_EXPORT_DIRECTORY = "/Stamper Exports";
         public const string STAMPER_TERRAIN_EXPORT_DIRECTORY = "/Stamper Terrain Exports";
         public const string WORLD_DESIGNER_EXPORT_DIRECTORY = "/World Designer Exports";
         public const string SCANNER_EXPORT_DIRECTORY = "/Scanner Exports";
         public const string MASK_MAP_EXPORT_DIRECTORY = "/Mask Maps";
         public const string COLLISION_DATA_DIRECTORY = "/TerrainCollisionData";
-        public const string GAIA_PRO = "/Procedural Worlds/Gaia/Gaia Pro";
-        public const string GAIA_SHADER_DIRECTORY = "/Procedural Worlds/PW Shader Library";
+        public const string GAIA_PRO = "/Gaia Pro";
+        public const string GAIA_MESH_SIMPLIFIER_DIRECTORY = "/Scripts/Mesh Simplifier";
         public const string TERRAIN_MESH_EXPORT_DIRECTORY = "/Mesh Terrains";
         public const string GAIA_WATER_MATERIAL_DIRECTORY = "/Gaia Lighting and Water/Gaia Water/Ocean Water/Resources/Material";
         public const string TEMP_EXPORT_PATH = "Assets/Temp Export";
@@ -48,9 +50,30 @@ namespace Gaia
         public static bool GetGaiaProDirectory()
         {
             bool isPro = false;
-            string dataPath = Application.dataPath;
+            string dataPath = GetFullFileSystemPath(GetGaiaDirectory() + GAIA_PRO);
 
-            if (Directory.Exists(dataPath + GAIA_PRO))
+            if (Directory.Exists(dataPath))
+            {
+                isPro = true;
+            }
+            else
+            {
+                isPro = false;
+            }
+
+            return isPro;
+        }
+
+        /// <summary>
+        /// Returns if the Gaia Mesh Simplifier folder exists in the project
+        /// </summary>
+        /// <returns></returns>
+        public static bool GetGaiaMeshSimplifierDirectory()
+        {
+            bool isPro = false;
+            string dataPath = GetFullFileSystemPath(GetGaiaDirectory() + GAIA_MESH_SIMPLIFIER_DIRECTORY);
+
+            if (Directory.Exists(dataPath))
             {
                 isPro = true;
             }
@@ -82,6 +105,28 @@ namespace Gaia
             }
 #endif
             return gaiaDirectory;
+        }
+
+        /// <summary>
+        /// Return the Flora directory in the project (if flora exists, otherwise returns null)
+        /// </summary>
+        /// <returns>String containing the Gaia directory</returns>
+        public static string GetFloraDirectory()
+        {
+            //Default Directory, will be returned if not in Editor
+            string floraDirectory = "";
+#if UNITY_EDITOR
+            string[] assets = AssetDatabase.FindAssets("Flora_ReadMe", null);
+            for (int idx = 0; idx < assets.Length; idx++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(assets[idx]);
+                if (Path.GetFileName(path) == "Flora_ReadMe.txt")
+                {
+                    floraDirectory = path.Replace("/Flora_ReadMe.txt", "");
+                }
+            }
+#endif
+            return floraDirectory;
         }
 
         /// <summary>
@@ -130,7 +175,7 @@ namespace Gaia
             {
                 terrainSceneStorage = TerrainLoaderManager.Instance.TerrainSceneStorage;
             }
-            return CreatePathIfDoesNotExist(AssetDatabase.GetAssetPath(terrainSceneStorage).Replace(terrainSceneStorage.name + ".asset","") + TERRAIN_SCENES_DIRECTORY);
+            return CreatePathIfDoesNotExist(AssetDatabase.GetAssetPath(terrainSceneStorage).Replace("/" + terrainSceneStorage.name + ".asset","") + TERRAIN_SCENES_DIRECTORY);
 #else
             return "";
 #endif
@@ -317,17 +362,17 @@ namespace Gaia
         }
 
         /// <summary>
-        /// Returns the path to store the terrain detail scriptable object files in
+        /// Returns the path to store the scriptable object files for the flora configuration
         /// </summary>
         /// <param name="gaiaSession">The current session to get / create this directory for</param>
         /// <returns></returns>
-        public static string GetTerrainDetailsPath(GaiaSession gaiaSession = null)
+        public static string GetFloraDataPath(GaiaSession gaiaSession = null)
         {
             if (gaiaSession == null)
             {
                 gaiaSession = GaiaSessionManager.GetSessionManager().m_session;
             }
-            return CreatePathIfDoesNotExist(GetScenePath(gaiaSession) + TERRAIN_DETAILS_DIRECTORY);
+            return CreatePathIfDoesNotExist(GetScenePath(gaiaSession) + FLORA_DATA_DIRECTORY);
         }
 
         /// <summary>
@@ -481,22 +526,6 @@ namespace Gaia
 
 
         /// <summary>
-        /// Gets the path to a specific stamp data directory. (The Data subfolder within the stamp instance folder)
-        /// </summary>
-        /// <param name="m_featureType">The stamp feature type</param>
-        /// <param name="m_featureName">The stamp name</param>
-        /// <returns>The path to the specific stamp instance data directory.</returns>
-        //public static string GetStampInstanceDataDirectory(GaiaConstants.FeatureType m_featureType, string m_featureName)
-        //{
-        //    return CreatePathIfDoesNotExist(GetStampInstanceDirectory( m_featureType, m_featureName) + DATA_DIRECTORY);
-        //}
-
-        public static string GetShaderDirectory()
-        {
-            return Application.dataPath + GAIA_SHADER_DIRECTORY;
-        }
-
-        /// <summary>
         /// Returns a path to a Gaia subdirectory. The subdirectory can be optionally created if it does not exist already.
         /// </summary>
         /// <param name="subDir">The Subdir to create.</param>
@@ -546,6 +575,31 @@ namespace Gaia
         public static string GetFullFileSystemPath(string inputPath)
         {
             return Application.dataPath.Substring(0,Application.dataPath.Length - "Assets".Length) + inputPath;
+        }
+
+        /// <summary>
+        /// Returns the path to the Gaia-specific shader directory
+        /// </summary>
+        /// <returns></returns>
+        public static string GetGaiaShaderPath()
+        {
+            return GetGaiaDirectory() + GAIA_SHADER_DIRECTORY;
+        }
+
+        /// <summary>
+        /// Returns the path to the Flora-specific shader directory. Will return empty string if flora folder is not present in the project.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetFloraShaderPath()
+        {
+            string floraDir = GetFloraDirectory();
+
+            if (!string.IsNullOrEmpty(floraDir))
+            {
+                floraDir += FLORA_SHADER_DIRECTORY;
+            }
+
+            return floraDir;
         }
     }
 }

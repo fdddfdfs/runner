@@ -100,7 +100,6 @@ namespace Gaia
                     PointScale(threadData);
                 }
             }
-
 #if UNITY_2021_2_OR_NEWER
             tex.Reinitialize(newWidth, newHeight);
 #else

@@ -2,6 +2,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
@@ -51,9 +52,20 @@ namespace Gaia
             }
         }
         public Camera m_mainCamera;
+        public List<HDRPDensityVolumeComponent> m_densityVolumes = new List<HDRPDensityVolumeComponent>();
+        public Vector2 m_densityVolumeCheck = new Vector2(0.4f, 1f);
+        public float m_densityVolumeBlendTime = 2f;
         //Private
+        private float m_densityVolumeCheckTimer;
+        private float m_blendTime;
+        private bool m_lastBoundsVolumeState = false;
+        private bool m_processVolumeBlend = false;
         [SerializeField] private DensityVolumeProfile m_densityVolumeProfile = new DensityVolumeProfile();
+#if UNITY_2021_2_OR_NEWER
         [SerializeField] private LocalVolumetricFog m_volume;
+#else
+        [SerializeField] private DensityVolume m_volume;
+#endif
         [SerializeField] private Camera m_editorMainCamera;
         private const string DensityVolumeName = "Gaia World Density Volume";
 
@@ -97,6 +109,26 @@ namespace Gaia
             if (m_mainCamera != null)
             {
                 UpdateVolumeTransform(m_mainCamera.transform.position, Quaternion.identity);
+                if (!m_processVolumeBlend)
+                {
+                    m_densityVolumeCheckTimer -= Time.deltaTime;
+                    if (m_densityVolumeCheckTimer <= 0f)
+                    {
+                        m_densityVolumeCheckTimer = UnityEngine.Random.Range(m_densityVolumeCheck.x, m_densityVolumeCheck.y);
+                        bool newValue = IsInAnotherVolume(m_mainCamera);
+                        if (m_lastBoundsVolumeState != newValue)
+                        {
+                            m_blendTime = 0f;
+                            m_lastBoundsVolumeState = newValue;
+                            m_processVolumeBlend = true;
+                        }
+                    }
+                }
+
+                if (m_processVolumeBlend)
+                {
+                    SetDensityVolumeState(m_lastBoundsVolumeState);
+                }
             }
         }
 
@@ -115,7 +147,11 @@ namespace Gaia
                 m_volume = CreateOrGetVolume();
             }
 
-            m_volume.parameters.albedo = DensityVolumeProfile.m_singleScatteringAlbedo;
+            if (m_volume.isActiveAndEnabled)
+            {
+                m_volume.parameters.albedo = DensityVolumeProfile.m_singleScatteringAlbedo;
+            }
+
             m_volume.parameters.meanFreePath = DensityVolumeProfile.m_fogDistance;
             m_volume.parameters.size = GetEffectSizeType(DensityVolumeProfile);
             m_volume.parameters.anisotropy = DensityVolumeProfile.m_blendDistance;
@@ -236,6 +272,8 @@ namespace Gaia
         private void Initialize()
         {
             transform.hideFlags = HideFlags.HideInInspector;
+            m_densityVolumeCheckTimer = UnityEngine.Random.Range(m_densityVolumeCheck.x, m_densityVolumeCheck.y);
+            GetDensityVolumes();
             ApplyChanges();
             m_mainCamera = GaiaUtils.GetCamera();
 #if UNITY_EDITOR
@@ -254,6 +292,7 @@ namespace Gaia
         /// Gets or creates a density volume
         /// </summary>
         /// <returns></returns>
+#if UNITY_2021_2_OR_NEWER
         private LocalVolumetricFog CreateOrGetVolume()
         {
             GameObject DensityVolumeObject = GameObject.Find(DensityVolumeName);
@@ -273,6 +312,27 @@ namespace Gaia
 
             return volume;
         }
+#else
+          private DensityVolume CreateOrGetVolume()
+        {
+            GameObject DensityVolumeObject = GameObject.Find(DensityVolumeName);
+            DensityVolume volume = FindObjectOfType<DensityVolume>();
+            if (DensityVolumeObject == null)
+            {
+                if (volume == null)
+                {
+                    DensityVolumeObject = new GameObject(DensityVolumeName);
+                    volume = DensityVolumeObject.AddComponent<DensityVolume>();
+                }
+            }
+            else
+            {
+                volume = DensityVolumeObject.GetComponent<DensityVolume>();
+            }
+
+            return volume;
+        }
+#endif
         /// <summary>
         /// Updates the density volume transform
         /// </summary>
@@ -281,6 +341,70 @@ namespace Gaia
         private void UpdateVolumeTransform(Vector3 position, Quaternion rotation)
         {
             m_volume.transform.SetPositionAndRotation(position, rotation);
+        }
+        /// <summary>
+        /// Sets the volume state based on the isEnabled bool
+        /// </summary>
+        /// <param name="isEnabled"></param>
+        private void SetDensityVolumeState(bool inAnotherVolume)
+        {
+            if (m_volume != null)
+            {
+                m_blendTime += Time.deltaTime / m_densityVolumeBlendTime;
+                if (inAnotherVolume)
+                {
+                    m_volume.parameters.albedo = Color.Lerp(m_volume.parameters.albedo, Color.black, m_blendTime);
+                    if (m_blendTime >= 1f)
+                    {
+                        m_volume.enabled = false;
+                        m_processVolumeBlend = false;
+                    }
+                }
+                else
+                {
+                    m_volume.enabled = true;
+                    m_volume.parameters.albedo = Color.Lerp(m_volume.parameters.albedo, DensityVolumeProfile.m_singleScatteringAlbedo, m_blendTime);
+                    if (m_blendTime >= 1f)
+                    {
+                        m_processVolumeBlend = false;
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Gets all other volumes in the scene
+        /// </summary>
+        private void GetDensityVolumes()
+        {
+            m_densityVolumes.Clear();
+            HDRPDensityVolumeComponent[] volumes = FindObjectsOfType<HDRPDensityVolumeComponent>();
+            if (volumes.Length > 1)
+            {
+                foreach (HDRPDensityVolumeComponent densityVolume in volumes)
+                {
+                    densityVolume.Setup();
+                    m_densityVolumes.Add(densityVolume);
+                }
+            }
+        }
+        /// <summary>
+        /// Checks to see if you are in a volume
+        /// </summary>
+        /// <returns></returns>
+        private bool IsInAnotherVolume(Camera camera)
+        {
+            if (m_densityVolumes.Count > 0)
+            {
+                foreach (HDRPDensityVolumeComponent volume in m_densityVolumes)
+                {
+                    if (volume.IsInBounds(camera))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
 #endregion
@@ -322,6 +446,21 @@ namespace Gaia
             Vector3 position = m_editorMainCamera.transform.position;
             position += -m_editorMainCamera.transform.forward * 1.5f;
             UpdateVolumeTransform(position, Quaternion.identity);
+            if (!m_processVolumeBlend)
+            {
+                bool newValue = IsInAnotherVolume(m_editorMainCamera);
+                if (m_lastBoundsVolumeState != newValue)
+                {
+                    m_blendTime = 0f;
+                    m_lastBoundsVolumeState = newValue;
+                    m_processVolumeBlend = true;
+                }
+            }
+
+            if (m_processVolumeBlend)
+            {
+                SetDensityVolumeState(m_lastBoundsVolumeState);
+            }
             UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(m_volume, false);
         }
 
@@ -336,6 +475,7 @@ namespace Gaia
         public static void CreateGaiaHDRPDensityVolume()
         {
             GameObject DensityVolumeObject = GameObject.Find(DensityVolumeName);
+#if UNITY_2021_2_OR_NEWER
             if (DensityVolumeObject == null)
             {
                 LocalVolumetricFog volume = FindObjectOfType<LocalVolumetricFog>();
@@ -354,6 +494,28 @@ namespace Gaia
             {
                 DensityVolumeObject.GetComponent<LocalVolumetricFog>();
             }
+#else
+            
+             if (DensityVolumeObject == null)
+            {
+                DensityVolume volume = FindObjectOfType<DensityVolume>();
+                if (volume == null)
+                {
+                    DensityVolumeObject = new GameObject(DensityVolumeName);
+                    DensityVolumeObject.AddComponent<DensityVolume>();
+                }
+                else
+                {
+                    DensityVolumeObject = volume.gameObject;
+                    DensityVolumeObject.name = DensityVolumeName;
+                }
+            }
+            else
+            {
+                DensityVolumeObject.GetComponent<DensityVolume>();
+            }
+            
+#endif
 
             HDRPDensityVolumeController controller = DensityVolumeObject.GetComponent<HDRPDensityVolumeController>();
             if (controller == null)

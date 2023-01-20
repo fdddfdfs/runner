@@ -14,13 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_sourceTerrainTreatment: 0
   m_saveFormat: 0
-  m_addMeshCollider: 0
+  m_addTerrainCollider: 1
+  m_terrainColliderType: 1
   m_addMeshColliderImpostor: 0
   m_exportSelection: 0
   m_terrainExportMask: {fileID: 0}
   m_terrainExportMaskChannel: 0
   m_terrainExportInvertMask: 0
   m_copyGaiaGameObjects: 0
+  m_convertTreesToGameObjects: 1
   m_copyGaiaGameObjectsImpostor: 0
   m_convertSourceTerrains: 1
   m_convertSourceTerrainsAction: 1
@@ -32,6 +34,18 @@ MonoBehaviour:
   m_createImpostorScenes: 0
   m_exportTerrainLODSettingsSourceTerrains:
   - m_saveResolution: 2
+    m_simplifyQuality: 1
+    m_simplificationOptions:
+      PreserveBorderEdges: 1
+      PreserveUVSeamEdges: 0
+      PreserveUVFoldoverEdges: 0
+      PreserveSurfaceCurvature: 0
+      EnableSmartLink: 1
+      VertexLinkDistance: 0.00009999999747378752
+      MaxIterationCount: 100
+      Agressiveness: 7
+      ManualUVComponentCount: 0
+      UVComponentCount: 2
     m_normalEdgeMode: 1
     m_LODSettingsMode: 1
     m_settingsFoldedOut: 0
@@ -52,8 +66,21 @@ MonoBehaviour:
     namePrefix: LOD0_
     m_captureBaseMapTextures: 0
     m_LODGroupScreenRelativeTransitionHeight: 0.8
+    m_customSimplifySettingsFoldedOut: 0
   m_exportTerrainLODSettingsImpostors:
   - m_saveResolution: 0
+    m_simplifyQuality: 1
+    m_simplificationOptions:
+      PreserveBorderEdges: 1
+      PreserveUVSeamEdges: 0
+      PreserveUVFoldoverEdges: 0
+      PreserveSurfaceCurvature: 0
+      EnableSmartLink: 1
+      VertexLinkDistance: 0.00009999999747378752
+      MaxIterationCount: 100
+      Agressiveness: 7
+      ManualUVComponentCount: 0
+      UVComponentCount: 2
     m_normalEdgeMode: 0
     m_LODSettingsMode: 2
     m_settingsFoldedOut: 1
@@ -74,11 +101,26 @@ MonoBehaviour:
     namePrefix: LOD0_
     m_captureBaseMapTextures: 0
     m_LODGroupScreenRelativeTransitionHeight: 0.8
-  m_exportPath: Assets/Gaia User Data/Sessions/GS-20201201 - 102210/Exports/Mesh
+    m_customSimplifySettingsFoldedOut: 0
+  m_exportPath: Assets/Gaia User Data/Sessions/GS-20210807 - 161224/Exports/Mesh
     Terrains
   m_newExportPreset: 1
   m_customSettingsFoldedOut: 1
-  m_presetIndex: 7
-  m_lastUsedPresetName: Custom
+  m_presetIndex: 3
+  m_lastUsedPresetName: 07 Bake Collider Objects
   m_colliderTreeReplacement: {fileID: -739820527890389476, guid: 8f041173c7d4cfd47ac0733fcccec769,
     type: 3}
+  m_impostorRange: 0
+  m_colliderSimplifyQuality: 1
+  m_customSimplificationSettingsFoldedOut: 0
+  m_colliderSimplificationOptions:
+    PreserveBorderEdges: 1
+    PreserveUVSeamEdges: 0
+    PreserveUVFoldoverEdges: 0
+    PreserveSurfaceCurvature: 0
+    EnableSmartLink: 1
+    VertexLinkDistance: 0.00009999999747378752
+    MaxIterationCount: 100
+    Agressiveness: 7
+    ManualUVComponentCount: 0
+    UVComponentCount: 2

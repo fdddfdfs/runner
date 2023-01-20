@@ -1,10 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using static Gaia.GaiaConstants;
-using System.Security.AccessControl;
 #if !UNITY_2021_2_OR_NEWER
 using UnityEngine.Experimental.TerrainAPI;
 #else
@@ -761,80 +759,212 @@ namespace Gaia
 
 
             int terrain1XBase = 0, terrain1YBase = 0;
-            int terrain2XBase =0, terrain2YBase=0;
+            int terrain2XBase = 0, terrain2YBase = 0;
             int seamWidth = 0, seamHeight = 0;
+            int seamDiameter = extraSeamSize + 1;
+
+            float[,] terrain1Heights = new float[0, 0];
+            float[,] terrain2Heights = new float[0, 0]; 
 
             switch (stitchDirection)
             {
                 case StitchDirection.North:
                     terrain1XBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.x - terrain1.transform.position.x) / terrain1.terrainData.heightmapScale.x);
-                    terrain1YBase = terrain1.terrainData.heightmapResolution - 1;
+                    terrain1YBase = terrain1.terrainData.heightmapResolution - 1 - extraSeamSize;
                     seamWidth = terrain1.terrainData.heightmapResolution - Mathf.RoundToInt(Mathf.Abs(terrain1.transform.position.x - terrain2.transform.position.x) / terrain1.terrainData.heightmapScale.x);
-                    seamHeight = 1;
+                    seamHeight = seamDiameter;
+                    terrain1Heights = terrain1.terrainData.GetHeights(terrain1XBase, terrain1YBase, seamWidth, seamHeight);
 
                     terrain2XBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.x - terrain2.transform.position.x) / terrain2.terrainData.heightmapScale.x);
                     terrain2YBase = 0;
+                    terrain2Heights = terrain2.terrainData.GetHeights(terrain2XBase, terrain2YBase, seamWidth, seamHeight);
+
+                    StitchBordersWithSeam(stitchDirection, seamWidth, extraSeamSize, ref terrain1Heights, ref terrain2Heights);
                     break;
                 case StitchDirection.South:
-                    terrain1XBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.x - terrain1.transform.position.x) / terrain1.terrainData.heightmapScale.x);
+                    terrain1XBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.x - terrain2.transform.position.x) / terrain2.terrainData.heightmapScale.x);
                     terrain1YBase = 0;
                     seamWidth = terrain1.terrainData.heightmapResolution - Mathf.RoundToInt(Mathf.Abs(terrain1.transform.position.x - terrain2.transform.position.x) / terrain1.terrainData.heightmapScale.x);
-                    seamHeight = 1;
-
-                    terrain2XBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.x - terrain2.transform.position.x) / terrain2.terrainData.heightmapScale.x);
-                    terrain2YBase = terrain1.terrainData.heightmapResolution - 1;
+                    seamHeight = seamDiameter;
+                    terrain1Heights = terrain1.terrainData.GetHeights(terrain1XBase, terrain1YBase, seamWidth, seamHeight);
+                    
+                    terrain2XBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.x - terrain1.transform.position.x) / terrain1.terrainData.heightmapScale.x);
+                    terrain2YBase = terrain1.terrainData.heightmapResolution - 1 - extraSeamSize;
+                    terrain2Heights = terrain2.terrainData.GetHeights(terrain2XBase, terrain2YBase, seamWidth, seamDiameter);
+                    StitchBordersWithSeam(stitchDirection, seamWidth, extraSeamSize, ref terrain2Heights, ref terrain1Heights);
                     break;
                 case StitchDirection.West:
                     terrain1XBase = 0;
                     terrain1YBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.z - terrain1.transform.position.z) / terrain1.terrainData.heightmapScale.z);
-                    seamWidth = 1;
+                    seamWidth = seamDiameter;
                     seamHeight = terrain1.terrainData.heightmapResolution - Mathf.RoundToInt(Mathf.Abs(terrain1.transform.position.z - terrain2.transform.position.z) / terrain1.terrainData.heightmapScale.z);
+                    terrain1Heights = terrain1.terrainData.GetHeights(terrain1XBase, terrain1YBase, seamWidth, seamHeight);
 
-                    terrain2XBase = terrain2.terrainData.heightmapResolution - 1; 
+                    terrain2XBase = terrain2.terrainData.heightmapResolution - 1 - extraSeamSize; 
                     terrain2YBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.z - terrain2.transform.position.z) / terrain2.terrainData.heightmapScale.z);
+                    terrain2Heights = terrain2.terrainData.GetHeights(terrain2XBase, terrain2YBase, seamWidth, seamHeight);
+                    StitchBordersWithSeam(stitchDirection, seamHeight, extraSeamSize, ref terrain2Heights, ref terrain1Heights);
                     break;
                 case StitchDirection.East:
-                    terrain1XBase = terrain1.terrainData.heightmapResolution - 1; 
-                    terrain1YBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.z - terrain1.transform.position.z) / terrain1.terrainData.heightmapScale.z);
-                    seamWidth = 1;
-                    seamHeight = terrain1.terrainData.heightmapResolution - Mathf.RoundToInt(Mathf.Abs(terrain1.transform.position.z-terrain2.transform.position.z) / terrain1.terrainData.heightmapScale.z);
+                    terrain1XBase = terrain2.terrainData.heightmapResolution - 1 - extraSeamSize;
+                    terrain1YBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.z - terrain2.transform.position.z) / terrain2.terrainData.heightmapScale.z);
+                    seamWidth = seamDiameter;
+                    seamHeight = terrain1.terrainData.heightmapResolution - Mathf.RoundToInt(Mathf.Abs(terrain1.transform.position.z - terrain2.transform.position.z) / terrain1.terrainData.heightmapScale.z);
+                    terrain1Heights = terrain1.terrainData.GetHeights(terrain1XBase, terrain1YBase, seamWidth, seamHeight);
 
                     terrain2XBase = 0;
-                    terrain2YBase = Mathf.RoundToInt(Mathf.Max(0, terrain1.transform.position.z - terrain2.transform.position.z) / terrain2.terrainData.heightmapScale.z);
+                    terrain2YBase = Mathf.RoundToInt(Mathf.Max(0, terrain2.transform.position.z - terrain1.transform.position.z) / terrain1.terrainData.heightmapScale.z);
+                    terrain2Heights = terrain2.terrainData.GetHeights(terrain2XBase, terrain2YBase, seamWidth, seamHeight);
+
+                    StitchBordersWithSeam(stitchDirection, seamHeight, extraSeamSize, ref terrain1Heights, ref terrain2Heights);
                     break;
             }
+            terrain1.terrainData.SetHeights(terrain1XBase, terrain1YBase, terrain1Heights);
+            terrain2.terrainData.SetHeights(terrain2XBase, terrain2YBase, terrain2Heights);
+            
+            //bool wasStitched = AverageHeightPixels(terrain1, terrain2, terrain1XBase, terrain1YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, 1, 1, true, true, maxDifference);
 
-            bool wasStitched = AverageHeightPixels(terrain1, terrain2, terrain1XBase, terrain1YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, 1, 1, true, true, maxDifference);
+            //if (extraSeamSize > 0 && wasStitched)
+            //{
+            //    for (int s = 1; s <= extraSeamSize; s++)
+            //    {
+            //        float terrain1Weight = Mathf.InverseLerp(0, extraSeamSize, s);
+            //        float terrain2Weight = Mathf.InverseLerp(extraSeamSize, 0, s);
 
-            if (extraSeamSize > 0 && wasStitched)
+            //        switch (stitchDirection)
+            //        {
+            //            case StitchDirection.North:
+            //                AverageHeightPixels(terrain1, terrain1, terrain1XBase, terrain1YBase - s, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                AverageHeightPixels(terrain2, terrain2, terrain2XBase, terrain2YBase + s, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                break;
+            //            case StitchDirection.South:
+            //                AverageHeightPixels(terrain1, terrain1, terrain1XBase, terrain1YBase + s, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                AverageHeightPixels(terrain2, terrain2, terrain2XBase, terrain2YBase - s, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                break;
+            //            case StitchDirection.West:
+            //                AverageHeightPixels(terrain1, terrain1, terrain1XBase + s, terrain1YBase, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                AverageHeightPixels(terrain2, terrain2, terrain2XBase - s, terrain2YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                break;
+            //            case StitchDirection.East:
+            //                AverageHeightPixels(terrain1, terrain1, terrain1XBase - s, terrain1YBase, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                AverageHeightPixels(terrain2, terrain2, terrain2XBase + s, terrain2YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
+            //                break;
+            //        }
+
+            //    }
+
+            //}
+        }
+
+        private static void StitchBordersWithSeam(StitchDirection stitchDirection, int seamLength, int extraSeamSize, ref float[,] terrain1Heights, ref float[,] terrain2Heights)
+        {
+            for (int dimension1 = 0; dimension1 < seamLength; dimension1++)
             {
-                for (int s = 1; s <= extraSeamSize; s++)
+                float terrain1EndHeight = 0f;
+                float terrain2EndHeight = 0f;
+
+                bool isHorizontalSeam = stitchDirection == StitchDirection.North || stitchDirection == StitchDirection.South;
+
+                if (isHorizontalSeam)
                 {
-                    float terrain1Weight = Mathf.InverseLerp(0, extraSeamSize, s);
-                    float terrain2Weight = Mathf.InverseLerp(extraSeamSize, 0, s);
-
-                    switch (stitchDirection)
-                    {
-                        case StitchDirection.North:
-                            AverageHeightPixels(terrain1, terrain1, terrain1XBase, terrain1YBase - s, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            AverageHeightPixels(terrain2, terrain2, terrain2XBase, terrain2YBase + s, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            break;
-                        case StitchDirection.South:
-                            AverageHeightPixels(terrain1, terrain1, terrain1XBase, terrain1YBase + s, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            AverageHeightPixels(terrain2, terrain2, terrain2XBase, terrain2YBase - s, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            break;
-                        case StitchDirection.West:
-                            AverageHeightPixels(terrain1, terrain1, terrain1XBase + s, terrain1YBase, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            AverageHeightPixels(terrain2, terrain2, terrain2XBase - s, terrain2YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            break;
-                        case StitchDirection.East:
-                            AverageHeightPixels(terrain1, terrain1, terrain1XBase - s, terrain1YBase, terrain1XBase, terrain1YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            AverageHeightPixels(terrain2, terrain2, terrain2XBase + s, terrain2YBase, terrain2XBase, terrain2YBase, seamWidth, seamHeight, terrain1Weight, terrain2Weight, true, false, 1);
-                            break;
-                    }
-
+                    terrain1EndHeight = terrain1Heights[0, dimension1];
+                    terrain2EndHeight = terrain2Heights[extraSeamSize, dimension1];
+                }
+                else
+                {
+                    terrain1EndHeight = terrain1Heights[dimension1, 0];
+                    terrain2EndHeight = terrain2Heights[dimension1, extraSeamSize];
                 }
 
+                //float[] oldPoints = terrain1Heights[dimension1,];
+
+                //if (terrain1EndHeight > 0 || terrain2EndHeight > 0)
+                //{
+                //    string message = "BEFORE:";
+                //    message = "\r\nTerrain 1 End: " + terrain1EndHeight.ToString();
+                //    message += "\r\nTerrain 2 End: " + terrain2EndHeight.ToString();
+                //    message += "\r\n";
+                //    for (int dimension2 = 1; dimension2 < extraSeamSize * 2; dimension2++)
+                //    {
+                //        if (dimension2 <= extraSeamSize)
+                //        {
+                //            message += "\r\n" + dimension2.ToString() + ": " + terrain1Heights[dimension2, dimension1].ToString();
+                //        }
+                //        else
+                //        {
+                //            message += "\r\n" + dimension2.ToString() + ": " + terrain2Heights[dimension2 - extraSeamSize, dimension1].ToString();
+                //        }
+                //    }
+                //    Debug.Log(message);
+                //}
+
+                for (int dimension2 = 1; dimension2 < extraSeamSize * 2; dimension2++)
+                {
+                    float linearHeight = Mathf.Lerp(terrain1EndHeight, terrain2EndHeight, Mathf.InverseLerp(1, extraSeamSize * 2 - 1, dimension2));
+
+                    if (dimension2 == extraSeamSize)
+                    {
+                        //Do not process the actual seam between the two terrains, this will be done after the rest of the points have been processed
+                    }
+                    else
+                    {
+                        if (dimension2 < extraSeamSize)
+                        {
+                            if (isHorizontalSeam)
+                            {
+                                terrain1Heights[dimension2, dimension1] = Mathf.Lerp(terrain1Heights[dimension2, dimension1], linearHeight, Mathf.InverseLerp(0, extraSeamSize, dimension2));
+                            }
+                            else
+                            {
+                                terrain1Heights[dimension1, dimension2] = Mathf.Lerp(terrain1Heights[dimension1, dimension2], linearHeight, Mathf.InverseLerp(0, extraSeamSize, dimension2));
+                            }
+                        }
+                        else
+                        {
+                            if (isHorizontalSeam)
+                            {
+                                terrain2Heights[dimension2 - extraSeamSize, dimension1] = Mathf.Lerp(linearHeight, terrain2Heights[dimension2 - extraSeamSize, dimension1], Mathf.InverseLerp(0, extraSeamSize, dimension2 - extraSeamSize));
+                            }
+                            else
+                            {
+                                terrain2Heights[dimension1, dimension2-extraSeamSize] = Mathf.Lerp(linearHeight, terrain2Heights[dimension1, dimension2 - extraSeamSize], Mathf.InverseLerp(0, extraSeamSize, dimension2 - extraSeamSize));
+                            }
+                        }
+                    }
+                }
+                //Now do the actual seam between the two points based on the changed data
+                //just do the average between the closest points at the actual seam - this gives the best results without any visible bends between two terrains
+                if (isHorizontalSeam)
+                {
+                    terrain1Heights[extraSeamSize, dimension1] = (terrain1Heights[extraSeamSize - 1, dimension1] + terrain2Heights[extraSeamSize + 1 - extraSeamSize, dimension1]) / 2f;
+                    terrain2Heights[0, dimension1] = terrain1Heights[extraSeamSize, dimension1];
+                }
+                else
+                {
+                    terrain1Heights[dimension1, extraSeamSize] = (terrain1Heights[dimension1, extraSeamSize - 1] + terrain2Heights[dimension1, extraSeamSize + 1 - extraSeamSize]) / 2f;
+                    terrain2Heights[dimension1, 0] = terrain1Heights[dimension1, extraSeamSize];
+                }
+
+                //if (terrain1EndHeight > 0 || terrain2EndHeight > 0)
+                //{
+                //    string message = "AFTER:";
+                //    message = "\r\nTerrain 1 End: " + terrain1EndHeight.ToString();
+                //    message += "\r\nTerrain 2 End: " + terrain2EndHeight.ToString();
+                //    message += "\r\n";
+                //    for (int dimension2 = 1; dimension2 < extraSeamSize * 2; dimension2++)
+                //    {
+                //        if (dimension2 <= extraSeamSize)
+                //        {
+                //            message += "\r\n" + dimension2.ToString() + ": " + terrain1Heights[dimension2, dimension1].ToString();
+                //        }
+                //        else
+                //        {
+                //            message += "\r\n" + dimension2.ToString() + ": " + terrain2Heights[dimension2 - extraSeamSize, dimension1].ToString();
+                //        }
+                //    }
+                //    Debug.Log(message);
+                //    Debug.Log("################################################");
+                //}
             }
         }
 
@@ -849,8 +979,13 @@ namespace Gaia
         /// <param name="extraSeamSize">Amount of extra heightmap pixels to align near the border. More pixels result in smoother transition, but may also remove details on the individual terrains due to the averaging.</param>
         /// <param name="maxDifference">The maximum amount of (scalar) height difference the stitching process will attempt to stitch up. If =1, the stitching process will fix gaps of any size between two terrains.</param>
         /// <returns>True if stitching performed, false if not</returns>
-        public static bool TryStitch(Terrain terrain, StitchDirection direction, int extraSeamSize =1, float maxDifference = 0.01f)
+        public static bool TryStitch(Terrain terrain, StitchDirection direction, int extraSeamSize = 1, float maxDifference = 0.01f)
         {
+            if (TerrainLoaderManager.Instance.m_autoTerrainStitching == false)
+            {
+                return false;
+            }
+
             bool stitched = false;
             Terrain neighbor = GetTerrainNeighbor(terrain, direction);
             if (neighbor != null)
@@ -907,7 +1042,10 @@ namespace Gaia
                         }
                     }
                 }
-
+                if (!Application.isPlaying)
+                {
+                    TerrainLoaderManager.Instance.DirtyStorageData();
+                }
                
             }
             return stitched;
@@ -974,6 +1112,7 @@ namespace Gaia
                     }
                     avgheights[x, y] = (terrain1Heights[x, y] * terrain1Weight + terrain2Heights[x, y] * terrain2Weight) / (terrain1Weight + terrain2Weight);
                     //avgheights[x, y] = Mathf.Lerp(terrain1Heights[x, y], terrain2Heights[x, y], terrain2Weight);
+                    //avgheights[x,y] = Mathf.Min(terrain1Heights[x,y], terrain2Heights[x,y]);
                 }
             }
             if (withinMaxDistance)
@@ -1205,7 +1344,7 @@ namespace Gaia
             {
                 foreach (SpawnRule sr in sp.m_settings.m_spawnerRules)
                 {
-                    sp.ClearSpawnExtensionsForRule(sr);
+                    sp.ClearSpawnExtensionsForRule(sr, sp.m_settings);
                     Spawner.ClearGameObjectsForRule(sp, sr, false, terrain);
                 }
             }

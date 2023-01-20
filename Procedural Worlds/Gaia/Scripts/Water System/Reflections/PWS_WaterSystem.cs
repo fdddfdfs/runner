@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Gaia.Pipeline.HDRP;
 using UnityEngine;
 #if MEWLIST_MASSIVE_CLOUDS
 using Mewlist;
@@ -90,6 +91,9 @@ namespace Gaia
         public Texture2D m_currentWaterTexture;
         public bool m_requestDepthTextureGeneration = false;
         public Light SunLight;
+#if HDPipeline
+        public HDAdditionalLightData SunLightData;
+#endif
         public float m_minSurfaceLight = 0.5f;
         public float m_maxSurfaceLight = 2f;
 
@@ -117,7 +121,6 @@ namespace Gaia
 #endif
 
         #endregion
-
         #region Private Variables
 
         public bool m_weatherSystemPresent = false;
@@ -167,7 +170,6 @@ namespace Gaia
         #endregion
 
         #endregion
-
         #region Underwater Sync Variables
 
         #region Public Variables
@@ -210,7 +212,6 @@ namespace Gaia
         #endregion
 
         #endregion
-
         #region Unity Methods
 
         private void Start()
@@ -227,6 +228,17 @@ namespace Gaia
         private void OnEnable()
         {
             StartAndOnEnabled();
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+            {
+                EditorApplication.update -= EditorUpdate;
+            }
+            else
+            {
+                EditorApplication.update -= EditorUpdate;
+                EditorApplication.update += EditorUpdate;
+            }
+#endif
         }
         /// <summary>
         /// Update is called every frame
@@ -242,7 +254,10 @@ namespace Gaia
         {
             if (RenderPipeline == GaiaConstants.EnvironmentRenderer.BuiltIn)
             {
-                OnRenderObjectUpdate();
+                if (ConfigurePlayerAndCamera())
+                {
+                    OnRenderObjectUpdate();
+                }
             }
         }
         /// <summary>
@@ -306,6 +321,7 @@ namespace Gaia
             m_rebuild = true;
             Generate(m_waterProfile);
             m_rebuild = false;
+            CheckSunLight(true);
 
 #if GAIA_PRO_PRESENT
             m_weatherSystemPresent = ProceduralWorldsGlobalWeather.Instance;
@@ -344,6 +360,7 @@ namespace Gaia
 #if UNITY_EDITOR
             m_waterProfile.UpdateTextureResolution();
 #endif
+            CheckSunLight();
             BuildWaterColorDepth();
             UpdateShaderValues(m_waterProfileValues);
             float distanceCheck = 500f;
@@ -359,10 +376,8 @@ namespace Gaia
                     {
                         SendWaveData();
                         SendWindDirection();
-#if UNITY_EDITOR
                         SendNormalMaps();
                         SendWaterEdge();
-#endif
                     }
                 }
             }
@@ -375,11 +390,39 @@ namespace Gaia
                 }
             }
         }
+
+        private void CheckSunLight(bool checkIsNull = false)
+        {
+            bool searchForLightSource = false;
+            if (checkIsNull)
+            {
+                if (SunLight == null)
+                {
+                    searchForLightSource = true;
+                }
+            }
+
+            if (SunLight != null)
+            {
+                if (!SunLight.isActiveAndEnabled)
+                {
+                    searchForLightSource = true;
+                }
+            }
+
+            if (searchForLightSource)
+            {
+                SunLight = GaiaUtils.GetMainDirectionalLight(false);
+#if HDPipeline
+                SunLightData = GaiaHDRPRuntimeUtils.GetHDLightData(SunLight);
+#endif
+            }
+        }
         /// <summary>
         /// Used on will render object and the alternative for SRP
         /// </summary>
         /// <param name="SRP"></param>
-        private void OnRenderObjectUpdate(Camera overrideCam = null)
+        private void OnRenderObjectUpdate(Camera overrideCam = null, bool refreshRenderPipeline = false)
         {
             if (m_waterProfile == null && m_waterProfileValues == null)
             {
@@ -396,74 +439,56 @@ namespace Gaia
 
             if (m_disableAllReflections)
             {
-                ClearData(true);
+                ClearData();
                 return;
             }
 
             if (!Application.isPlaying)
             {
 #if UNITY_EDITOR
-                if (SceneView.lastActiveSceneView == null)
-                {
-                    return;
-                }
-
-                m_RenderCamera = SceneView.lastActiveSceneView.camera;
                 if (overrideCam != null)
                 {
                     m_RenderCamera = overrideCam;
                 }
-                if (m_RenderCamera != null)
+
+                if (CheckPositionAndRotation())
                 {
-                    if (CheckPositionAndRotation())
+                    GenerateCamera(m_waterProfile);
+                    ResyncCameraSettings(m_waterProfile);
+                    UpdateCameraModes();
+                    if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
                     {
-                        GenerateCamera(m_waterProfile);
-                        ResyncCameraSettings(m_waterProfile);
-                        UpdateCameraModes();
-                        if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
-                        {
-                            BuildReflection(m_waterProfile);
-                        }
+                        BuildReflection(m_waterProfile, refreshRenderPipeline);
                     }
                 }
 #endif
             }
             else
             {
-                m_RenderCamera = m_gameCamera;
                 if (overrideCam != null)
                 {
                     m_RenderCamera = overrideCam;
                 }
-                if (m_RenderCamera != null)
-                {
-                    if (CheckPositionAndRotation())
-                    {
-                        if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
-                        {
-                            BuildReflection(m_waterProfile);
-                        }
-                    }
-                    else
-                    {
-                        if (AutoRefresh())
-                        {
-                            m_frameCheck = Random.Range(5, 15);
-                            if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
-                            {
-                                BuildReflection(m_waterProfile);
-                            }
-                        }
 
-                        m_frameCheck--;
+                if (CheckPositionAndRotation())
+                {
+                    if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
+                    {
+                        BuildReflection(m_waterProfile, refreshRenderPipeline);
                     }
                 }
                 else
                 {
-                    if (m_RenderCamera == null)
+                    if (AutoRefresh())
                     {
-                        m_RenderCamera = GaiaUtils.GetCamera();
+                        m_frameCheck = Random.Range(5, 15);
+                        if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
+                        {
+                            BuildReflection(m_waterProfile, refreshRenderPipeline);
+                        }
                     }
+
+                    m_frameCheck--;
                 }
             }
         }
@@ -483,7 +508,7 @@ namespace Gaia
             Shader.SetGlobalFloat(GaiaShaderID.CameraRoll, roll);
             Shader.SetGlobalMatrix(GaiaShaderID.InvViewProjection, (GL.GetGPUProjectionMatrix(cam.projectionMatrix, false) * cam.worldToCameraMatrix).inverse);
 
-            if (Instance != null)
+            if (Instance != null && ConfigurePlayerAndCamera())
             {
                 OnRenderObjectUpdate(cam);
             }
@@ -514,6 +539,18 @@ namespace Gaia
             {
                 Console.WriteLine(e);
                 throw;
+            }
+        }
+        /// <summary>
+        /// Editor Update
+        /// </summary>
+        private void EditorUpdate()
+        {
+            CheckSunLight(true);
+            if (SunLight != null)
+            {
+                BuildWaterColorDepth();
+                UpdateShaderValues(m_waterProfileValues);
             }
         }
         /// <summary>
@@ -629,7 +666,7 @@ namespace Gaia
         /// Used to generate the reflections
         /// </summary>
         /// <param name="profile"></param>
-        public void Generate(SceneProfile profile)
+        public void Generate(SceneProfile profile, bool refreshRenderPipeline = false)
         {
             if (m_disableAllReflections)
             {
@@ -664,7 +701,7 @@ namespace Gaia
                     CreateMirrorObjects(profile);
                     if (m_reflectionTexture != null && m_reflectionTexture.width > 0)
                     {
-                        BuildReflection(profile);
+                        BuildReflection(profile, refreshRenderPipeline);
                     }
                 }
             }
@@ -1006,7 +1043,7 @@ namespace Gaia
                         }
                         else
                         {
-                            SunLight = GaiaUtils.GetMainDirectionalLight(false);
+                            CheckSunLight();
                         }
                     }
 #else
@@ -1023,7 +1060,7 @@ namespace Gaia
                     }
                     else
                     {
-                        SunLight = GaiaUtils.GetMainDirectionalLight(false);
+                        CheckSunLight();
                     }
 #endif
                 }
@@ -1087,7 +1124,7 @@ namespace Gaia
                         }
                         else
                         {
-                            SunLight = GaiaUtils.GetMainDirectionalLight(false);
+                            CheckSunLight();
                         }
                     }
                 }
@@ -1108,7 +1145,7 @@ namespace Gaia
                     }
                     else
                     {
-                        SunLight = GaiaUtils.GetMainDirectionalLight(false);
+                        CheckSunLight();
                     }
                 }
 #endif
@@ -1122,16 +1159,18 @@ namespace Gaia
         private void ClearAllData()
         {
             ClearData();
-            //Stops prerenders and clears data
             switch (RenderPipeline)
             {
                 case GaiaConstants.EnvironmentRenderer.Universal:
+                {
                     RenderPipelineManager.beginCameraRendering += OnRenderSRP;
                     break;
-                case GaiaConstants.EnvironmentRenderer.HighDefinition:
-                    //RenderPipelineManager.beginCameraRendering += OnRenderSRP;
-                    break;
+                }
             }
+
+#if UNITY_EDITOR
+            EditorApplication.update -= EditorUpdate;
+#endif
         }
         /// <summary>
         /// Checks to see if the active gameobject has a mesh renderer
@@ -1158,10 +1197,42 @@ namespace Gaia
                 m_instance = this;
             }
 
-            if (m_gameCamera == null)
+            ConfigurePlayerAndCamera();
+#if UNITY_EDITOR
+            if (m_gaiaSession == null)
+            {
+                m_gaiaSession = GaiaSessionManager.GetSessionManager(false, false);
+            }
+#endif
+            CheckSunLight(true);
+            if (m_currentGradient == null)
+            {
+                m_currentGradient = new Gradient();
+            }
+        }
+        /// <summary>
+        /// Sets up the player transform and the render camera for reflections
+        /// </summary>
+        /// <returns></returns>
+        private bool ConfigurePlayerAndCamera()
+        {
+            //Setup player
+            if (m_player == null || !m_player.gameObject.activeInHierarchy)
+            {
+                m_player = GaiaUtils.GetPlayerTransform();
+                if (m_player == null && m_gameCamera != null)
+                {
+                    m_player = m_gameCamera.transform;
+                }
+            }
+
+            //Setup camera
+            if (m_gameCamera == null || !m_gameCamera.enabled)
             {
                 m_gameCamera = GaiaUtils.GetCamera();
             }
+
+            //Assign correct camera via editor and playmode
             if (Application.isPlaying)
             {
                 m_RenderCamera = m_gameCamera;
@@ -1171,38 +1242,19 @@ namespace Gaia
 #if UNITY_EDITOR
                 if (SceneView.lastActiveSceneView == null)
                 {
-                    return;
+                    return false;
                 }
                 m_RenderCamera = SceneView.lastActiveSceneView.camera;
 #endif
             }
 
-            if (m_player == null)
+            if (m_player != null && m_RenderCamera != null)
             {
-                m_player = GaiaUtils.GetPlayerTransform();
-            }
-            if (m_player == null)
-            {
-                if (m_RenderCamera)
-                {
-                    m_player = m_RenderCamera.transform;
-                }
-            }
-#if UNITY_EDITOR
-            if (m_gaiaSession == null)
-            {
-                m_gaiaSession = GaiaSessionManager.GetSessionManager(false, false);
-            }
-#endif
-            if (SunLight == null)
-            {
-                SunLight = GaiaUtils.GetMainDirectionalLight(false);
+                return true;
             }
 
-            if (m_currentGradient == null)
-            {
-                m_currentGradient = new Gradient();
-            }
+            Debug.LogWarning("Water System: The player was null or no camera was found in your scene.");
+            return false;
         }
         /// <summary>
         /// Update Aura
@@ -1307,42 +1359,43 @@ namespace Gaia
         {
             if (dataOnly)
             {
-                if (m_reflectionTexture)
+                if (m_reflectionTexture != null)
                 {
                     m_reflectionTexture.Release();
                     DestroyImmediate(m_reflectionTexture);
                     m_reflectionTexture = null;
                 }
 
-                if (RenderPipeline == GaiaConstants.EnvironmentRenderer.Universal || RenderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+                if (RenderPipeline == GaiaConstants.EnvironmentRenderer.Universal)
                 {
                     RenderPipelineManager.beginCameraRendering -= OnRenderSRP;
                 }
             }
             else
             {
-                if (m_reflectionTexture)
+                if (m_reflectionTexture != null)
                 {
                     m_reflectionTexture.Release();
                     DestroyImmediate(m_reflectionTexture);
                     m_reflectionTexture = null;
                 }
 
-                if (m_reflectionCamera)
+                if (m_reflectionCamera != null)
                 {
                     DestroyImmediate(m_reflectionCamera.gameObject);
                 }
 
-                if (RenderPipeline == GaiaConstants.EnvironmentRenderer.Universal || RenderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+                if (RenderPipeline == GaiaConstants.EnvironmentRenderer.Universal)
                 {
                     RenderPipelineManager.beginCameraRendering -= OnRenderSRP;
                 }
             }
         }
+
         /// <summary>
         /// Builds the necessary steps to produce a reflection
         /// </summary>
-        private void BuildReflection(SceneProfile profile)
+        private void BuildReflection(SceneProfile profile, bool refreshRenderPipeline = false)
         {
             if (m_disableAllReflections)
             {
@@ -1373,7 +1426,7 @@ namespace Gaia
                     m_ableToRender = false;
                     m_worldPosition = transform.position;
                     m_normal = transform.up;
-                    GenerateReflection(profile, reflectionsEnabled);
+                    GenerateReflection(profile, reflectionsEnabled, refreshRenderPipeline);
                     CreateMirrorObjects(profile);
                     m_ableToRender = true;
                 }
@@ -1582,9 +1635,13 @@ namespace Gaia
         /// <summary>
         /// Generates the reflection based on the main camera
         /// </summary>
-        private void GenerateReflection(SceneProfile profile, bool reflectionsEnabled)
+        private void GenerateReflection(SceneProfile profile, bool reflectionsEnabled, bool refreshRenderPipeline = false)
         {
-            RenderPipeline = GaiaUtils.GetActivePipeline();
+            if (refreshRenderPipeline)
+            {
+                RenderPipeline = GaiaUtils.GetActivePipeline();
+            }
+
             switch (RenderPipeline)
             {
                 case GaiaConstants.EnvironmentRenderer.BuiltIn:
@@ -1953,62 +2010,49 @@ namespace Gaia
                 {
                     if (WeatherSystem.CheckIsNight())
                     {
-                        if (WeatherSystem.m_moonLight != null)
-                        {
-                            SunLight = WeatherSystem.m_moonLight;
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightDirection))
-                            {
-                                m_waterMaterial.SetVector(GaiaShaderID.m_globalLightDirection, -WeatherSystem.m_moonLight.transform.forward);
-                            }
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightColor))
-                            {
-                                m_waterMaterial.SetColor(GaiaShaderID.m_globalLightColor, WeatherSystem.m_moonLight.color);
-                            }
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightIntensity))
-                            {
-                                m_waterMaterial.SetFloat(GaiaShaderID.m_globalLightIntensity, WeatherSystem.m_moonLight.intensity);
-                            }
-                        }
+                        SunLight = WeatherSystem.m_moonLight;
+                        ApplySunLightShaderData();
                     }
                     else
                     {
-                        if (WeatherSystem.m_sunLight != null)
-                        {
-                            SunLight = WeatherSystem.m_sunLight;
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightDirection))
-                            {
-                                m_waterMaterial.SetVector(GaiaShaderID.m_globalLightDirection, -WeatherSystem.m_sunLight.transform.forward);
-                            }
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightColor))
-                            {
-                                m_waterMaterial.SetColor(GaiaShaderID.m_globalLightColor, WeatherSystem.m_sunLight.color);
-                            }
-                            if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightIntensity))
-                            {
-                                m_waterMaterial.SetFloat(GaiaShaderID.m_globalLightIntensity, WeatherSystem.m_sunLight.intensity);
-                            }
-                        }
+                        SunLight = WeatherSystem.m_sunLight;
+                        ApplySunLightShaderData();
                     }
                 }
                 else
                 {
-                    if (SunLight != null)
-                    {
-                        if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightDirection))
-                        {
-                            m_waterMaterial.SetVector(GaiaShaderID.m_globalLightDirection, -SunLight.transform.forward);
-                        }
-                        if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightColor))
-                        {
-                            m_waterMaterial.SetColor(GaiaShaderID.m_globalLightColor, SunLight.color);
-                        }
-                        if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightIntensity))
-                        {
-                            m_waterMaterial.SetFloat(GaiaShaderID.m_globalLightIntensity, SunLight.intensity);
-                        }
-                    }
+                    ApplySunLightShaderData();
                 }
 #else
+                ApplySunLightShaderData();
+#endif
+            }
+        }
+
+        private void ApplySunLightShaderData()
+        {
+            if (RenderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+            {
+#if HDPipeline
+                if (SunLightData != null)
+                {
+                    if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightDirection))
+                    {
+                        m_waterMaterial.SetVector(GaiaShaderID.m_globalLightDirection, -SunLight.transform.forward);
+                    }
+                    if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightColor))
+                    {
+                        m_waterMaterial.SetColor(GaiaShaderID.m_globalLightColor, SunLightData.color);
+                    }
+                    if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightIntensity))
+                    {
+                        m_waterMaterial.SetFloat(GaiaShaderID.m_globalLightIntensity, SunLightData.intensity);
+                    }
+                }
+#endif
+            }
+            else
+            {
                 if (SunLight != null)
                 {
                     if (GaiaUtils.ValidateShaderProperty(m_waterMaterial, GaiaShaderID.m_globalLightDirection))
@@ -2024,10 +2068,8 @@ namespace Gaia
                         m_waterMaterial.SetFloat(GaiaShaderID.m_globalLightIntensity, SunLight.intensity);
                     }
                 }
-#endif
             }
         }
-
         /// <summary>
         /// Sets the sun light on the water system
         /// </summary>
@@ -2045,6 +2087,9 @@ namespace Gaia
             }
 
             Instance.SunLight = light;
+#if HDPipeline
+            Instance.SunLightData = GaiaHDRPRuntimeUtils.GetHDLightData(Instance.SunLight);
+#endif
         }
 
         #endregion
@@ -2093,8 +2138,8 @@ namespace Gaia
 	    }
         private void SendWaveData()
 	    {
-            m_waterMaterial.SetFloat (GaiaShaderID._normalLayer0_ID, m_waterMaterial.GetFloat (GaiaShaderID._normalLayer0Scale_ID ) );
-            m_waterMaterial.SetFloat (GaiaShaderID._normalLayer1_ID, m_waterMaterial.GetFloat (GaiaShaderID._normalLayer1Scale_ID ) );
+            m_waterMaterial.SetFloat (GaiaShaderID._normalLayer0Scale_ID, m_waterMaterial.GetFloat (GaiaShaderID._normalLayer0Scale_ID ) );
+            m_waterMaterial.SetFloat (GaiaShaderID._normalLayer1Scale_ID, m_waterMaterial.GetFloat (GaiaShaderID._normalLayer1Scale_ID ) );
 
             m_waterMaterial.SetFloat (GaiaShaderID._normalTile_ID, m_waterMaterial.GetFloat (GaiaShaderID._normalTile_ID ) );
 

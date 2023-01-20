@@ -202,7 +202,7 @@ namespace Gaia
                             //Manager can be null if the dependency package installation is started upon opening the manager window.
                             if (manager != null)
                             {
-                                Vector2 initialSize = new Vector2(650f, 450f);
+                                Vector2 initialSize = new Vector2(850f, 450f);
                                 manager.position = new Rect(new Vector2(Screen.currentResolution.width / 2f - initialSize.x / 2f, Screen.currentResolution.height / 2f - initialSize.y / 2f), initialSize);
                                 manager.Show();
                             }

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+#if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Compilation;
+#endif
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 
@@ -27,7 +30,14 @@ namespace Gaia
             Initialize();
         }
 
-        public  void Initialize()
+        private void OnDestroy()
+        {
+#if UNITY_EDITOR
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+#endif
+        }
+
+        public void Initialize()
         {
             if (m_profile == null)
             {
@@ -38,6 +48,16 @@ namespace Gaia
             }
 
             ApplyToGameCamera();
+            ApplyToSceneCamera();
+#if UNITY_EDITOR
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
+#endif
+        }
+
+        private void OnCompilationFinished(object obj)
+        {
+            Refresh();
         }
 
         public void ApplyToGameCamera()
@@ -64,6 +84,32 @@ namespace Gaia
                     cam.layerCullDistances = layerCulls;
                 }
             }
+        }
+
+        public void ApplyToSceneCamera()
+        {
+#if UNITY_EDITOR
+            if (m_applyToSceneCamera)
+            {
+                foreach (var sceneCamera in SceneView.GetAllSceneCameras())
+                {
+                    sceneCamera.layerCullDistances = m_profile.m_layerDistances;
+                }
+                ApplyToDirectionalLight();
+            }
+            else
+            {
+                float[] layerCulls = new float[32];
+                for (int i = 0; i < layerCulls.Length; i++)
+                {
+                    layerCulls[i] = 0f;
+                }
+                foreach (var sceneCamera in SceneView.GetAllSceneCameras())
+                {
+                    sceneCamera.layerCullDistances = layerCulls;
+                }
+            }
+#endif
         }
 
         public void ApplyToDirectionalLight()
@@ -112,6 +158,15 @@ namespace Gaia
                         m_directionalLight.layerShadowCullDistances = layers;
                     }
                 }
+            }
+        }
+
+        public static void Refresh()
+        {
+            foreach (SimpleCameraLayerCulling sclc in FindObjectsOfType<SimpleCameraLayerCulling>())
+            {
+                sclc.ApplyToGameCamera();
+                sclc.ApplyToSceneCamera();
             }
         }
     }

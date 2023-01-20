@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -372,11 +373,23 @@ namespace Gaia
         }
 
 
-        public RenderTexture BakeTerrainTreeCollisions(Terrain terrain, int treePrototypeId, string spawnRuleGUID, float boundsRadius)
+        public RenderTexture BakeTerrainTreeCollisions(Terrain terrain, CollisionMask collisionMask, float boundsRadius)
         {
             //Iterate through the trees and build a v4 array with the positions
+            List<int> treePrototypeIds = new List<int>();
+            List<SpawnRule> selectedTreeRules = CollisionMask.m_allTreeSpawnRules.Where(x => collisionMask.m_selectedTreeSpawnRuleGUIDs.Contains(x.GUID)).ToList();
 
-            TreeInstance[] allRelevantTrees = terrain.terrainData.treeInstances.Where(x => x.prototypeIndex == treePrototypeId).ToArray();
+            foreach (SpawnRule sr in selectedTreeRules)
+            {
+                if (sr == null)
+                {
+                    continue;
+                }
+                int treePrototypeID = TerrainHelper.GetTreePrototypeIDFromSpawnRule(sr, terrain);
+                treePrototypeIds.Add(treePrototypeID);
+            }
+
+            TreeInstance[] allRelevantTrees = terrain.terrainData.treeInstances.Where(x => treePrototypeIds.Contains(x.prototypeIndex)).ToArray();
             //Array to store all positions and radi of the tree
             Vector4[] posAndRad = new Vector4[allRelevantTrees.Length];
 
@@ -386,7 +399,7 @@ namespace Gaia
                 posAndRad[i] = new Vector4(allRelevantTrees[i].position.x, allRelevantTrees[i].position.y, 1 - allRelevantTrees[i].position.z, WorldDistance2UVDistance(terrain, boundsRadius * allRelevantTrees[i].widthScale));
             }
 
-            string fileName = GetTreeCollisionMaskFileName(terrain, spawnRuleGUID, boundsRadius);
+            string fileName = GetTreeCollisionMaskFileName(terrain, collisionMask.RadiusTreeMaskValues.ToString(), boundsRadius);
 
             return BakeVectorArrayForTerrain(posAndRad, terrain, fileName);
 
@@ -645,7 +658,7 @@ namespace Gaia
             entry.fullPath = fullPath;
         }
 
-        public RenderTexture LoadBakedMask(Terrain terrain, BakedMaskTypeInternal type, CollisionMask collisionMask = null, string worldMaskGUID = "", int treeID = 0) //float radius, int id = 0, string tag = "", string GUID = "")
+        public RenderTexture LoadBakedMask(Terrain terrain, BakedMaskTypeInternal type, CollisionMask collisionMask = null, string worldMaskGUID = "") //float radius, int id = 0, string tag = "", string GUID = "")
         {
 
             if (m_cacheEntries == null)
@@ -657,7 +670,7 @@ namespace Gaia
             switch (type)
             {
                 case BakedMaskTypeInternal.RadiusTree:
-                    fileName = GetTreeCollisionMaskFileName(terrain, collisionMask.m_treeSpawnRuleGUID, collisionMask.m_Radius);
+                    fileName = GetTreeCollisionMaskFileName(terrain, collisionMask.RadiusTreeMaskValues.ToString(), collisionMask.m_Radius);
                     break;
                 case BakedMaskTypeInternal.RadiusTag:
                     fileName = GetTagCollisionMaskFileName(terrain, collisionMask.m_tag, collisionMask.m_Radius);
@@ -694,7 +707,7 @@ namespace Gaia
                 switch (type)
                 {
                     case BakedMaskTypeInternal.RadiusTree:
-                        return BakeTerrainTreeCollisions(terrain, treeID, collisionMask.m_treeSpawnRuleGUID, collisionMask.m_Radius);
+                        return BakeTerrainTreeCollisions(terrain, collisionMask, collisionMask.m_Radius);
                     case BakedMaskTypeInternal.RadiusTag:
                         return BakeTerrainTagCollisions(terrain, collisionMask.m_tag, collisionMask.m_Radius);
                     case BakedMaskTypeInternal.WorldBiomeMask:
@@ -747,21 +760,11 @@ namespace Gaia
         }
 
 
-        public void BakeAllTreeCollisions(string spawnRuleGUID, float radius)
+        public void BakeAllTreeCollisions(CollisionMask collisionMask, float radius)
         {
-            SpawnRule sr = CollisionMask.m_allTreeSpawnRules.FirstOrDefault(x => x.GUID == spawnRuleGUID);
-            if (sr == null)
-            {
-                return;
-            }
-
             foreach (Terrain t in Terrain.activeTerrains)
             {
-                int treePrototypeID = TerrainHelper.GetTreePrototypeIDFromSpawnRule(sr, t);
-                if (treePrototypeID != -1)
-                {
-                    BakeTerrainTreeCollisions(t, treePrototypeID, spawnRuleGUID, radius);
-                }
+                BakeTerrainTreeCollisions(t, collisionMask, radius);
             }
         }
 
@@ -824,7 +827,7 @@ namespace Gaia
         }
 
 
-        private void SetLayerIDDirty(int layerID)
+        public void SetLayerIDDirty(int layerID)
         {
             //Iterate through the cached textures, and fish out the ones that fit the layer ID according to the layer mask, then relase them
             for (int i = 0; i < m_cacheEntries.Length; i++)

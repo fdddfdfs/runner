@@ -9,9 +9,9 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: SkyCarLightCoversWhite
   m_Shader: {fileID: 4800000, guid: 676d51a93fad6434bb7ee1f64ad89551, type: 3}
-  m_ShaderKeywords: _ALPHATEST_OFF _ALPHATEST_ON
-    _PW_SF_COVER_ON
-   
+  m_ShaderKeywords: '_ALPHATEST_OFF _ALPHATEST_ON _PW_SF_COVER_ON
+
+'
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -87,7 +87,8 @@ Material:
     - _PW_GlobalControl: 1
     - _PW_Global_SeasonalTintAmount: 0
     - _PW_SF_BILLBOARD: 1
-    - _PW_SF_COVER: 1
+    - _PW_SF_COVER: 0
+    - _PW_SF_FLORA_INDIRECT: 0
     - _PW_SF_SSS: 0
     - _PW_SF_WIND: 0
     - _PW_SF_WORLDMAP: 0
@@ -110,3 +111,4 @@ Material:
     - _PW_WorldMapColorCover0: {r: 1, g: 1, b: 1, a: 1}
     - _PW_WorldMapColorCover1: {r: 1, g: 1, b: 1, a: 1}
     - _PW_WorldMapColorObject: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []

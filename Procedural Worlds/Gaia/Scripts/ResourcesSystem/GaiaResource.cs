@@ -268,6 +268,18 @@ namespace Gaia
                     ResourceProtoTexture splat = m_texturePrototypes[resourceIdx];
                     foreach (TerrainLayer proto in terrain.terrainData.terrainLayers)
                     {
+                        //perform a check based on layer guid first, more precise
+#if UNITY_EDITOR
+                        string layerGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(proto));
+                        if (!string.IsNullOrEmpty(layerGUID))
+                        {
+                            if (layerGUID == splat.m_LayerGUID)
+                            {
+                                //Found it!
+                                return localTerrainIdx;
+                            }
+                        }
+#endif
                         if (splat != null && proto != null)
                         {
                             if (splat.m_texture != null && proto.diffuseTexture != null)
@@ -296,7 +308,11 @@ namespace Gaia
                     ResourceProtoDetail detail = m_detailPrototypes[resourceIdx];
                     foreach (DetailPrototype proto in terrain.terrainData.detailPrototypes)
                     {
+#if UNITY_2021_2_OR_NEWER
+                        if (detail.m_renderMode == proto.renderMode || detail.m_useInstancing == proto.useInstancing)
+#else
                         if (detail.m_renderMode == proto.renderMode)
+#endif
                         {
                             if (PWCommon5.Utils.IsSameTexture(detail.m_detailTexture, proto.prototypeTexture, false))
                             {
@@ -428,6 +444,9 @@ namespace Gaia
                         newDetail.usePrototypeMesh = false;
                         newDetail.prototypeTexture = detail.m_detailTexture;
                     }
+#if UNITY_2021_2_OR_NEWER
+                    newDetail.useInstancing = detail.m_useInstancing;
+#endif
                     newDetail.dryColor = detail.m_dryColour;
                     newDetail.healthyColor = detail.m_healthyColour;
                     newDetail.maxHeight = detail.m_maxHeight;
@@ -713,7 +732,9 @@ namespace Gaia
                     resourceDetailProto.m_name = GetUniqueName(terrainDetailProto.prototypeTexture.name, ref names);
                     resourceDetailProto.m_detailTexture = terrainDetailProto.prototypeTexture;
                 }
-
+#if UNITY_2021_2_OR_NEWER
+                resourceDetailProto.m_useInstancing = terrainDetailProto.useInstancing;
+#endif
                 resourceDetailProto.m_dryColour = terrainDetailProto.dryColor;
                 resourceDetailProto.m_healthyColour = terrainDetailProto.healthyColor;
                 resourceDetailProto.m_maxHeight = terrainDetailProto.maxHeight;
@@ -1205,6 +1226,9 @@ namespace Gaia
                         newDetail.usePrototypeMesh = false;
                         newDetail.prototypeTexture = detail.m_detailTexture;
                     }
+#if UNITY_2021_2_OR_NEWER
+                    newDetail.useInstancing = detail.m_useInstancing;
+#endif
                     newDetail.dryColor = detail.m_dryColour;
                     newDetail.healthyColor = detail.m_healthyColour;
                     newDetail.maxHeight = detail.m_maxHeight;
@@ -1250,7 +1274,8 @@ namespace Gaia
         /// </summary>
         /// <param name="resourceType">Resource type</param>
         /// <param name="resourceIdx">Resource idx</param>
-        public void AddPrototypeToTerrain(GaiaConstants.SpawnerResourceType resourceType, int resourceIdx, Terrain[] terrains = null)
+        /// <param name="forceAddition">Force the addition of the texture, will add it even if it exists already on the terrain</param>
+        public void AddPrototypeToTerrain(GaiaConstants.SpawnerResourceType resourceType, int resourceIdx, Terrain[] terrains = null, bool forceAddition = false)
         {
             if (terrains == null)
             {
@@ -1259,7 +1284,7 @@ namespace Gaia
 
             foreach (Terrain terrain in terrains)
             {
-                AddPrototypeToTerrain(resourceType, resourceIdx, terrain);
+                AddPrototypeToTerrain(resourceType, resourceIdx, terrain, forceAddition);
             }
         }
 
@@ -1269,7 +1294,8 @@ namespace Gaia
         /// <param name="resourceType">Resource type</param>
         /// <param name="resourceIdx">Resource idx</param>
         /// <param name="terrain">Terrain to add it to</param>
-        public void AddPrototypeToTerrain(GaiaConstants.SpawnerResourceType resourceType, int resourceIdx, Terrain terrain)
+        /// <param name="forceAddition">Force the addition of the texture, will add it even if it exists already on the terrain</param>
+        public void AddPrototypeToTerrain(GaiaConstants.SpawnerResourceType resourceType, int resourceIdx, Terrain terrain, bool forceAddition=false)
         {
             //Check index
             if (ResourceIdxOutOfBounds(resourceType, resourceIdx))
@@ -1278,7 +1304,7 @@ namespace Gaia
             }
 
             //Exit if its already there - assume if any terrain then in all terrains
-            if (!PrototypeMissingFromTerrain(resourceType, resourceIdx, terrain))
+            if (!PrototypeMissingFromTerrain(resourceType, resourceIdx, terrain) && !forceAddition)
             {
                 return;
             }
@@ -1323,7 +1349,7 @@ namespace Gaia
                     terrainLayer.diffuseRemapMin = splat.m_diffuseRemapMin;
                     terrainLayer.diffuseRemapMax = splat.m_diffuseRemapMax;
                     terrainLayer.maskMapRemapMin = splat.m_maskMapRemapMin;
-                    terrainLayer.maskMapRemapMin = splat.m_maskMapRemapMin;
+                    terrainLayer.maskMapRemapMax = splat.m_maskMapRemapMax;
                     terrainLayer.specular = splat.m_specularColor;
                     terrainLayer.tileOffset = new Vector2(splat.m_offsetX, splat.m_offsetY);
                     terrainLayer.tileSize = new Vector2(splat.m_sizeX, splat.m_sizeY);
@@ -1350,6 +1376,14 @@ namespace Gaia
                         newDetail.usePrototypeMesh = false;
                         newDetail.prototypeTexture = detail.m_detailTexture;
                     }
+#if UNITY_2021_2_OR_NEWER
+                    newDetail.useInstancing = detail.m_useInstancing;
+                    //override to vertex lit if we are using instancing.
+                    if (newDetail.useInstancing)
+                    {
+                        newDetail.renderMode = DetailRenderMode.VertexLit;
+                    }
+#endif
                     newDetail.dryColor = detail.m_dryColour;
                     newDetail.healthyColor = detail.m_healthyColour;
                     newDetail.maxHeight = detail.m_maxHeight;
@@ -1453,7 +1487,7 @@ namespace Gaia
         }
         */
 
-        #region Cache Helpers
+#region Cache Helpers
 
         /// <summary>
         /// Return true if any of these resources do texture based lookups
@@ -1549,9 +1583,9 @@ namespace Gaia
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region Add Resources
+#region Add Resources
 
         /// <summary>
         /// Add a new game object resource, and make some assumptions based on current terrain settings
@@ -1886,9 +1920,9 @@ namespace Gaia
         }
 
 
-        #endregion
+#endregion
 
-        #region Create Spawners
+#region Create Spawners
 
         public GameObject CreateCoverageTextureSpawner(float range, float increment)
         {
@@ -2731,9 +2765,9 @@ namespace Gaia
         }
         */
 
-        #endregion
+#endregion
 
-        #region Exporters
+#region Exporters
 
         /// <summary>
         /// This routine will export a texture from the current terrain - experimental only at moment and not supported.
@@ -2786,9 +2820,9 @@ namespace Gaia
             Debug.LogError("Attempted to export textures on terrain that does not exist!");
         }
 
-        #endregion
+#endregion
 
-        #region Serialisation
+#region Serialisation
 
         ///// <summary>
         ///// Serialise this as json
@@ -2814,6 +2848,6 @@ namespace Gaia
         //    serializer.TryDeserialize<GaiaResource>(data, ref defaults);
         //}
 
-        #endregion
+#endregion
     }
 }

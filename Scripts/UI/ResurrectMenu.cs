@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using System.Globalization;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +25,7 @@ public sealed class ResurrectMenu : MonoBehaviour
         ChangeMenuVisible(true);
         
         ChangeBuybackState();
-        _currentScore.text = $"Current score:\n{score}";
+        _currentScore.text = $"Current score:\n{score.ToString(CultureInfo.InvariantCulture)}";
 
         _timer.fillAmount = 1;
         _timer.DOFillAmount(0, SkipTime).SetEase(Ease.Linear).SetUpdate(true).OnComplete(() =>
@@ -42,7 +43,7 @@ public sealed class ResurrectMenu : MonoBehaviour
         
         _buyBack.onClick.AddListener(() =>
         {
-            Stats.Instance.Money -= BuyBackPrice;
+            Stats.Money.Value -= BuyBackPrice;
             _run.Resurrect();
             ChangeMenuVisible(false);
             _timer.DOKill();
@@ -71,7 +72,7 @@ public sealed class ResurrectMenu : MonoBehaviour
 
     private void ChangeBuybackState()
     {
-        if (Stats.Instance.Money < BuyBackPrice)
+        if (Stats.Money.Value < BuyBackPrice)
         {
             _buyBack.image.color = Color.red;
             _buyBack.enabled = false;

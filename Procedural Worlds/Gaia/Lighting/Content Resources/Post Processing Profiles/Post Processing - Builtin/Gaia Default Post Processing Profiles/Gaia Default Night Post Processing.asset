@@ -83,7 +83,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6050e2d5de785ce4d931e4dbdbf2d755, type: 3}
   m_Name: ChromaticAberration
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   enabled:
     overrideState: 1
     value: 1
@@ -120,8 +120,8 @@ MonoBehaviour:
     overrideState: 1
     value: 1
   color:
-    overrideState: 0
-    value: {r: 0, g: 0, b: 0, a: 0}
+    overrideState: 1
+    value: {r: 0.075, g: 0.08097976, b: 0.1, a: 0}
   ambientOnly:
     overrideState: 1
     value: 1
@@ -232,10 +232,10 @@ MonoBehaviour:
     value: {x: 0.5, y: 0.5}
   intensity:
     overrideState: 1
-    value: 0.361
+    value: 0.3
   smoothness:
     overrideState: 1
-    value: 0.695
+    value: 0.8
   roundness:
     overrideState: 0
     value: 1
@@ -376,7 +376,7 @@ MonoBehaviour:
     value: 0
   saturation:
     overrideState: 1
-    value: -70
+    value: -65
   brightness:
     overrideState: 0
     value: 0
@@ -385,7 +385,7 @@ MonoBehaviour:
     value: 0
   contrast:
     overrideState: 1
-    value: 0
+    value: 20
   mixerRedOutRedIn:
     overrideState: 0
     value: 100
@@ -417,11 +417,11 @@ MonoBehaviour:
     overrideState: 0
     value: {x: 1, y: 1, z: 1, w: -0.09011476}
   gamma:
-    overrideState: 0
-    value: {x: 1, y: 1, z: 1, w: 0.059928223}
+    overrideState: 1
+    value: {x: 1, y: 0.9376016, z: 0.9844, w: 0.021382757}
   gain:
-    overrideState: 0
-    value: {x: 1, y: 1, z: 1, w: 0.03793345}
+    overrideState: 1
+    value: {x: 0.8409151, y: 0.91067404, z: 1, w: 0.42052716}
   masterCurve:
     overrideState: 0
     value:
@@ -1609,8 +1609,8 @@ MonoBehaviour:
       - 0.5134593
       - 0.51307315
       - 0.5126546
-      - 0.5122028
-      - 0.51171654
+      - 0.51220274
+      - 0.5117165
       - 0.5111948
       - 0.51063657
       - 0.5100408
@@ -1627,11 +1627,11 @@ MonoBehaviour:
       - 0.50070804
       - 0.49957958
       - 0.49839994
-      - 0.49716803
+      - 0.497168
       - 0.49588278
       - 0.49454316
       - 0.49314812
-      - 0.49169663
+      - 0.4916966
       - 0.4901864
       - 0.48853138
       - 0.48668206
@@ -1676,7 +1676,7 @@ MonoBehaviour:
     value: 1
   focusDistance:
     overrideState: 1
-    value: 500
+    value: 1.25
   aperture:
     overrideState: 1
     value: 8
@@ -1707,10 +1707,10 @@ MonoBehaviour:
     value: {x: 24.416496, y: 82.24841}
   minLuminance:
     overrideState: 1
-    value: -0.5
+    value: 0.1
   maxLuminance:
     overrideState: 1
-    value: 2
+    value: 1
   keyValue:
     overrideState: 1
     value: 1

@@ -1,10 +1,14 @@
 ﻿using System.Collections.Generic;
 using Gaia.Pipeline.HDRP;
+#if GAIA_PRO_PRESENT
+using ProceduralWorlds.HDRPTOD;
+#endif
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine.Rendering;
+using UnityEngine.VFX;
 #if HDPipeline
 using UnityEngine.Rendering.HighDefinition;
 #endif
@@ -71,16 +75,33 @@ namespace Gaia
 #if HDPipeline
         [SerializeField]
         private HDAdditionalLightData m_hdrpLightData;
+        [SerializeField]
+        private HDRPUnderwaterFog m_hdrpUnderwaterFog;
+        [SerializeField] 
+        private Volume m_underwaterHDRPFogVolume;
+        [SerializeField] 
+        private UnityEngine.Rendering.HighDefinition.Fog m_hdrpFogComponent;
+        [SerializeField] 
+        private UnityEngine.Rendering.HighDefinition.Exposure m_hdrpExposureComponent;
 #endif
         //Fog
         public bool m_supportFog = true;
         public Gradient m_fogColorGradient;
+        public bool m_overrideFogColor = false;
+        public Gradient m_overrideFogColorGradient;
+        public AnimationCurve m_overrideFogColorMultiplier;
+        public float m_timeOfDayValue = 0.5f;
+        public Color m_overrideFogMultiplier;
         public Color m_fogColor = new Color(0.533f, 0.764f, 1f, 1f);
         public Color m_fogColorMultiplier = Color.black;
         public float m_fogDepth = 100f;
         public float m_fogDistance = 45f;
+        public float m_hdrpFogDistance = 30f;
         public float m_nearFogDistance = -4f;
         public float m_fogDensity = 0.045f;
+        public Vector2 m_anisotropyMinMax = new Vector2(0.225f, 0f);
+        //Exposure
+        public Vector2 m_exposureMinMax = new Vector2(16f, 18f);
         //Post FX
         public bool m_enableTransitionFX = true;
         public GameObject m_underwaterTransitionPostFX;
@@ -98,9 +119,17 @@ namespace Gaia
         public AudioClip m_submergeSoundFXDown;
         public AudioClip m_submergeSoundFXUp;
         public AudioClip m_underwaterSoundFX;
+#if GAIA_PRO_PRESENT && HDPipeline && UNITY_2021_2_OR_NEWER
+        public bool m_useOverrideReverb = false;
+        public UnderwaterReverbFilterSettings m_overrideReverbSettings = new UnderwaterReverbFilterSettings();
+#endif
+
+        /// <summary>
+        /// VFX graph that you can setup that the system will disable/enable accordingly
+        /// </summary>
+        public List<VisualEffect> m_surfaceVisualEffects = new List<VisualEffect>();
 
         #endregion
-
         #region Private Variables
 
         private int m_indexNumber = 0;
@@ -124,24 +153,32 @@ namespace Gaia
         private Material m_underwaterMaterial;
 
 #if HDPipeline
-        [HideInInspector]
-        [SerializeField]
-        private VolumeProfile HDRPVolumeProfile;
-        [HideInInspector]
         [SerializeField]
         private UnityEngine.Rendering.HighDefinition.Fog Fog;
-        [HideInInspector]
-        [SerializeField]
-        private Volume EnvironmentVolume;
 #endif
 
         #endregion
-
         #region Unity Functions
 
         private void Start()
         {
             RenderPipeline = GaiaUtils.GetActivePipeline();
+            if (RenderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+            {
+#if HDPipeline
+                if (m_hdrpUnderwaterFog == null)
+                {
+                    m_hdrpUnderwaterFog = FindObjectOfType<HDRPUnderwaterFog>();
+                    if (m_hdrpUnderwaterFog == null || !m_hdrpUnderwaterFog.gameObject.activeSelf)
+                    {
+                        GameObject hdrpUnderwaterGameObject = new GameObject("Gaia HDRP Underwater Fog");
+                        m_hdrpUnderwaterFog = hdrpUnderwaterGameObject.AddComponent<HDRPUnderwaterFog>();
+                    }
+                }
+
+                m_hdrpUnderwaterFog.Setup(false);
+#endif
+            }
             m_instance = this;
 
 #if GAIA_PRO_PRESENT
@@ -242,6 +279,7 @@ namespace Gaia
             if (m_startingUnderwater)
             {
                 IsUnderwater = SetupWaterSystems(true, m_startingUnderwater);
+                SetHDRPVisualEffectsState(m_surfaceVisualEffects);
                 m_underwaterSetup = true;
                 m_surfaceSetup = false;
             }
@@ -278,7 +316,13 @@ namespace Gaia
         }
         private void OnDisable()
         {
-            UpdateSurfaceFog();
+            UpdateSurfaceFog(false);
+#if HDPipeline
+            if (m_underwaterHDRPFogVolume != null)
+            {
+                DestroyImmediate(m_underwaterHDRPFogVolume.gameObject);
+            }
+#endif
         }
         private void Update()
         {
@@ -292,7 +336,7 @@ namespace Gaia
                     }
                 }
 
-                if (m_mainLight == null)
+                if (m_mainLight == null || !m_mainLight.isActiveAndEnabled)
                 {
                     m_mainLight = GaiaUtils.GetMainDirectionalLight(false);
                 }
@@ -309,6 +353,7 @@ namespace Gaia
                 }
                 else
                 {
+
                     if (EnableUnderwaterEffects)
                     {
                         if (m_playerCamera.position.y > m_seaLevel)
@@ -316,6 +361,7 @@ namespace Gaia
                             if (!m_surfaceSetup)
                             {
                                 IsUnderwater = SetupWaterSystems(false, m_startingUnderwater);
+                                SetHDRPVisualEffectsState(m_surfaceVisualEffects);
                                 m_underwaterSetup = false;
                                 m_surfaceSetup = true;
                             }
@@ -324,6 +370,13 @@ namespace Gaia
                         {
                             if (!m_underwaterSetup)
                             {
+#if HDPipeline
+                                if (m_mainLight != null)
+                                {
+                                    m_hdrpLightData = GaiaHDRPRuntimeUtils.GetHDLightData(m_mainLight);
+                                }
+#endif
+
                                 if (m_underwaterTransitionPostFX != null)
                                 {
                                     m_underwaterTransitionPostFX.SetActive(true);
@@ -334,6 +387,7 @@ namespace Gaia
                                 }
                                 UpdateSurfaceFogSettings();
                                 IsUnderwater = SetupWaterSystems(true, m_startingUnderwater);
+                                SetHDRPVisualEffectsState(m_surfaceVisualEffects);
                                 m_underwaterSetup = true;
                                 m_surfaceSetup = false;
                             }
@@ -415,7 +469,6 @@ namespace Gaia
         }
 
         #endregion
-
         #region Functions
 
         /// <summary>
@@ -479,6 +532,39 @@ namespace Gaia
                     DestroyImmediate(m_underwaterTransitionPostFX);
                 }
             }
+        }
+        /// <summary>
+        /// Sets the visual effect state and plays them if they are underwater
+        /// </summary>
+        /// <param name="visualEffects"></param>
+        public void SetHDRPVisualEffectsState(List<VisualEffect> visualEffects)
+        {
+            if (visualEffects.Count > 0)
+            {
+                foreach (VisualEffect visualEffect in visualEffects)
+                {
+                    if (visualEffect != null)
+                    {
+                        if (IsUnderwater)
+                        {
+                            visualEffect.enabled = false;
+                            visualEffect.Stop();
+                        }
+                        else
+                        {
+                            visualEffect.enabled = true;
+                            visualEffect.Play();
+                        }
+                    }
+                }
+            }
+
+#if GAIA_PRO_PRESENT && HDPipeline && UNITY_2021_2_OR_NEWER
+            if (m_useOverrideReverb && m_overrideReverbSettings != null)
+            {
+                m_overrideReverbSettings.ApplyReverb(null, m_playerCamera, IsUnderwater);
+            }
+#endif
         }
         /// <summary>
         /// Plays the underwater caustic animations
@@ -553,7 +639,14 @@ namespace Gaia
                     {
                         foreach (MeshRenderer render in m_horizonMeshRenders)
                         {
-                            render.enabled = true;
+                            if (RenderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+                            {
+                                render.enabled = false;
+                            }
+                            else
+                            {
+                                render.enabled = true;
+                            }
                         }
                     }
 
@@ -654,23 +747,33 @@ namespace Gaia
                     if (m_playerCamera.position.y < m_seaLevel)
                     {
                         float distance = Mathf.Clamp01((m_seaLevel - m_playerCamera.position.y) / m_fogDepth);
-                        m_fogColor = m_fogColorGradient.Evaluate(distance);
-                        if (m_mainLight != null)
+                        if (m_overrideFogColor)
                         {
-                            m_fogColor *= m_mainLight.color;
+                            if (m_overrideFogColorGradient != null)
+                            {
+                                m_fogColor = m_overrideFogColorGradient.Evaluate(m_timeOfDayValue) * (m_overrideFogMultiplier * m_overrideFogColorMultiplier.Evaluate(m_timeOfDayValue));
+                            }
+                        }
+                        else
+                        {
+                            m_fogColor = m_fogColorGradient.Evaluate(distance);
                         }
 
-                        if (m_fogColorMultiplier.r >= 0)
+                        if (m_mainLight != null && !m_overrideFogColor)
                         {
-                            m_fogColor.r = Mathf.Clamp01(m_fogColor.r += m_fogColorMultiplier.r);
-                        }
-                        if (m_fogColorMultiplier.g >= 0)
-                        {
-                            m_fogColor.g = Mathf.Clamp01(m_fogColor.g += m_fogColorMultiplier.g);
-                        }
-                        if (m_fogColorMultiplier.b >= 0)
-                        {
-                            m_fogColor.b = Mathf.Clamp01(m_fogColor.b += m_fogColorMultiplier.b);
+                            m_fogColor *= m_mainLight.color;
+                            if (m_fogColorMultiplier.r >= 0)
+                            {
+                                m_fogColor.r = Mathf.Clamp01(m_fogColor.r += m_fogColorMultiplier.r);
+                            }
+                            if (m_fogColorMultiplier.g >= 0)
+                            {
+                                m_fogColor.g = Mathf.Clamp01(m_fogColor.g += m_fogColorMultiplier.g);
+                            }
+                            if (m_fogColorMultiplier.b >= 0)
+                            {
+                                m_fogColor.b = Mathf.Clamp01(m_fogColor.b += m_fogColorMultiplier.b);
+                            }
                         }
 
                         if (RenderPipeline != GaiaConstants.EnvironmentRenderer.HighDefinition)
@@ -683,44 +786,27 @@ namespace Gaia
                         else
                         {
 #if HDPipeline
-                            if (EnvironmentVolume == null)
+                            if (m_hdrpUnderwaterFog != null)
                             {
-                                Volume[] volumes = FindObjectsOfType<Volume>();
-                                if (volumes.Length > 0)
-                                {
-                                    foreach(Volume volume in volumes)
-                                    {
-                                        if (volume.isGlobal)
-                                        {
-                                            if (!volume.name.Contains("Processing"))
-                                            {
-                                                EnvironmentVolume = volume;
-                                            }
-                                        }
-                                    }
-                                }
+                                m_hdrpUnderwaterFog.UnderwaterProfile.m_albedo = m_fogColor;
+                                m_hdrpUnderwaterFog.UnderwaterProfile.m_fogDistance = m_hdrpFogDistance;
+                                m_hdrpUnderwaterFog.Setup(true);
                             }
-                            else
-                            {
-                                if (HDRPVolumeProfile == null)
-                                {
-                                    HDRPVolumeProfile = EnvironmentVolume.sharedProfile;
-                                }
-                                else
-                                {
-                                    if (HDRPVolumeProfile.TryGet(out Fog))
-                                    {
-                                        Fog.active = true;
-                                        Fog.albedo.value = m_fogColor;
-                                        Fog.color.value = m_fogColor;
-                                        Fog.meanFreePath.value = m_fogDistance;
-                                    }
-                                }
-                            }
+
+                            UpdateHDRPUnderwaterFog(true, true, distance);
 #endif
                         }
                     }
                 }
+            }
+            else
+            {
+#if HDPipeline
+                if (m_hdrpUnderwaterFog != null)
+                {
+                    m_hdrpUnderwaterFog.Setup(false);
+                }
+#endif
             }
         }
         /// <summary>
@@ -773,16 +859,15 @@ namespace Gaia
 #endif
             }
         }
-        private void UpdateSurfaceFog()
+        private void UpdateSurfaceFog(bool createVolume = true)
         {
-            //Do not execute if the surface fog end distance has never been stored yet
-            if (m_surfaceFogEndDistance == -99.0f)
-            {
-                return;
-            }
-
             if (RenderPipeline != GaiaConstants.EnvironmentRenderer.HighDefinition)
             {
+                //Do not execute if the surface fog end distance has never been stored yet
+                if (m_surfaceFogEndDistance == -99.0f)
+                {
+                    return;
+                }
                 RenderSettings.fogColor = m_surfaceFogColor;
                 RenderSettings.fogDensity = m_surfaceFogDensity;
                 RenderSettings.fogStartDistance = m_surfaceFogStartDistance;
@@ -791,38 +876,9 @@ namespace Gaia
             else
             {
 #if HDPipeline
-                if (EnvironmentVolume == null)
+                if (m_playerCamera != null)
                 {
-                    Volume[] volumes = FindObjectsOfType<Volume>();
-                    if (volumes.Length > 0)
-                    {
-                        foreach (Volume volume in volumes)
-                        {
-                            if (volume.isGlobal)
-                            {
-                                if (!volume.name.Contains("Processing"))
-                                {
-                                    EnvironmentVolume = volume;
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (HDRPVolumeProfile == null)
-                    {
-                        HDRPVolumeProfile = EnvironmentVolume.sharedProfile;
-                    }
-                    else
-                    {
-                        if (HDRPVolumeProfile.TryGet(out Fog))
-                        {
-                            Fog.color.value = m_surfaceFogColor;
-                            Fog.color.value = m_surfaceFogColor;
-                            Fog.meanFreePath.value = m_surfaceFogEndDistance;
-                        }
-                    }
+                    UpdateHDRPUnderwaterFog(false, createVolume, Mathf.Clamp01((m_seaLevel - m_playerCamera.position.y) / m_fogDepth));
                 }
 #endif
             }
@@ -878,6 +934,7 @@ namespace Gaia
                     }
 
                     IsUnderwater = SetupWaterSystems(true, m_startingUnderwater);
+                    SetHDRPVisualEffectsState(m_surfaceVisualEffects);
                     m_underwaterSetup = true;
                     m_surfaceSetup = false;
                 }
@@ -901,38 +958,9 @@ namespace Gaia
             else
             {
 #if HDPipeline
-                if (EnvironmentVolume == null)
+                if (m_hdrpUnderwaterFog != null)
                 {
-                    Volume[] volumes = FindObjectsOfType<Volume>();
-                    if (volumes.Length > 0)
-                    {
-                        foreach (Volume volume in volumes)
-                        {
-                            if (volume.isGlobal)
-                            {
-                                if (!volume.name.Contains("Processing"))
-                                {
-                                    EnvironmentVolume = volume;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (EnvironmentVolume != null)
-                {
-                    if (HDRPVolumeProfile == null)
-                    {
-                        HDRPVolumeProfile = EnvironmentVolume.sharedProfile;
-                    }
-                    else
-                    {
-                        if (HDRPVolumeProfile.TryGet(out Fog))
-                        {
-                            m_surfaceFogColor = Fog.color.value;
-                            m_surfaceFogEndDistance = Fog.meanFreePath.value;
-                        }
-                    }
+                    m_hdrpUnderwaterFog.Setup(false);
                 }
 #endif
             }
@@ -944,10 +972,153 @@ namespace Gaia
         /// <param name="profile"></param>
         public void SetNewHDRPEnvironmentVolume(VolumeProfile profile)
         {
-            HDRPVolumeProfile = profile;
             if (!IsUnderwater)
             {
                 UpdateSurfaceFogSettings();
+            }
+        }
+        /// <summary>
+        /// Updates the underwater hdrp fog height to block out god rays as you get deeper
+        /// </summary>
+        private void UpdateHDRPUnderwaterFog(bool apply, bool createVolume, float distance)
+        {
+            if (createVolume)
+            {
+                if (m_underwaterHDRPFogVolume == null)
+                {
+                    GameObject underwaterFogObject = new GameObject("Gaia HDRP Underwater Fog Override");
+
+                    Volume volume = underwaterFogObject.GetComponent<Volume>();
+                    if (volume == null)
+                    {
+                        volume = underwaterFogObject.AddComponent<Volume>();
+                    }
+
+                    volume.isGlobal = true;
+                    volume.priority = 50;
+                    m_underwaterHDRPFogVolume = volume;
+
+                    VolumeProfile volumeProfile = volume.sharedProfile;
+                    if (volumeProfile == null)
+                    {
+                        volumeProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+                    }
+
+                    volume.sharedProfile = volumeProfile;
+                    if (!volumeProfile.Has<UnityEngine.Rendering.HighDefinition.Fog>())
+                    {
+                        volumeProfile.Add<UnityEngine.Rendering.HighDefinition.Fog>();
+                    }
+                    if (!volumeProfile.Has<UnityEngine.Rendering.HighDefinition.Exposure>())
+                    {
+                        volumeProfile.Add<UnityEngine.Rendering.HighDefinition.Exposure>();
+                    }
+
+                    if (volumeProfile.TryGet(out UnityEngine.Rendering.HighDefinition.Fog fog))
+                    {
+                        m_hdrpFogComponent = fog;
+                    }
+                    if (volumeProfile.TryGet(out UnityEngine.Rendering.HighDefinition.Exposure exposure))
+                    {
+                        m_hdrpExposureComponent = exposure;
+                    }
+                }
+                else
+                {
+                    if (m_hdrpFogComponent == null)
+                    {
+                        if (m_underwaterHDRPFogVolume.sharedProfile.TryGet(
+                            out UnityEngine.Rendering.HighDefinition.Fog fog))
+                        {
+                            m_hdrpFogComponent = fog;
+                        }
+                        if (m_underwaterHDRPFogVolume.sharedProfile.TryGet(
+                            out UnityEngine.Rendering.HighDefinition.Exposure exposure))
+                        {
+                            m_hdrpExposureComponent = exposure;
+                        }
+                    }
+                }
+            }
+
+            if (apply)
+            {
+                if (m_hdrpFogComponent != null)
+                {
+                    if (m_supportFog)
+                    {
+                        float depth = Mathf.Clamp01((m_seaLevel - m_playerCamera.position.y) / m_fogDepth);
+                        m_fogColor = m_fogColorGradient.Evaluate(depth);
+                        Color veryDeepColor = m_fogColor;
+                        if (m_overrideFogColor)
+                        {
+                            if (m_overrideFogColorGradient != null)
+                            {
+                                m_fogColor = m_overrideFogColorGradient.Evaluate(distance) * (m_overrideFogMultiplier * m_overrideFogColorMultiplier.Evaluate(m_timeOfDayValue));
+                                veryDeepColor = (m_fogColor / 6f);
+                            }
+                        }
+                        veryDeepColor /= 6f;
+
+                        m_hdrpFogComponent.baseHeight.overrideState = true;
+                        m_hdrpFogComponent.meanFreePath.overrideState = true;
+                        m_hdrpFogComponent.baseHeight.value = Mathf.Lerp(-150f, 6000f, depth);
+                        m_hdrpFogComponent.meanFreePath.overrideState = true;
+                        m_hdrpFogComponent.meanFreePath.value = Mathf.Lerp(3000f, 1f, depth);
+                        m_hdrpFogComponent.albedo.overrideState = true;
+                        m_hdrpFogComponent.albedo.value = Color.Lerp(m_fogColor, veryDeepColor, depth);
+                        m_hdrpFogComponent.globalLightProbeDimmer.overrideState = true;
+                        m_hdrpFogComponent.globalLightProbeDimmer.value = Mathf.Lerp(1f, 0.325f, depth);
+                        m_hdrpFogComponent.anisotropy.overrideState = true;
+                        m_hdrpFogComponent.anisotropy.value = Mathf.Lerp(m_anisotropyMinMax.x, m_anisotropyMinMax.y, depth);
+                        m_hdrpFogComponent.depthExtent.overrideState = true;
+                        m_hdrpFogComponent.depthExtent.value = Mathf.Lerp(150f, 300f, depth);
+                    }
+                    else
+                    {
+                        m_hdrpFogComponent.albedo.overrideState = false;
+                        m_hdrpFogComponent.baseHeight.overrideState = false;
+                        m_hdrpFogComponent.meanFreePath.overrideState = false;
+                        m_hdrpFogComponent.globalLightProbeDimmer.overrideState = false;
+                        m_hdrpFogComponent.anisotropy.overrideState = false;
+                        m_hdrpFogComponent.depthExtent.overrideState = false;
+                    }
+                }
+#if GAIA_PRO_PRESENT && UNITY_2021_2_OR_NEWER
+                if (ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.Instance != null)
+                {
+                    if (m_hdrpExposureComponent != null)
+                    {
+                        m_hdrpExposureComponent.mode.overrideState = true;
+                        m_hdrpExposureComponent.mode.value = ExposureMode.Fixed;
+                        m_hdrpExposureComponent.fixedExposure.overrideState = true;
+                        m_hdrpExposureComponent.fixedExposure.value = Mathf.Lerp(m_exposureMinMax.x, m_exposureMinMax.y, distance);
+                    }
+                }
+                else
+                {
+                    m_hdrpExposureComponent.mode.overrideState = false;
+                    m_hdrpExposureComponent.fixedExposure.overrideState = false;
+                }
+#endif
+            }
+            else
+            {
+                if (m_hdrpFogComponent != null)
+                {
+                    m_hdrpFogComponent.albedo.overrideState = false;
+                    m_hdrpFogComponent.baseHeight.overrideState = false;
+                    m_hdrpFogComponent.meanFreePath.overrideState = false;
+                    m_hdrpFogComponent.globalLightProbeDimmer.overrideState = false;
+                    m_hdrpFogComponent.anisotropy.overrideState = false;
+                    m_hdrpFogComponent.depthExtent.overrideState = false;
+                }
+
+                if (m_hdrpExposureComponent != null)
+                {
+                    m_hdrpExposureComponent.mode.overrideState = false;
+                    m_hdrpExposureComponent.fixedExposure.overrideState = false;
+                }
             }
         }
 #endif

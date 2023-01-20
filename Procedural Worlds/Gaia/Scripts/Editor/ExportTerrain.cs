@@ -13,6 +13,13 @@ using UnityEngine.Experimental.TerrainAPI;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
+#if GAIA_MESH_PRESENT
+using UnityMeshSimplifierGaia;
+#endif
+#if HDPipeline
+using UnityEngine.Rendering.HighDefinition;
+#endif
+
 namespace Gaia
 {
     public static class ExportTerrainUtility
@@ -25,7 +32,7 @@ namespace Gaia
         public static int m_currentTerrainCount = 0;
         public static ExportTerrainSettings m_settings;
         public static string m_copyToPath;
-        
+
         private static GaiaSessionManager m_sessionManager;
         public static bool m_exportRunning;
         private static int totalCount;
@@ -43,7 +50,7 @@ namespace Gaia
                 return m_sessionManager;
             }
         }
-        
+
         private static void CreateColliderScene(Terrain terrain, GameObject gaiaGameObjectCopyTarget)
         {
             //If we are in a terrain loading scenario and about to create collider scenes, we need to create the collider scene if it does not exist yet and copy the result over
@@ -55,7 +62,7 @@ namespace Gaia
                 if (ts != null)
                 {
                     ts.m_colliderScenePath = colliderScenePath;
-                    TerrainLoaderManager.Instance.SaveStorageData();
+                    TerrainLoaderManager.Instance.DirtyStorageData();
                 }
                 else
                 {
@@ -71,7 +78,7 @@ namespace Gaia
         {
             return Resources.FindObjectsOfTypeAll<Terrain>().ToList();
         }
-        
+
         private static string ExportNormalMap(ExportTerrainLODSettings LODSettings, Terrain terrain)
         {
             string normalMapFileName = m_workingExportPath + Path.DirectorySeparatorChar + LODSettings.namePrefix + terrain.name + "_Normal.png";
@@ -90,7 +97,7 @@ namespace Gaia
 
         private static string ExportTextures(ExportTerrainLODSettings LODSettings, Terrain terrain)
         {
-            string textureFileName ="";
+            string textureFileName = "";
             switch (LODSettings.m_textureExportMethod)
             {
                 case TextureExportMethod.BaseMapExport:
@@ -158,7 +165,19 @@ namespace Gaia
             if (importer != null)
             {
                 importer.maxTextureSize = (int)LODSettings.m_textureExportResolution;
+#if HDPipeline || UPPipeline
+                if (LODSettings.m_textureExportMethod == TextureExportMethod.BaseMapExport)
+                {
+                    importer.sRGBTexture = false;
+                }
+                else
+                {
+                    importer.sRGBTexture = true;
+                }
+#else
                 importer.sRGBTexture = true;
+#endif
+                importer.alphaSource = TextureImporterAlphaSource.None;
                 importer.isReadable = true;
                 importer.streamingMipmaps = true;
                 importer.wrapMode = TextureWrapMode.Clamp;
@@ -167,6 +186,7 @@ namespace Gaia
                 TextureImporterPlatformSettings texImpPlatSet = new TextureImporterPlatformSettings();
                 texImpPlatSet.format = TextureImporterFormat.Automatic;
                 texImpPlatSet.maxTextureSize = (int)LODSettings.m_textureExportResolution;
+                texImpPlatSet.textureCompression = TextureImporterCompression.Uncompressed;
                 importer.SetPlatformTextureSettings(texImpPlatSet);
                 AssetDatabase.ImportAsset(textureFileName);
             }
@@ -193,6 +213,16 @@ namespace Gaia
                 ImageProcessing.WriteTexture2D(textureFileName, bakedTexture);
                 AssetDatabase.ImportAsset(textureFileName);
             }
+
+            //Now we can set up compression, before it would result in an error when adding the alpha channel
+            importer.textureCompression = TextureImporterCompression.CompressedHQ;
+            TextureImporterPlatformSettings texImpPlatSet2 = new TextureImporterPlatformSettings();
+            texImpPlatSet2.format = TextureImporterFormat.Automatic;
+            texImpPlatSet2.maxTextureSize = (int)LODSettings.m_textureExportResolution;
+            texImpPlatSet2.textureCompression = TextureImporterCompression.CompressedHQ;
+            importer.SetPlatformTextureSettings(texImpPlatSet2);
+            AssetDatabase.ImportAsset(textureFileName);
+
             return textureFileName;
         }
 
@@ -233,7 +263,7 @@ namespace Gaia
                 if (ts != null)
                 {
                     ts.m_impostorScenePath = impostorScenePath;
-                    TerrainLoaderManager.Instance.SaveStorageData();
+                    TerrainLoaderManager.Instance.DirtyStorageData();
                 }
                 else
                 {
@@ -241,7 +271,7 @@ namespace Gaia
                 }
             }
         }
-         /// <summary>
+        /// <summary>
         /// Export a terrain to an OBJ file
         /// </summary>
         /// <param name="terrain"></param>
@@ -289,7 +319,7 @@ namespace Gaia
                 0.2f,
                 (int)LODSettings.m_saveResolution,
                 terrain.terrainData.size,
-                (int )m_settings.m_saveFormat,
+                (int)m_settings.m_saveFormat,
                 MaskedMeshParamters.WindingOrder.CounterClockwise
                 );
             try
@@ -360,7 +390,7 @@ namespace Gaia
                     {
                         GaiaSessionManager.AddTerrainScenesToBuildSettings(TerrainLoaderManager.TerrainScenes);
                     }
-                    
+
 #endif
                 }
                 else
@@ -384,7 +414,6 @@ namespace Gaia
             var originalAmbientColor = RenderSettings.ambientSkyColor;
             var originalLODBias = QualitySettings.lodBias;
 
-
             int lodCount = 0;
             GameObject weatherObject = GameObject.Find(GaiaConstants.gaiaWeatherObject);
             foreach (ExportTerrainLODSettings LODSettings in LODSettingsList)
@@ -400,6 +429,11 @@ namespace Gaia
 
                     //Switch off all active lights in the scene as they would interfere with the baking for this mode
                     OrthographicBake.LightsOff();
+
+#if HDPipeline
+                    OrthographicBake.m_HDLODBiasOverride = 100;
+                    OrthographicBake.CreateBakeDirectionalLight(3, Color.white);
+#endif
 
                     //Do we have a weather object? Deactivate it for the baking
                     if (weatherObject != null)
@@ -432,6 +466,10 @@ namespace Gaia
                     OrthographicBake.LightsOn();
                     OrthographicBake.RemoveOrthoCam();
 
+#if HDPipeline
+                    OrthographicBake.RemoveBakeDirectionalLight();
+#endif
+
                     if (weatherObject != null)
                     {
                         weatherObject.SetActive(true);
@@ -444,41 +482,21 @@ namespace Gaia
                 }
             }
         }
-        
+
         private static GameObject SetupGameObject(List<ExportTerrainLODSettings> LODSettingsList, int index, Terrain terrain, string objFileName, string textureFileName, Material material, bool isFinalLOD, bool isImpostor)
         {
+#if GAIA_MESH_PRESENT
+
             GameObject gaiaGameObjectCopyTarget = null;
             Texture2D bakedTexture = (Texture2D)AssetDatabase.LoadAssetAtPath(textureFileName, typeof(Texture2D));
-            Mesh mesh = BuildUnityMesh(terrain, LODSettingsList[index], bakedTexture);
-            GameObject newGO = new GameObject();
-            newGO.layer = terrain.gameObject.layer;
-            newGO.name = objFileName.Split('/').Last().Replace(".obj", "");
-            newGO.transform.position = terrain.transform.position;
+            ExportTerrainLODSettings lodSettings = LODSettingsList[index];
 
-            //only add a mesh filter and renderer if it is NOT a pure collider export
-            if (!(m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly && !isImpostor))
-            {
-                MeshFilter filter = newGO.AddComponent<MeshFilter>();
-                filter.mesh = mesh;
-                MeshRenderer meshRenderer = newGO.AddComponent<MeshRenderer>();
-                if (material != null)
-                {
-                    meshRenderer.material = material;
-                }
-            }
+            string parentName = GaiaConstants.MeshTerrainLODGroupPrefix + terrain.name;
+            GameObject LODGroupParent = null;
 
-            GameObject terrainExportObject = GaiaUtils.GetTerrainExportObject();
-
-            //Scene lastActiveScene = EditorSceneManager.GetActiveScene();
-
-            //if (GaiaUtils.HasDynamicLoadedTerrains())
-            //{
-            //    EditorSceneManager.SetActiveScene(terrain.gameObject.scene);
-            //}
             if (LODSettingsList.Count > 1)
             {
-                string parentName = GaiaConstants.MeshTerrainLODGroupPrefix + terrain.name;
-                GameObject LODGroupParent = GameObject.Find(parentName);
+                LODGroupParent = GameObject.Find(parentName);
 
                 //GameObject.Find fails in terrain loading scenario for some reason, iterate over root objects to find it
                 if (GaiaUtils.HasDynamicLoadedTerrains())
@@ -491,6 +509,80 @@ namespace Gaia
                         }
                     }
                 }
+            }
+
+            Mesh renderMesh = null;
+            if ((m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider) ||
+                m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain)
+            {
+                //Find previous level to inherit the mesh
+                if (index > 0 && LODGroupParent!=null)
+                {
+                    foreach (Transform t in LODGroupParent.transform)
+                    {
+                        if (t.name.Contains("LOD" + (index - 1).ToString()))
+                        {
+                            MeshFilter filter = t.GetComponent<MeshFilter>();
+                            if(filter!=null)
+                            {
+                                renderMesh = filter.sharedMesh;
+                            }
+                            break;
+                        }
+                    }
+                    if (renderMesh == null)
+                    {
+                        renderMesh = BuildUnityMesh(terrain, lodSettings.m_saveResolution);
+                    }
+                }
+                else
+                {
+                    renderMesh = BuildUnityMesh(terrain, lodSettings.m_saveResolution);
+                }
+
+                //Mesh simplification is only applied if we aim for a reduction in quality
+                if (lodSettings.m_simplifyQuality<1.0f)
+                {
+                    UnityMeshSimplifierGaia.MeshSimplifier meshSimplifier = new UnityMeshSimplifierGaia.MeshSimplifier();
+                    meshSimplifier.SimplificationOptions = lodSettings.m_simplificationOptions;
+                    meshSimplifier.Initialize(renderMesh);
+                    meshSimplifier.SimplifyMesh(lodSettings.m_simplifyQuality);
+                    renderMesh = meshSimplifier.ToMesh();
+                }
+            }
+
+            renderMesh = ProcessEdgesAndColorBaking(lodSettings, renderMesh, bakedTexture, terrain);
+
+            GameObject newGO = new GameObject();
+            newGO.layer = terrain.gameObject.layer;
+            newGO.name = objFileName.Split('/').Last().Replace(".obj", "");
+            //Replace slash in object name since it creates issues with navmesh generation!
+            newGO.name = newGO.name.Replace("\\", "_");
+            newGO.transform.position = terrain.transform.position;
+
+            //only add a mesh filter and renderer if it is NOT a pure collider export
+            if (!(m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly && !isImpostor))
+            {
+                MeshFilter filter = newGO.AddComponent<MeshFilter>();
+                AssetDatabase.CreateAsset(renderMesh, objFileName.Replace(".obj", ".mesh"));
+                filter.mesh = renderMesh;
+                MeshRenderer meshRenderer = newGO.AddComponent<MeshRenderer>();
+                if (material != null)
+                {
+                    meshRenderer.material = material;
+                }
+            }
+
+            GameObject terrainExportObject = null;
+
+            //Scene lastActiveScene = EditorSceneManager.GetActiveScene();
+
+            //if (GaiaUtils.HasDynamicLoadedTerrains())
+            //{
+            //    EditorSceneManager.SetActiveScene(terrain.gameObject.scene);
+            //}
+            if (LODSettingsList.Count > 1)
+            {
 
                 if (LODGroupParent == null)
                 {
@@ -505,16 +597,25 @@ namespace Gaia
                     }
                     else
                     {
+                        if (terrainExportObject == null)
+                        {
+                            terrainExportObject = GaiaUtils.GetTerrainExportObject();
+                        }
                         LODGroupParent.transform.parent = terrainExportObject.transform;
                     }
                     LODGroupParent.AddComponent<LODGroup>();
                     m_createdLODParents.Add(LODGroupParent);
-                    if (m_settings.m_addMeshCollider && !isImpostor || m_settings.m_addMeshColliderImpostor && isImpostor)
+                    if (m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider && !isImpostor || m_settings.m_addMeshColliderImpostor && isImpostor)
                     {
                         MeshCollider mc = LODGroupParent.AddComponent<MeshCollider>();
-                        mc.sharedMesh = mesh;
+                        mc.sharedMesh = renderMesh;
                     }
 
+                    if (m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.TerrainCollider && !isImpostor)
+                    {
+                        TerrainCollider tc = LODGroupParent.AddComponent<TerrainCollider>();
+                        tc.terrainData = terrain.terrainData;
+                    }
                 }
                 gaiaGameObjectCopyTarget = LODGroupParent;
                 newGO.transform.parent = LODGroupParent.transform;
@@ -543,19 +644,56 @@ namespace Gaia
                 }
                 else
                 {
+                    if (terrainExportObject == null)
+                    {
+                        terrainExportObject = GaiaUtils.GetTerrainExportObject();
+                    }
                     newGO.transform.parent = terrainExportObject.transform;
                 }
                 //Setup the mesh collider directly on the single exported LOD in 3 cases:
                 //1 We convert a source terrain to a mesh and the user wants to have a mesh collider on that, and we are currently not creating the impostor
                 //2 User wants a mesh collider on the impostor, and we are creating the impostor
                 //3 We are doing a collider only source terrain conversion
-                if ((m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain && m_settings.m_addMeshCollider && !isImpostor ) ||
-                    (m_settings.m_addMeshColliderImpostor && isImpostor) || 
-                    (m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly))
+                if ((m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain && m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider && !isImpostor) ||
+                    (m_settings.m_addMeshColliderImpostor && isImpostor) ||
+                    (m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly && m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider))
                 {
+
+                    Mesh colliderMesh = renderMesh;
+                    //We may re-use the render mesh, but only if
+                    //1. it exists
+                    //2. it does use the same resolution
+                    //3. it does use the same simplification settings
+                    //otherwise we need to build another mesh for the collider
+                    if (renderMesh == null || 
+                        m_settings.m_colliderExportResolution != lodSettings.m_saveResolution || 
+                        lodSettings.m_simplifyQuality != m_settings.m_colliderSimplifyQuality ||
+                        !CompareSimplificationOptions(lodSettings.m_simplificationOptions, m_settings.m_colliderSimplificationOptions))
+                    {
+                        colliderMesh = BuildUnityMesh(terrain, m_settings.m_colliderExportResolution);
+                        //Mesh simplification is only applied if we aim for a reduction in quality
+                        if (m_settings.m_colliderSimplifyQuality < 1.0f)
+                        {
+                            UnityMeshSimplifierGaia.MeshSimplifier meshSimplifier = new UnityMeshSimplifierGaia.MeshSimplifier();
+                            meshSimplifier.SimplificationOptions = m_settings.m_colliderSimplificationOptions;
+                            meshSimplifier.Initialize(colliderMesh);
+                            meshSimplifier.SimplifyMesh(m_settings.m_colliderSimplifyQuality);
+                            colliderMesh = meshSimplifier.ToMesh();
+                        }
+                    }
+
+                    AssetDatabase.CreateAsset(colliderMesh, objFileName.Replace(".obj", "_collider.mesh"));
+
                     MeshCollider mc = newGO.AddComponent<MeshCollider>();
-                    mc.sharedMesh = mesh;
+                    mc.sharedMesh = colliderMesh;
                 }
+
+                if (m_settings.m_addTerrainCollider && m_settings.m_terrainColliderType == TerrainColliderType.TerrainCollider && !isImpostor)
+                {
+                    TerrainCollider tc = newGO.AddComponent<TerrainCollider>();
+                    tc.terrainData = terrain.terrainData;
+                }
+
                 gaiaGameObjectCopyTarget = newGO;
             }
 
@@ -565,8 +703,32 @@ namespace Gaia
             //}
 
             return gaiaGameObjectCopyTarget;
+#else
+            return null;
+#endif
         }
-        
+#if GAIA_MESH_PRESENT
+        /// <summary>
+        /// returns true if both simplifcation options use the same settings
+        /// </summary>
+        /// <param name="m_simplificationOptions"></param>
+        /// <param name="m_colliderSimplificationOptions"></param>
+        /// <returns></returns>
+        private static bool CompareSimplificationOptions(SimplificationOptions simplificationOptionsA, SimplificationOptions simplificationOptionsB)
+        {
+            return simplificationOptionsA.Agressiveness == simplificationOptionsB.Agressiveness &&
+                simplificationOptionsA.EnableSmartLink == simplificationOptionsB.EnableSmartLink &&
+                simplificationOptionsA.ManualUVComponentCount == simplificationOptionsB.ManualUVComponentCount&&
+                simplificationOptionsA.MaxIterationCount == simplificationOptionsB.MaxIterationCount &&
+                simplificationOptionsA.PreserveBorderEdges == simplificationOptionsB.PreserveBorderEdges &&
+                simplificationOptionsA.PreserveSurfaceCurvature == simplificationOptionsB.PreserveSurfaceCurvature &&
+                simplificationOptionsA.PreserveUVFoldoverEdges == simplificationOptionsB.PreserveUVFoldoverEdges &&
+                simplificationOptionsA.PreserveUVSeamEdges == simplificationOptionsB.PreserveUVSeamEdges &&
+                simplificationOptionsA.UVComponentCount == simplificationOptionsB.UVComponentCount &&
+                simplificationOptionsA.VertexLinkDistance == simplificationOptionsB.VertexLinkDistance;
+        }
+#endif
+
         /// <summary>
         /// Read a texture from a color array according to x-z coordinates from the terrain without exceeding the index
         /// </summary>
@@ -600,7 +762,7 @@ namespace Gaia
                     for (int z = 0; z < input.height; z++)
                     {
                         int index = z * input.width + x;
-                        workingcolors[index] = (GetSafeColor(colors, input.width, x, z-1) + GetSafeColor(colors, input.width, x, z+1) + GetSafeColor(colors, input.width, x-1, z) + GetSafeColor(colors, input.width, x+1,z)) / 4f;
+                        workingcolors[index] = (GetSafeColor(colors, input.width, x, z - 1) + GetSafeColor(colors, input.width, x, z + 1) + GetSafeColor(colors, input.width, x - 1, z) + GetSafeColor(colors, input.width, x + 1, z)) / 4f;
                     }
                 }
                 colors = workingcolors;
@@ -611,13 +773,14 @@ namespace Gaia
             returnTexture.Apply();
             return returnTexture;
         }
-        private static Mesh BuildUnityMesh(Terrain terrain, ExportTerrainLODSettings LODSettings, Texture2D bakedTexture)
+
+        private static Mesh BuildUnityMesh(Terrain terrain, SaveResolution resolution)
         {
             terrainPos = terrain.transform.position;
             int w = terrain.terrainData.heightmapResolution;
             int h = terrain.terrainData.heightmapResolution;
             Vector3 meshScale = terrain.terrainData.size;
-            int tRes = (int)Mathf.Pow(2, (int)LODSettings.m_saveResolution);
+            int tRes = (int)Mathf.Pow(2, (int)resolution);
             meshScale = new Vector3(meshScale.x / (w - 1) * tRes, meshScale.y, meshScale.z / (h - 1) * tRes);
             Vector2 uvScale = new Vector2(1.0f / (w - 1), 1.0f / (h - 1));
             float[,] tData = terrain.terrainData.GetHeights(0, 0, w, h);
@@ -628,19 +791,78 @@ namespace Gaia
 
             Vector2[] tUV = new Vector2[w * h];
             int[] tPolys;
+            tPolys = new int[(w - 1) * (h - 1) * 6];
+
+
+            // Build vertices and UVs
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    //tVertices[y * w + x] = Vector3.Scale(meshScale, new Vector3(y, tData[x * tRes, y * tRes], x));// - terrain.transform.position;
+                    tVertices[y * w + x] = Vector3.Scale(meshScale, new Vector3(y, tData[x * tRes, y * tRes], x));
+                    tUV[y * w + x] = Vector2.Scale(new Vector2(y * tRes, x * tRes), uvScale);
+                }
+            }
+
+            int index = 0;
+
+            // Build triangle indices: 3 indices into vertex array for each triangle
+            for (int y = 0; y < h - 1; y++)
+            {
+                for (int x = 0; x < w - 1; x++)
+                {
+                    // For each grid cell output two triangles
+                    tPolys[index++] = (y * w) + x;
+                    tPolys[index++] = ((y + 1) * w) + x;
+                    tPolys[index++] = (y * w) + x + 1;
+
+                    tPolys[index++] = ((y + 1) * w) + x;
+                    tPolys[index++] = ((y + 1) * w) + x + 1;
+                    tPolys[index++] = (y * w) + x + 1;
+                }
+            }
+
+            int numPolys = tPolys.Length - 1;
+
+            int[] tPolysFlipped = new int[tPolys.Length];
+            for (int i = numPolys; i >= 0; i--)
+            {
+                tPolysFlipped[i] = tPolys[numPolys - i];
+            }
+            tPolys = tPolysFlipped;
+
+            Mesh returnMesh = new Mesh();
+            returnMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+            returnMesh.vertices = tVertices;
+            returnMesh.uv = tUV;
+            returnMesh.triangles = tPolys;
+
+            returnMesh.RecalculateNormals();
+
+            return returnMesh;
+        }
+
+
+        private static Mesh ProcessEdgesAndColorBaking(ExportTerrainLODSettings LODSettings, Mesh mesh, Texture2D bakedTexture, Terrain terrain )
+        {
+            Vector3[] flatVertices = new Vector3[0];
+            Vector2[] flatUVs = new Vector2[0];
             Color[] dVCs = new Color[0];
             Color[] textureColors = new Color[0];
+            int[] tPolys = mesh.triangles;
+            Vector3[] tVertices = mesh.vertices;
+            Vector2[] tUV = mesh.uv;
+
             int mipLevel = 0;
             int mipWidth = 0;
             if (bakedTexture != null)
             {
-              mipWidth = Math.Max(1, bakedTexture.width >> mipLevel);
+                mipWidth = Math.Max(1, bakedTexture.width >> mipLevel);
             }
 
-           
-            tPolys = new int[(w - 1) * (h - 1) * 6];
-
-            if (LODSettings.m_bakeVertexColors && bakedTexture !=null)
+            if (LODSettings.m_bakeVertexColors && bakedTexture != null)
             {
                 if (LODSettings.m_VertexColorSmoothing > 0)
                 {
@@ -653,52 +875,11 @@ namespace Gaia
                 }
             }
 
-           // Build vertices and UVs
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    //tVertices[y * w + x] = Vector3.Scale(meshScale, new Vector3(y, tData[x * tRes, y * tRes], x));// - terrain.transform.position;
-                    tVertices[y * w + x] = Vector3.Scale(meshScale, new Vector3(y, tData[x * tRes, y * tRes], x));
-                    tUV[y * w + x] = Vector2.Scale(new Vector2(y * tRes, x * tRes), uvScale);
-                }
-            }
-
-            int index = 0;
-            
-            // Build triangle indices: 3 indices into vertex array for each triangle
-            for (int y = 0; y < h - 1; y++)
-            {
-                for (int x = 0; x < w - 1; x++)
-                {
-                    // For each grid cell output two triangles
-                    tPolys[index++] = (y * w) + x;
-                    tPolys[index++] = ((y + 1) * w) + x;
-                    tPolys[index++] = (y * w) + x + 1;
-      
-                    tPolys[index++] = ((y + 1) * w) + x;
-                    tPolys[index++] = ((y + 1) * w) + x + 1;
-                    tPolys[index++] = (y * w) + x + 1;
-                }
-            }
-  
-            Vector3[] flatVertices = new Vector3[0];
-            Vector2[] flatUVs = new Vector2[0];
-
             if (LODSettings.m_normalEdgeMode == NormalEdgeMode.Sharp)
             {
 #if GAIA_PRO_PRESENT
                 LowPolyHelper.FlattenPolysAndUVs(ref flatVertices, ref flatUVs, ref tPolys, tVertices, tUV);
-
-                if (LODSettings.m_bakeVertexColors && bakedTexture !=null)
-                {
-                    dVCs = LowPolyHelper.BakeSharpVertexColorsToArray(flatVertices, tPolys, textureColors, mipWidth, terrain);
-                }
-#endif
-            }
-            else
-            {
-                flatVertices = new Vector3[tPolys.Length];
+                //flatVertices = new Vector3[tPolys.Length];
                 int numPolys = tPolys.Length - 1;
                 int[] tPolysFlipped = new int[tPolys.Length];
                 for (int i = numPolys; i >= 0; i--)
@@ -706,10 +887,20 @@ namespace Gaia
                     tPolysFlipped[i] = tPolys[numPolys - i];
                 }
                 tPolys = tPolysFlipped;
-#if GAIA_PRO_PRESENT
-                if (LODSettings.m_bakeVertexColors && bakedTexture !=null)
+
+                if (LODSettings.m_bakeVertexColors && bakedTexture != null)
                 {
-                    dVCs = LowPolyHelper.BakeSmoothVertexColorsToArray(tVertices, textureColors, mipWidth, terrain);
+                    dVCs = LowPolyHelper.BakeSharpVertexColorsToArray(flatVertices, tPolys, textureColors, mipWidth, terrain, LODSettings);
+                }
+#endif
+            }
+            else
+            {
+
+#if GAIA_PRO_PRESENT
+                if (LODSettings.m_bakeVertexColors && bakedTexture != null)
+                {
+                    dVCs = LowPolyHelper.BakeSmoothVertexColorsToArray(tVertices, textureColors, mipWidth, terrain, LODSettings);
                 }
 #endif
             }
@@ -729,16 +920,19 @@ namespace Gaia
             }
             returnMesh.triangles = tPolys;
 
-            if (LODSettings.m_bakeVertexColors && bakedTexture !=null)
+            if (LODSettings.m_bakeVertexColors && bakedTexture != null)
             {
                 returnMesh.colors = dVCs;
             }
-            
+
             returnMesh.RecalculateNormals();
 
-            return returnMesh;
+           return returnMesh;
+
         }
-                /// <summary>
+
+
+        /// <summary>
         /// Export a terrain to an OBJ file
         /// </summary>
         /// <param name="terrain">The terrain to export</param>
@@ -774,7 +968,7 @@ namespace Gaia
                 //Vector3[] tNormals = new Vector3[tPolys.Length * 4];
             }
 
-            
+
 
             // Build vertices and UVs
             for (int y = 0; y < h; y++)
@@ -961,7 +1155,7 @@ namespace Gaia
                 newTexture.Apply(true);
             }
 
-            RenderTexture.active = previous; 
+            RenderTexture.active = previous;
             RenderTexture.ReleaseTemporary(rt);
             GL.sRGBWrite = prevRgbConversionState;
             return newTexture;
@@ -988,7 +1182,7 @@ namespace Gaia
             float[,,] splatMaps = terrain.terrainData.GetAlphamaps(0, 0, width, height);
 
             GaiaUtils.CompressToMultiChannelFileImage(splatMaps, path, TextureFormat.RGBA32, true, true, false);
-          
+
             return path;
         }
 
@@ -1002,7 +1196,7 @@ namespace Gaia
             }
 
             string fname = m_workingExportPath + "/" + LODPrefix + terrain.name + "_BaseMap";
-           // fname = Path.Combine(path, PWCommon5.Utils.FixFileName(mgr.PhysicalTerrainArray[tileX, tileZ].name + "_BaseMap"));
+            // fname = Path.Combine(path, PWCommon5.Utils.FixFileName(mgr.PhysicalTerrainArray[tileX, tileZ].name + "_BaseMap"));
 
             Texture2D[] terrainSplats = terrain.terrainData.alphamapTextures;
 
@@ -1016,7 +1210,8 @@ namespace Gaia
             for (int protoIdx = 0; protoIdx < terrainSplatPrototypes.Length; protoIdx++)
             {
                 GaiaSplatPrototype proto = terrainSplatPrototypes[protoIdx];
-                Texture2D tmpTerrainTex = ResizeTexture(proto.texture, TextureFormat.ARGB32, 8, width, height, true, false, false);
+
+                Texture2D tmpTerrainTex = ResizeTexture(proto.texture, TextureFormat.ARGB32, 8, width, height, true, true, false);
                 Color[] maxMipColors = tmpTerrainTex.GetPixels(tmpTerrainTex.mipmapCount - 1);
                 averageSplatColors[protoIdx] = new Color(maxMipColors[0].r, maxMipColors[0].g, maxMipColors[0].b, maxMipColors[0].a);
             }
@@ -1046,7 +1241,7 @@ namespace Gaia
                         Texture2D terrainSplat = terrainSplats[splatIdx];
                         Color splatColor;
                         splatColor = terrainSplat.GetPixel(x, z);
-                      
+
 
                         if (splatColorIdx < averageSplatColors.Length)
                         {
@@ -1073,7 +1268,11 @@ namespace Gaia
                         //mapColor.a = 1f;
                         //}
                     }
+#if HDPipeline || UPPipeline
                     colorTex.SetPixel(x, z, mapColor);
+#else
+                    colorTex.SetPixel(x, z, mapColor.gamma);
+#endif
                 }
             }
             colorTex.Apply();
@@ -1091,21 +1290,26 @@ namespace Gaia
             //EditorUtility.ClearProgressBar();
 
             return fname;
-        } 
+        }
         private static string CreateMaterial(ExportTerrainLODSettings LODSettings, out Material mat, string objFileName, string textureFileName, string normalMapFileName, bool isImpostor)
         {
             if (LODSettings.m_materialShader == ExportedTerrainShader.Standard)
             {
                 mat = new Material(Shader.Find("Standard"));
 #if UPPipeline
-                        mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
 #elif HDPipeline
-                        mat = new Material(Shader.Find("HDRP/Lit"));
+                mat = new Material(Shader.Find("HDRP/Lit"));
 #endif
             }
             else
             {
+#if HDPipeline || UPPipeline
+                mat = new Material(Shader.Find("Shader Graphs/PW_Vertex_Color_SRP"));
+#else
                 mat = new Material(Shader.Find("PWS/PW_VertexColor"));
+#endif
+
             }
             string matFileName = objFileName;
             //need to make sure the file name is different for impostors so they do not share the filename with a potential source terrain mesh conversion
@@ -1118,16 +1322,16 @@ namespace Gaia
                 matFileName = objFileName.Replace(".obj", ".mat");
             }
 
-            
+
 
 
             if (LODSettings.m_exportTextures)
             {
                 Texture2D texture = (Texture2D)AssetDatabase.LoadAssetAtPath(textureFileName, typeof(Texture2D));
 #if UPPipeline
-                        mat.SetTexture("_BaseMap", texture);
+                mat.SetTexture("_BaseMap", texture);
 #elif HDPipeline
-                        mat.SetTexture("_BaseColorMap", texture);
+                mat.SetTexture("_BaseColorMap", texture);
 #else
                 mat.SetTexture("_MainTex", texture);
 #endif
@@ -1137,12 +1341,11 @@ namespace Gaia
             {
                 Texture2D normalMap = (Texture2D)AssetDatabase.LoadAssetAtPath(normalMapFileName, typeof(Texture2D));
 #if HDPipeline
-                        mat.SetTexture("_NormalMap", normalMap);
+                mat.SetTexture("_NormalMap", normalMap);
+                //Sets normal map to Object Space
+                mat.SetFloat("_NormalMapSpace", 1f);
 #else
                 mat.SetFloat("_Glossiness", 0f);
-
-
-
                 mat.SetTexture("_BumpMap", normalMap);
                 float normalStrength = 1f;
                 mat.SetFloat("_BumpScale", normalStrength);
@@ -1151,19 +1354,21 @@ namespace Gaia
             }
 
 #if UPPipeline
-                         mat.SetFloat("_Smoothness", 0f);
+            mat.SetFloat("_Smoothness", 0f);
 #elif HDPipeline
-                        mat.SetFloat("_Smoothness", 0f);
+            mat.SetFloat("_Smoothness", 0f);
+
 #else
             mat.SetFloat("_Glossiness", 0f);
 #endif
+            mat.enableInstancing = true;
 
             AssetDatabase.CreateAsset(mat, matFileName);
             AssetDatabase.ImportAsset(matFileName, ImportAssetOptions.ForceUpdate);
             return matFileName;
         }
-       
-        
+
+
         private static void CopyGaiaSpawns(Terrain terrain, GameObject gaiaGameObjectCopyTarget)
         {
             if (gaiaGameObjectCopyTarget != null)
@@ -1177,15 +1382,9 @@ namespace Gaia
                 }
             }
         }
-        
+
         private static void AddGameObjectColliders(Terrain terrain, GameObject gaiaGameObjectCopyTarget)
         {
-            MeshCollider mainMC = gaiaGameObjectCopyTarget.GetComponent<MeshCollider>();
-            if (mainMC == null)
-            {
-                Debug.LogWarning("Trying to add game object colliders while exporting terrain " + terrain.name + ", but there is no mesh collider on the exported object, skipping game object colliders.");
-                return;
-            }
             Collider[] allChildColliders = terrain.gameObject.GetComponentsInChildren<Collider>();
             if (m_settings.m_colliderExportBakeCombinedCollisionMesh)
             {
@@ -1286,8 +1485,8 @@ namespace Gaia
                         layerGO.layer = layer;
                         MeshCollider layerCollider = layerGO.AddComponent<MeshCollider>();
                         layerCollider.sharedMesh = combinedMesh;
-                        layerCollider.transform.position = mainMC.transform.position;
-                        layerCollider.transform.parent = mainMC.transform;
+                        layerCollider.transform.position = gaiaGameObjectCopyTarget.transform.position;
+                        layerCollider.transform.parent = gaiaGameObjectCopyTarget.transform;
                     }
                 }
 
@@ -1318,19 +1517,11 @@ namespace Gaia
                     go.transform.parent = gaiaGameObjectCopyTarget.transform;
                 }
             }
-            
+
         }
 
         private static void AddTreeColliders(Terrain terrain, GameObject gaiaGameObjectCopyTarget)
         {
-            MeshCollider mainMC = gaiaGameObjectCopyTarget.GetComponent<MeshCollider>();
-            if (mainMC == null)
-            {
-                Debug.LogWarning("Trying to add tree colliders while exporting terrain " + terrain.name + ", but there is no mesh collider on the exported object, skipping game object colliders.");
-                return;
-            }
-
-
             if (m_settings.m_colliderExportBakeCombinedCollisionMesh)
             {
                 Mesh builtinCubeMesh = GaiaEditorUtils.LoadAssetFromUniqueAssetPath<Mesh>("Library/unity default resources::Cube");
@@ -1372,10 +1563,10 @@ namespace Gaia
                                 var allLODs = lODGroup.GetLODs();
                                 if (allLODs.Length > 0)
                                 {
-                                    Renderer[]  renderer = allLODs[0].renderers;
+                                    Renderer[] renderer = allLODs[0].renderers;
                                     if (renderer.Length > 0)
                                     {
-                                        heightScale =  renderer[0].bounds.size.y / m_settings.m_colliderTreeReplacement.bounds.size.y;
+                                        heightScale = renderer[0].bounds.size.y / m_settings.m_colliderTreeReplacement.bounds.size.y;
                                     }
                                 }
                             }
@@ -1414,14 +1605,14 @@ namespace Gaia
                         {
                             //Easy mode: Just use the collider provided by user
                             mesh = m_settings.m_colliderTreeReplacement;
-                            scale = new Vector3(treeInstance.widthScale /2f, treeInstance.heightScale * protoTreeColliderMeshHeightScale[treeInstance.prototypeIndex], treeInstance.widthScale /2f);
+                            scale = new Vector3(treeInstance.widthScale / 2f, treeInstance.heightScale * protoTreeColliderMeshHeightScale[treeInstance.prototypeIndex], treeInstance.widthScale / 2f);
                             rotation = Quaternion.Euler(0f, treeInstance.rotation * (180f / (float)Math.PI), 0f);
                             UnityEngine.Matrix4x4 matrix = UnityEngine.Matrix4x4.TRS(position, rotation, scale);
                             combineInstances.Add(new CombineInstance() { mesh = mesh, transform = matrix });
-                            
+
                         }
                         else
-                        { 
+                        {
                             //Hard mode: Iterate through all child colliders in the prefab and replace them with the Unity primitives
                             Collider[] allChildColliders = protoTreeColliders[treeInstance.prototypeIndex];
                             for (int i = 0; i < allChildColliders.Length; i++)
@@ -1522,8 +1713,8 @@ namespace Gaia
                         layerGO.layer = layer;
                         MeshCollider layerCollider = layerGO.AddComponent<MeshCollider>();
                         layerCollider.sharedMesh = combinedMesh;
-                        layerCollider.transform.position = mainMC.transform.position;
-                        layerCollider.transform.parent = mainMC.transform;
+                        layerCollider.transform.position = gaiaGameObjectCopyTarget.transform.position;
+                        layerCollider.transform.parent = gaiaGameObjectCopyTarget.transform;
                     }
                 }
             }
@@ -1624,16 +1815,23 @@ namespace Gaia
 
             GameObject gaiaGameObjectCopyTarget = null;
 
-            if ((m_settings.m_convertSourceTerrainsAction != ConversionAction.OBJFileExport) || m_settings.m_createImpostorScenes )
+            if ((m_settings.m_convertSourceTerrainsAction != ConversionAction.OBJFileExport) || m_settings.m_createImpostorScenes)
             {
                 ProgressBar.Show(ProgressBarPriority.TerrainMeshExport, "Exporting Terrains", "Creating Game Object", m_currentTerrainCount, maxTerrainCount, true);
                 gaiaGameObjectCopyTarget = SetupGameObject(LODSettingsList, index, terrain, objFileName, textureFileName, material, isFinalLOD, isImpostorScenes);
             }
-
+            
             if ((m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain && m_settings.m_copyGaiaGameObjects && !isImpostorScenes || m_settings.m_copyGaiaGameObjectsImpostor && isImpostorScenes) && isFinalLOD)
             {
                 ProgressBar.Show(ProgressBarPriority.TerrainMeshExport, "Exporting Terrains", "Copying Gaia Spawns", m_currentTerrainCount, maxTerrainCount, true);
                 CopyGaiaSpawns(terrain, gaiaGameObjectCopyTarget);
+            }
+
+
+            if ((m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain && m_settings.m_convertTreesToGameObjects && !isImpostorScenes) && isFinalLOD)
+            {
+                ProgressBar.Show(ProgressBarPriority.TerrainMeshExport, "Exporting Terrains", "Converting Trees to Game Objects", m_currentTerrainCount, maxTerrainCount, true);
+                GaiaUtils.ConvertTreesToGameObjects(terrain, gaiaGameObjectCopyTarget.transform);
             }
 
             if (m_settings.m_colliderExportAddGameObjectColliders && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly && !isImpostorScenes)
@@ -1669,13 +1867,13 @@ namespace Gaia
             }
 
 
-            if (m_settings.m_sourceTerrainTreatment!= SourceTerrainTreatment.Delete && !m_processedTerrains.Contains(terrain))
+            if (m_settings.m_sourceTerrainTreatment != SourceTerrainTreatment.Delete && !m_processedTerrains.Contains(terrain))
             {
                 m_processedTerrains.Add(terrain);
             }
         }
-        
-        
+
+
         public static void RestoreBackup()
         {
             if (GaiaUtils.HasDynamicLoadedTerrains())
@@ -1764,7 +1962,7 @@ namespace Gaia
                 }
             }
         }
-        
+
         public static void ShowTerrains(List<Terrain> terrains)
         {
             foreach (Terrain t in terrains)
@@ -1774,7 +1972,7 @@ namespace Gaia
                     t.gameObject.SetActive(true);
                 }
             }
-            
+
         }
 
         private static void CreateBackupScene(Terrain terrain)
@@ -1819,7 +2017,7 @@ namespace Gaia
             if (ts != null)
             {
                 ts.m_backupScenePath = backupScenePath;
-                TerrainLoaderManager.Instance.SaveStorageData();
+                TerrainLoaderManager.Instance.DirtyStorageData();
             }
             else
             {
@@ -1827,7 +2025,7 @@ namespace Gaia
             }
         }
 
-        
+
         private static void HandleSourceTerrain(Terrain terrain, GameObject gaiaGameObjectCopyTarget)
         {
             switch (m_settings.m_sourceTerrainTreatment)
@@ -1852,7 +2050,7 @@ namespace Gaia
                     if (GaiaUtils.HasDynamicLoadedTerrains())
                     {
                         CreateBackupScene(terrain);
-                       
+
                     }
                     else
                     {
@@ -1880,6 +2078,8 @@ namespace Gaia
             m_processedTerrains.Clear();
             m_createdLODParents.Clear();
             m_currentTerrainCount = 0;
+
+            double timeStamp = GaiaUtils.GetUnixTimestamp();
 
             //There can be issues in unity 2020.2 and higher when doing the orthographic bake on cached terrains. Force a full unload before the export & disable caching to prevent this
             if (GaiaUtils.HasDynamicLoadedTerrains())
@@ -1931,7 +2131,23 @@ namespace Gaia
             Selection.activeObject = obj;
             EditorGUIUtility.PingObject(obj);
 
-            Debug.Log("Exported " + m_currentTerrainCount.ToString() + " terrains as mesh terrains to the directory " + m_workingExportPath);
+            TimeSpan duration = TimeSpan.FromMilliseconds(GaiaUtils.GetUnixTimestamp() - timeStamp);
+
+            Debug.Log("Exported " + m_currentTerrainCount.ToString() + " terrains as mesh terrains to the directory " + m_workingExportPath + "\r\nDuration: " + duration.ToString());
+
+            if (m_settings.m_createImpostorScenes)
+            {
+                //Log Impostor creation in build log
+                BuildConfig config = GaiaUtils.GetOrCreateBuildConfig();
+                config.AddBuildHistoryEntry(BuildLogCategory.Impostors, SessionManager.gameObject.scene.name, GaiaUtils.GetUnixTimestamp());
+            }
+
+            if (m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly)
+            {
+                //Log Collider baking, in build log
+                BuildConfig config = GaiaUtils.GetOrCreateBuildConfig();
+                config.AddBuildHistoryEntry(BuildLogCategory.ColliderBaking, SessionManager.gameObject.scene.name, GaiaUtils.GetUnixTimestamp());
+            }
 
             if (m_copyToPath != "")
             {
@@ -1945,6 +2161,8 @@ namespace Gaia
             }
 
             TerrainLoaderManager.Instance.m_cacheInEditor = m_cachingWasAllowed;
+            TerrainLoaderManager.Instance.UpdateImpostorStateInBuildSettings();
+
 
             if (GaiaUtils.HasDynamicLoadedTerrains())
             {
@@ -1955,12 +2173,18 @@ namespace Gaia
                         ts.RemoveAllReferences();
                     }
                 }
-
-                TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
+                TerrainLoaderManager.Instance.SetLoadingRange(TerrainLoaderManager.Instance.GetLoadingRange(), m_settings.m_impostorRange);
+                TerrainLoaderManager.Instance.SaveStorageData();
             }
         }
     }
-    
+
+
+    /// <summary>
+    /// Selects a mode for the export terrain winodw, "Default" is the regular mode with all controls available, the other modes have reduced UI to focus on impostor / server scene creation only.
+    /// </summary>
+    public enum ExportTerrainWindowUIMode { Default, ImpostorScenes, ServerScene}
+
     /// <summary>
     /// 
     /// The obj export part of this utility is sourced from http://wiki.unity3d.com/index.php?title=TerrainObjExporter, and adapted largely untouched into 
@@ -1972,7 +2196,7 @@ namespace Gaia
     /// Bit Barrel media: progress bar fix.
     /// 
     /// </summary>
-    
+
     class ExportTerrain : EditorWindow, IPWEditor
     {
         private EditorUtils m_editorUtils;
@@ -1988,7 +2212,7 @@ namespace Gaia
             {
                 if (settings == null)
                 {
-                    if (SessionManager!=null && SessionManager.m_lastUsedTerrainExportSettings != null)
+                    if (SessionManager != null && SessionManager.m_lastUsedTerrainExportSettings != null)
                     {
                         settings = Instantiate(SessionManager.m_lastUsedTerrainExportSettings);
                         settings.name = settings.name.Replace("(Clone)", "").Trim();
@@ -2020,7 +2244,7 @@ namespace Gaia
                 return m_sessionManager;
             }
         }
-        
+
         private Vector2 m_scrollPosition;
         private ExportTerrainLODSettings m_currentLODSettings;
         private int m_currentLODLevel;
@@ -2034,6 +2258,8 @@ namespace Gaia
         private bool m_hideMeshButtonState;
 
         public bool PositionChecked { get; set; }
+        public ExportTerrainWindowUIMode m_UIMode = ExportTerrainWindowUIMode.Default;
+        internal int m_buildConfigIndex;
 
         void OnEnable()
         {
@@ -2055,7 +2281,8 @@ namespace Gaia
         private void SetImpostorPreset()
         {
             m_settings.m_convertSourceTerrainsAction = ConversionAction.MeshTerrain;
-            m_settings.m_addMeshCollider = true;
+            m_settings.m_addTerrainCollider = true;
+            m_settings.m_terrainColliderType = TerrainColliderType.MeshCollider;
             m_settings.m_copyGaiaGameObjects = false;
             if (GaiaUtils.HasDynamicLoadedTerrains())
             {
@@ -2071,7 +2298,8 @@ namespace Gaia
         private void SetLowPolyPreset()
         {
             m_settings.m_convertSourceTerrainsAction = ConversionAction.MeshTerrain;
-            m_settings.m_addMeshCollider = true;
+            m_settings.m_addTerrainCollider = true;
+            m_settings.m_terrainColliderType = TerrainColliderType.MeshCollider;
             m_settings.m_copyGaiaGameObjects = true;
             m_settings.m_sourceTerrainTreatment = SourceTerrainTreatment.Deactivate;
             SetLowPolyLODs();
@@ -2085,7 +2313,7 @@ namespace Gaia
             //{
             //    m_settings.m_exportTerrainLODSettings.Add(new ExportTerrainLODSettings());
             //}
-            
+
             //int lodLevel = 0;
             //foreach (ExportTerrainLODSettings lodSettings in m_settings.m_exportTerrainLODSettings)
             //{
@@ -2107,16 +2335,28 @@ namespace Gaia
             //    SetLODToLowPolyMode(lodSettings, lodLevel++);
             //}
         }
-        
+
         void OnGUI()
         {
             m_editorUtils.Initialize();
             EditorGUIUtility.labelWidth = 250;
             m_scrollPosition = GUILayout.BeginScrollView(m_scrollPosition);
-            m_editorUtils.Panel("ExportTerrainPanel", ExportTerrainPanel, true);
+            switch (m_UIMode)
+            {
+                case ExportTerrainWindowUIMode.Default:
+                    m_editorUtils.Panel("ExportTerrainPanel", ExportTerrainPanel, true);
+                    break;
+                case ExportTerrainWindowUIMode.ImpostorScenes:
+                    m_editorUtils.Panel("ExportTerrainImpostorPanel", ExportTerrainImpostorPanel, true);
+                    break;
+                case ExportTerrainWindowUIMode.ServerScene:
+                    m_editorUtils.Panel("ExportTerrainServerScenePanel", ExportTerrainServerScenePanel, true);
+                    break;
+            }
+            
             GUILayout.EndScrollView();
         }
-        
+
         /// <summary>
         /// Loads in an export preset after switching to a different preset
         /// </summary>
@@ -2130,20 +2370,180 @@ namespace Gaia
             m_settings.m_exportPath = oldPath;
         }
 
+        private void ExportTerrainServerScenePanel(bool helpEnabled)
+        {
+            GUI.enabled = !ExportTerrainUtility.m_exportRunning;
+            bool currentGUIState = GUI.enabled;
+            if ((m_hideTerrainButtonState && Terrain.activeTerrains.Count() <= 0) && !GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoTerrain"), MessageType.Warning);
+            }
+            if (string.IsNullOrEmpty(m_settings.m_exportPath))
+            {
+                m_settings.m_exportPath = GaiaDirectories.GetExportDirectory() + GaiaDirectories.TERRAIN_MESH_EXPORT_DIRECTORY;
+            }
+            ExportTerrainUtility.m_workingExportPath = m_settings.m_exportPath;
+            ExportTerrainUtility.m_copyToPath = "";
+            m_settings.m_addTerrainCollider = m_editorUtils.Toggle("AddTerrainCollider", m_settings.m_addTerrainCollider, helpEnabled);
+            if (m_settings.m_addTerrainCollider)
+            {
+                EditorGUI.indentLevel++;
+                m_settings.m_terrainColliderType = (TerrainColliderType)m_editorUtils.EnumPopup("TerrainColliderType", m_settings.m_terrainColliderType, helpEnabled);
+                if (m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider)
+                {
+                    m_settings.m_colliderExportResolution = (SaveResolution)m_editorUtils.EnumPopup("ColliderExportResolution", m_settings.m_colliderExportResolution, helpEnabled);
+#if GAIA_MESH_PRESENT
+                    DrawMeshSimplificationSettings(ref m_settings.m_colliderSimplifyQuality, ref m_settings.m_customSimplificationSettingsFoldedOut, m_settings.m_colliderSimplificationOptions, helpEnabled);
+#endif
+                }
+                EditorGUI.indentLevel--;
+            }
+            m_settings.m_colliderExportAddTreeColliders = m_editorUtils.Toggle("AddTreeColliders", m_settings.m_colliderExportAddTreeColliders, helpEnabled);
+            if (m_settings.m_colliderExportAddTreeColliders)
+            {
+                EditorGUI.indentLevel++;
+                m_settings.m_colliderTreeReplacement = (Mesh)m_editorUtils.ObjectField("TreeColliderReplacement", m_settings.m_colliderTreeReplacement, typeof(Mesh), false, helpEnabled);
+                EditorGUI.indentLevel--;
+            }
+            m_settings.m_colliderExportAddGameObjectColliders = m_editorUtils.Toggle("AddGameObjectColliders", m_settings.m_colliderExportAddGameObjectColliders, helpEnabled);
+            m_settings.m_colliderExportBakeCombinedCollisionMesh = m_editorUtils.Toggle("CombineColliderMeshes", m_settings.m_colliderExportBakeCombinedCollisionMesh, helpEnabled);
+            Color normalBGColor = GUI.backgroundColor;
+            if (m_gaiaSettings == null)
+            {
+                m_gaiaSettings = GaiaUtils.GetGaiaSettings();
+            }
+            GUI.backgroundColor = m_gaiaSettings.GetActionButtonColor();
+
+            if (m_editorUtils.Button("CreateServerSceneButton"))
+            {
+                if (EditorUtility.DisplayDialog("Start Server Scene Creation", "Do you want to start the server scene creation now? This process can take some time and will overwrite the previously created server scene (if any).", "Start Creation", "Cancel"))
+                {
+
+                    ExportButton();
+                    GaiaManagerEditor.CreateServerScene(m_buildConfigIndex);
+                    this.Close();
+                }
+            }
+            GUI.backgroundColor = normalBGColor;
+
+        }
+
+        private void ExportTerrainImpostorPanel(bool helpEnabled)
+        {
+            GUI.enabled = !ExportTerrainUtility.m_exportRunning;
+            bool currentGUIState = GUI.enabled;
+            if ((m_hideTerrainButtonState && Terrain.activeTerrains.Count() <= 0) && !GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoTerrain"), MessageType.Warning);
+            }
+            if (string.IsNullOrEmpty(m_settings.m_exportPath))
+            {
+                m_settings.m_exportPath = GaiaDirectories.GetExportDirectory() + GaiaDirectories.TERRAIN_MESH_EXPORT_DIRECTORY;
+            }
+            ExportTerrainUtility.m_workingExportPath = m_settings.m_exportPath;
+            ExportTerrainUtility.m_copyToPath = "";
+
+            bool canHaveImpostors = false;
+
+#if GAIA_PRO_PRESENT
+            if (GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                canHaveImpostors = true;
+            }
+#endif
+
+            if (!canHaveImpostors)
+            {
+                EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoImpostorPossibleWarningPanel"), MessageType.Warning);
+            }
+
+            GUI.enabled = canHaveImpostors;
+            double regularRange = TerrainLoaderManager.Instance.GetLoadingRange();
+            if (GaiaUtils.HasImpostorTerrains())
+            {
+                m_settings.m_impostorRange = TerrainLoaderManager.Instance.GetImpostorLoadingRange();
+            }
+            else
+            {
+                if (m_settings.m_impostorRange == 0)
+                {
+                    m_settings.m_impostorRange = TerrainLoaderManager.GetDefaultLoadingRangeForTilesize(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesSize) * 3f;
+                }
+            }
+            EditorGUI.indentLevel++;
+            EditorGUIUtility.labelWidth -= 15;
+            EditorGUI.BeginChangeCheck();
+            regularRange = m_editorUtils.DelayedDoubleField("RegularLoadRange", regularRange, helpEnabled);
+            m_settings.m_impostorRange = m_editorUtils.DelayedDoubleField("ImpostorLoadRange", m_settings.m_impostorRange, helpEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                TerrainLoaderManager.Instance.SetLoadingRange(regularRange, m_settings.m_impostorRange);
+            }
+            EditorGUIUtility.labelWidth += 15;
+            m_settings.m_addMeshColliderImpostor = m_editorUtils.Toggle("AddMeshCollider", m_settings.m_addMeshColliderImpostor, helpEnabled);
+            m_settings.m_copyGaiaGameObjectsImpostor = m_editorUtils.Toggle("CopyGaiaGameObjects", m_settings.m_copyGaiaGameObjectsImpostor, helpEnabled);
+            EditorGUI.indentLevel--;
+
+            GUILayout.Space(EditorGUIUtility.singleLineHeight / 2f);
+            m_editorUtils.Heading("LODSettingsImpostorScenes");
+            int LODLevel = 0;
+
+            foreach (ExportTerrainLODSettings LODSettings in m_settings.m_exportTerrainLODSettingsImpostors)
+            {
+                m_currentLODSettings = LODSettings;
+                m_currentLODLevel = LODLevel;
+                m_currentLODSettingsList = m_settings.m_exportTerrainLODSettingsImpostors;
+                m_editorUtils.Panel(new GUIContent("LOD Level " + LODLevel.ToString() + " Settings"), DrawLODLevel, false);
+                LODLevel++;
+            }
+            GUILayout.BeginHorizontal();
+            if (m_settings.m_exportTerrainLODSettingsImpostors.Count > 1)
+            {
+                if (m_editorUtils.Button("RemoveLODLevel"))
+                {
+                    m_settings.m_exportTerrainLODSettingsImpostors.RemoveAt(m_settings.m_exportTerrainLODSettingsImpostors.Count() - 1);
+                }
+            }
+            if (m_editorUtils.Button("AddLODLevel"))
+            {
+                ExportTerrainLODSettings newSettings = new ExportTerrainLODSettings();
+                newSettings.namePrefix = "LOD" + (m_settings.m_exportTerrainLODSettingsImpostors.Count - 1).ToString() + "_";
+                newSettings.m_LODGroupScreenRelativeTransitionHeight = Mathf.Max(0.2f * (3 - m_currentLODLevel), 0f);
+                m_settings.m_exportTerrainLODSettingsImpostors.Add(newSettings);
+            }
+            GUILayout.EndHorizontal();
+            Color normalBGColor = GUI.backgroundColor;
+            if (m_gaiaSettings == null)
+            {
+                m_gaiaSettings = GaiaUtils.GetGaiaSettings();
+            }
+            GUI.backgroundColor = m_gaiaSettings.GetActionButtonColor();
+            if (m_editorUtils.Button("StartImpostorCreation"))
+            {
+                if (EditorUtility.DisplayDialog("Start Impostor Creation", "Do you want to start the impostor creation now? This process can take some time and will overwrite any previously created Impostor Terrains.", "Start Creation", "Cancel"))
+                {
+                    ExportButton();
+                    this.Close();
+                }
+            }
+            GUI.backgroundColor = normalBGColor;
+        }
+
+
         private void ExportTerrainPanel(bool helpEnabled)
         {
             GUI.enabled = !ExportTerrainUtility.m_exportRunning;
 
             bool currentGUIState = GUI.enabled;
-            if ((m_hideTerrainButtonState && Terrain.activeTerrains.Count()<=0) && !GaiaUtils.HasDynamicLoadedTerrains())
+            if ((m_hideTerrainButtonState && Terrain.activeTerrains.Count() <= 0) && !GaiaUtils.HasDynamicLoadedTerrains())
             {
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoTerrain"), MessageType.Warning);
             }
 
 
             m_settings.m_exportSelection = (ExportSelection)m_editorUtils.EnumPopup("ExportSelection", m_settings.m_exportSelection, helpEnabled);
-           
-            
+
+
             if (string.IsNullOrEmpty(m_settings.m_exportPath))
             {
                 m_settings.m_exportPath = GaiaDirectories.GetExportDirectory() + GaiaDirectories.TERRAIN_MESH_EXPORT_DIRECTORY;
@@ -2200,13 +2600,13 @@ namespace Gaia
 
             //If the name of the preset has changed, this means the order of presets might have changed or the preset itself was changed
             //treat the stored settings as custom setting then
-            if (m_settings.m_presetIndex > allPresetNames.Length-1 || m_settings.m_lastUsedPresetName != allPresetNames[m_settings.m_presetIndex])
+            if (m_settings.m_presetIndex > allPresetNames.Length - 1 || m_settings.m_lastUsedPresetName != allPresetNames[m_settings.m_presetIndex])
             {
                 m_settings.m_presetIndex = allPresetIDs.Length - 1;
                 m_settings.m_lastUsedPresetName = allPresetNames[m_settings.m_presetIndex];
             }
 
-            m_settings.m_presetIndex = EditorGUILayout.IntPopup(m_settings.m_presetIndex, allPresetNames, allPresetIDs );
+            m_settings.m_presetIndex = EditorGUILayout.IntPopup(m_settings.m_presetIndex, allPresetNames, allPresetIDs);
 
 
             //ExportPreset oldPreset = m_settings.m_newExportPreset;
@@ -2247,7 +2647,7 @@ namespace Gaia
             {
                 if (!m_settings.CompareTo(m_allPresets[m_settings.m_presetIndex]))
                 {
-                   m_settings.m_presetIndex = allPresetNames.Length - 1;
+                    m_settings.m_presetIndex = allPresetNames.Length - 1;
                 }
 
             }
@@ -2274,7 +2674,7 @@ namespace Gaia
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoImpostorPossibleWarning"), MessageType.Warning);
             }
 
-            if (!canHaveLowPoly && 
+            if (!canHaveLowPoly &&
                 m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.MeshTerrain && m_settings.m_exportTerrainLODSettingsSourceTerrains.Find(x => x.m_materialShader == ExportedTerrainShader.VertexColor) != null)
             {
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoVertexColorPossibleWarning"), MessageType.Warning);
@@ -2285,7 +2685,7 @@ namespace Gaia
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoExportSelected"), MessageType.Warning);
             }
 
-            float buttonWidth = (EditorGUIUtility.currentViewWidth -28f) / 2f;
+            float buttonWidth = (EditorGUIUtility.currentViewWidth - 28f) / 2f;
 
             if (m_settings.m_customSettingsFoldedOut)
             {
@@ -2293,7 +2693,7 @@ namespace Gaia
                 GUILayout.BeginVertical(m_exportBox, GUILayout.MinWidth(200), GUILayout.MaxWidth(1920));
                 {
                     GUILayout.BeginHorizontal();
-                    m_settings.m_convertSourceTerrains = m_editorUtils.Toggle(m_settings.m_convertSourceTerrains, new GUIContent("",m_editorUtils.GetTooltip("ConvertSourceTerrain")), GUILayout.Width(15f));
+                    m_settings.m_convertSourceTerrains = m_editorUtils.Toggle(m_settings.m_convertSourceTerrains, new GUIContent("", m_editorUtils.GetTooltip("ConvertSourceTerrain")), GUILayout.Width(15f));
                     m_editorUtils.Heading("ConvertSourceTerrain");
                     GUILayout.EndHorizontal();
 
@@ -2305,8 +2705,22 @@ namespace Gaia
                         switch (m_settings.m_convertSourceTerrainsAction)
                         {
                             case ConversionAction.MeshTerrain:
-                                m_settings.m_addMeshCollider = m_editorUtils.Toggle("AddMeshCollider", m_settings.m_addMeshCollider, helpEnabled);
+                                m_settings.m_addTerrainCollider = m_editorUtils.Toggle("AddTerrainCollider", m_settings.m_addTerrainCollider, helpEnabled);
+                                if (m_settings.m_addTerrainCollider)
+                                {
+                                    EditorGUI.indentLevel++;
+                                    m_settings.m_terrainColliderType = (TerrainColliderType)m_editorUtils.EnumPopup("TerrainColliderType", m_settings.m_terrainColliderType, helpEnabled);
+                                    if (m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider)
+                                    {
+                                        m_settings.m_colliderExportResolution = (SaveResolution)m_editorUtils.EnumPopup("ColliderExportResolution", m_settings.m_colliderExportResolution, helpEnabled);
+#if GAIA_MESH_PRESENT
+                                        DrawMeshSimplificationSettings(ref m_settings.m_colliderSimplifyQuality, ref m_settings.m_customSimplificationSettingsFoldedOut, m_settings.m_colliderSimplificationOptions, helpEnabled);
+#endif
+                                    }
+                                    EditorGUI.indentLevel--;
+                                }
                                 m_settings.m_copyGaiaGameObjects = m_editorUtils.Toggle("CopyGaiaGameObjects", m_settings.m_copyGaiaGameObjects, helpEnabled);
+                                m_settings.m_convertTreesToGameObjects = m_editorUtils.Toggle("ConvertTreesToGameObjects", m_settings.m_convertTreesToGameObjects, helpEnabled);
                                 m_settings.m_sourceTerrainTreatment = (SourceTerrainTreatment)m_editorUtils.EnumPopup("SourceTerrainTreatment", m_settings.m_sourceTerrainTreatment, helpEnabled);
                                 if (m_settings.m_sourceTerrainTreatment == SourceTerrainTreatment.StoreInBackupScenes && !GaiaUtils.HasDynamicLoadedTerrains())
                                 {
@@ -2314,7 +2728,20 @@ namespace Gaia
                                 }
                                 break;
                             case ConversionAction.ColliderOnly:
-                                m_settings.m_colliderExportResolution = (SaveResolution)m_editorUtils.EnumPopup("ColliderExportResolution", m_settings.m_colliderExportResolution, helpEnabled);
+                                m_settings.m_addTerrainCollider = m_editorUtils.Toggle("AddTerrainCollider", m_settings.m_addTerrainCollider, helpEnabled);
+                                if (m_settings.m_addTerrainCollider)
+                                {
+                                    EditorGUI.indentLevel++;
+                                    m_settings.m_terrainColliderType = (TerrainColliderType)m_editorUtils.EnumPopup("TerrainColliderType", m_settings.m_terrainColliderType, helpEnabled);
+                                    if (m_settings.m_terrainColliderType == TerrainColliderType.MeshCollider)
+                                    {
+                                        m_settings.m_colliderExportResolution = (SaveResolution)m_editorUtils.EnumPopup("ColliderExportResolution", m_settings.m_colliderExportResolution, helpEnabled);
+#if GAIA_MESH_PRESENT
+                                        DrawMeshSimplificationSettings(ref m_settings.m_colliderSimplifyQuality, ref m_settings.m_customSimplificationSettingsFoldedOut, m_settings.m_colliderSimplificationOptions, helpEnabled);
+#endif
+                                    }
+                                    EditorGUI.indentLevel--;
+                                }
                                 m_settings.m_colliderExportAddTreeColliders = m_editorUtils.Toggle("AddTreeColliders", m_settings.m_colliderExportAddTreeColliders, helpEnabled);
                                 if (m_settings.m_colliderExportAddTreeColliders)
                                 {
@@ -2373,7 +2800,7 @@ namespace Gaia
                             {
                                 ExportTerrainLODSettings newSettings = new ExportTerrainLODSettings();
                                 newSettings.namePrefix = "LOD" + (m_settings.m_exportTerrainLODSettingsSourceTerrains.Count - 1).ToString() + "_";
-                                newSettings.m_LODGroupScreenRelativeTransitionHeight = Mathf.Max(0.2f * (3 -m_currentLODLevel), 0f);
+                                newSettings.m_LODGroupScreenRelativeTransitionHeight = Mathf.Max(0.2f * (3 - m_currentLODLevel), 0f);
                                 m_settings.m_exportTerrainLODSettingsSourceTerrains.Add(newSettings);
                             }
                             GUILayout.EndHorizontal();
@@ -2395,7 +2822,7 @@ namespace Gaia
                     GUILayout.BeginHorizontal();
                     m_settings.m_createImpostorScenes = m_editorUtils.Toggle(m_settings.m_createImpostorScenes, new GUIContent("", m_editorUtils.GetTooltip("CreateImpostorScenes")), GUILayout.Width(15f));
                     m_editorUtils.Heading("CreateImpostorScenes");
-                    
+
                     GUILayout.EndHorizontal();
 
                     if (m_settings.m_createImpostorScenes)
@@ -2406,7 +2833,28 @@ namespace Gaia
                         }
 
                         GUI.enabled = canHaveImpostors;
+                        double regularRange = TerrainLoaderManager.Instance.GetLoadingRange();
+                        if (GaiaUtils.HasImpostorTerrains())
+                        {
+                            m_settings.m_impostorRange = TerrainLoaderManager.Instance.GetImpostorLoadingRange();
+                        }
+                        else
+                        {
+                            if (m_settings.m_impostorRange == 0)
+                            {
+                                m_settings.m_impostorRange = TerrainLoaderManager.GetDefaultLoadingRangeForTilesize(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesSize) * 3f;
+                            }
+                        }
                         EditorGUI.indentLevel++;
+                        EditorGUIUtility.labelWidth -= 15; 
+                        EditorGUI.BeginChangeCheck();
+                        regularRange = m_editorUtils.DelayedDoubleField("RegularLoadRange", regularRange, helpEnabled);
+                        m_settings.m_impostorRange = m_editorUtils.DelayedDoubleField("ImpostorLoadRange", m_settings.m_impostorRange, helpEnabled);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            TerrainLoaderManager.Instance.SetLoadingRange(regularRange, m_settings.m_impostorRange);
+                        }
+                        EditorGUIUtility.labelWidth += 15;
                         m_settings.m_addMeshColliderImpostor = m_editorUtils.Toggle("AddMeshCollider", m_settings.m_addMeshColliderImpostor, helpEnabled);
                         m_settings.m_copyGaiaGameObjectsImpostor = m_editorUtils.Toggle("CopyGaiaGameObjects", m_settings.m_copyGaiaGameObjectsImpostor, helpEnabled);
                         EditorGUI.indentLevel--;
@@ -2450,7 +2898,7 @@ namespace Gaia
                 {
                     string dialogPath = GaiaDirectories.GetUserSettingsDirectory();
                     string filename = "Terrain Mesh Export Settings";
-                    string saveFilePath = EditorUtility.SaveFilePanel("Save Spawner settings as..", dialogPath, filename, "asset");
+                    string saveFilePath = EditorUtility.SaveFilePanel("Save Export settings as..", dialogPath, filename, "asset");
 
                     bool saveConditionsMet = true;
 
@@ -2514,7 +2962,7 @@ namespace Gaia
                     string path = GaiaDirectories.GetUserSettingsDirectory();
                     path = path.Remove(path.LastIndexOf(Path.AltDirectorySeparatorChar));
 
-                    string openFilePath = EditorUtility.OpenFilePanel("Load Spawner settings..", path, "asset");
+                    string openFilePath = EditorUtility.OpenFilePanel("Load Export settings..", path, "asset");
 
                     bool loadConditionsMet = true;
 
@@ -2540,7 +2988,7 @@ namespace Gaia
                         if (settingsToLoad != null)
                         {
                             //always switch to Custom setting after loading
-                            LoadSettings(settingsToLoad, allPresetIDs.Length-1);
+                            LoadSettings(settingsToLoad, allPresetIDs.Length - 1);
                             m_SaveAndLoadMessage = m_editorUtils.GetContent("LoadSuccessful").text;
                             m_SaveAndLoadMessageType = MessageType.Info;
                         }
@@ -2589,7 +3037,7 @@ namespace Gaia
 
                 }
             }
-           // }
+            // }
 
             //GameObject gaiaExportObject = GaiaUtils.GetTerrainExportObject(false);
 
@@ -2601,23 +3049,23 @@ namespace Gaia
             //}
             //else
             //{
-                if (m_hideMeshButtonState)
+            if (m_hideMeshButtonState)
+            {
+                if (m_editorUtils.Button("HideTerrainExports", GUILayout.Width(buttonWidth)))
                 {
-                    if (m_editorUtils.Button("HideTerrainExports", GUILayout.Width(buttonWidth)))
-                    {
-                        HideMeshTerrains(GetAllMeshTerrains());
-                        m_hideMeshButtonState = !m_hideMeshButtonState;
-                    }
-                    
+                    HideMeshTerrains(GetAllMeshTerrains());
+                    m_hideMeshButtonState = !m_hideMeshButtonState;
                 }
-                else
+
+            }
+            else
+            {
+                if (m_editorUtils.Button("ShowTerrainExports", GUILayout.Width(buttonWidth)))
                 {
-                    if (m_editorUtils.Button("ShowTerrainExports", GUILayout.Width(buttonWidth)))
-                    {
-                        ShowMeshTerrains(GetAllMeshTerrains());
-                        m_hideMeshButtonState = !m_hideMeshButtonState;
-                    }
+                    ShowMeshTerrains(GetAllMeshTerrains());
+                    m_hideMeshButtonState = !m_hideMeshButtonState;
                 }
+            }
             //}
             EditorGUILayout.EndHorizontal();
 
@@ -2637,107 +3085,11 @@ namespace Gaia
 
             if (m_editorUtils.Button("ExportButton", GUILayout.Width(buttonWidth)))
             {
-                //remember original caching setting
-                ExportTerrainUtility.m_cachingWasAllowed = TerrainLoaderManager.Instance.m_cacheInEditor; 
-                
-                //Ask for permission to switch back to regular loading if the collider only mode is active
-                if (GaiaUtils.HasDynamicLoadedTerrains() && TerrainLoaderManager.ColliderOnlyLoadingActive)
-                {
-                    if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("RestoreRegularLoadingTitle"), m_editorUtils.GetTextValue("RestoreRegularLoadingText"), m_editorUtils.GetTextValue("Continue"), m_editorUtils.GetTextValue("Cancel")))
-                    {
-                        // do an unload with the old setting
-                        TerrainLoaderManager.Instance.UnloadAll(true);
-                        //then change the actual flag in storage
-                        TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = false;
-                        //now do a refresh under the new setting
-                        TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
-                    }
-                    else
-                    {
-                        EditorGUIUtility.ExitGUI();
-                        return;
-                    }
-                }
-
-                if (GaiaUtils.HasDynamicLoadedTerrains())
-                {
-                    if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.Where(x => !String.IsNullOrEmpty(x.m_backupScenePath)).Count() > 0)
-                    {
-                        if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("RestoreBackupExportTitle"), m_editorUtils.GetTextValue("RestoreBackupExportText"), m_editorUtils.GetTextValue("Continue"), m_editorUtils.GetTextValue("Cancel")))
-                        {
-                            ExportTerrainUtility.RestoreBackup();
-                        }
-                        else
-                        {
-                            EditorGUIUtility.ExitGUI();
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        Action<Terrain> act = (t) => RemoveMeshTerrainFromTerrainScene(t);
-                        GaiaUtils.CallFunctionOnDynamicLoadedTerrains(act, true, null, "Removing old Mesh Terrains...");
-                        
-                        TerrainLoaderManager.Instance.UnloadAllImpostors(true);
-                        //In general we want to remove all impostor references - we are doing a new export which might not utilize impostors
-                        //But for collider scene exports it can be valuable to keep the existing impostor scenes, so that the user can switch back and forth
-                        //between collider loading & regular with impostors.
-                        if (!(m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly))
-                        {
-                            foreach (TerrainScene ts in TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes)
-                            {
-                                ts.m_impostorScenePath = "";
-                            }
-                            TerrainLoaderManager.Instance.SaveStorageData();
-                        }
-                        
-                    }
-                }
-                else
-                {
-                    List<GameObject> allMeshGameObjects = GetAllMeshTerrains();
-                    if (allMeshGameObjects != null && allMeshGameObjects.Count>0)
-                    {
-                        for (int i = allMeshGameObjects.Count - 1; i >= 0; i--)
-                        {
-                            DestroyImmediate(allMeshGameObjects[i]);
-                        }
-                    }
-                }
-
-                try
-                {
-                    ExportTerrainUtility.ExportTerrain(settings, ExportTerrainUtility.m_workingExportPath);
-
-                    if (GaiaUtils.HasDynamicLoadedTerrains() && m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly)
-                    {
-                        if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("CreatedColliderScenesTitle"), m_editorUtils.GetTextValue("CreatedColliderScenesText"), m_editorUtils.GetTextValue("SwitchToCollidersOnly"), m_editorUtils.GetTextValue("StayWithRegularTerrains")))
-                        {
-                            // do an unload with the old setting
-                            TerrainLoaderManager.Instance.UnloadAll(true);
-                            //then change the actual flag in storage
-                            TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = true;
-                            //now do a refresh under the new setting
-                            TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
-
-                            GaiaSessionManager.AddOnlyColliderScenesToBuildSettings(TerrainLoaderManager.TerrainScenes);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"Error during the terrain mesh export, Message: {ex.Message}, Stack Trace: {ex.StackTrace}");
-                }
-                finally
-                {
-                    EditorUtility.ClearProgressBar();
-                    TerrainLoaderManager.Instance.m_cacheInEditor = ExportTerrainUtility.m_cachingWasAllowed;
-                }
-
+                ExportButton();
             }
             GUI.backgroundColor = normalBGColor;
             GUI.enabled = currentGUIState;
-            
+
             if (m_editorUtils.Button("RestoreBackupScenes", GUILayout.Width(buttonWidth)))
             {
 
@@ -2770,6 +3122,106 @@ namespace Gaia
             GUI.enabled = true;
         }
 
+        private void ExportButton()
+        {
+            //remember original caching setting
+            ExportTerrainUtility.m_cachingWasAllowed = TerrainLoaderManager.Instance.m_cacheInEditor;
+
+            //Ask for permission to switch back to regular loading if the collider only mode is active
+            if (GaiaUtils.HasDynamicLoadedTerrains() && TerrainLoaderManager.ColliderOnlyLoadingActive)
+            {
+                if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("RestoreRegularLoadingTitle"), m_editorUtils.GetTextValue("RestoreRegularLoadingText"), m_editorUtils.GetTextValue("Continue"), m_editorUtils.GetTextValue("Cancel")))
+                {
+                    // do an unload with the old setting
+                    TerrainLoaderManager.Instance.UnloadAll(true);
+                    //then change the actual flag in storage
+                    TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = false;
+                    //now do a refresh under the new setting
+                    TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
+                }
+                else
+                {
+                    EditorGUIUtility.ExitGUI();
+                    return;
+                }
+            }
+
+            if (GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.Where(x => !String.IsNullOrEmpty(x.m_backupScenePath)).Count() > 0)
+                {
+                    if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("RestoreBackupExportTitle"), m_editorUtils.GetTextValue("RestoreBackupExportText"), m_editorUtils.GetTextValue("Continue"), m_editorUtils.GetTextValue("Cancel")))
+                    {
+                        ExportTerrainUtility.RestoreBackup();
+                    }
+                    else
+                    {
+                        EditorGUIUtility.ExitGUI();
+                        return;
+                    }
+                }
+                else
+                {
+                    Action<Terrain> act = (t) => RemoveMeshTerrainFromTerrainScene(t);
+                    GaiaUtils.CallFunctionOnDynamicLoadedTerrains(act, true, null, "Removing old Mesh Terrains...");
+
+                    TerrainLoaderManager.Instance.UnloadAllImpostors(true);
+                    //In general we want to remove all impostor references - we are doing a new export which might not utilize impostors
+                    //But for collider scene exports it can be valuable to keep the existing impostor scenes, so that the user can switch back and forth
+                    //between collider loading & regular with impostors.
+                    if (!(m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly))
+                    {
+                        foreach (TerrainScene ts in TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes)
+                        {
+                            ts.m_impostorScenePath = "";
+                        }
+                        TerrainLoaderManager.Instance.SaveStorageData();
+                    }
+
+                }
+            }
+            else
+            {
+                List<GameObject> allMeshGameObjects = GetAllMeshTerrains();
+                if (allMeshGameObjects != null && allMeshGameObjects.Count > 0)
+                {
+                    for (int i = allMeshGameObjects.Count - 1; i >= 0; i--)
+                    {
+                        DestroyImmediate(allMeshGameObjects[i]);
+                    }
+                }
+            }
+
+            try
+            {
+                ExportTerrainUtility.ExportTerrain(settings, ExportTerrainUtility.m_workingExportPath);
+
+                if (GaiaUtils.HasDynamicLoadedTerrains() && m_settings.m_convertSourceTerrains && m_settings.m_convertSourceTerrainsAction == ConversionAction.ColliderOnly)
+                {
+                    if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("CreatedColliderScenesTitle"), m_editorUtils.GetTextValue("CreatedColliderScenesText"), m_editorUtils.GetTextValue("SwitchToCollidersOnly"), m_editorUtils.GetTextValue("StayWithRegularTerrains")))
+                    {
+                        // do an unload with the old setting
+                        TerrainLoaderManager.Instance.UnloadAll(true);
+                        //then change the actual flag in storage
+                        TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = true;
+                        //now do a refresh under the new setting
+                        TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
+
+                        GaiaSessionManager.AddOnlyColliderScenesToBuildSettings(TerrainLoaderManager.TerrainScenes);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error during the terrain mesh export, Message: {ex.Message}, Stack Trace: {ex.StackTrace}");
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+                TerrainLoaderManager.Instance.m_cacheInEditor = ExportTerrainUtility.m_cachingWasAllowed;
+            }
+        }
+
 
         /// <summary>
         /// Looks for a keyword in the existing export presets, then applies the first preset with that keyword that is found.
@@ -2795,7 +3247,7 @@ namespace Gaia
                 SwitchPresetIndex();
             }
         }
-        
+
         private void LoadSettings(ExportTerrainSettings settingsToLoad, int selectedIndex)
         {
             m_settings = Instantiate(settingsToLoad);
@@ -2811,7 +3263,7 @@ namespace Gaia
             }
 
         }
-        
+
         private void RemoveMeshTerrainFromTerrainScene(Terrain terrain)
         {
             //We look for two things to remove: single meshes and Mesh LOD groups (created when the user selects multiple LOD levels for the export)
@@ -2827,7 +3279,7 @@ namespace Gaia
                 }
                 if (rootGOs[i].name.StartsWith(searchString1) || rootGOs[i].name.StartsWith(searchString2))
                 {
-                     DestroyImmediate(rootGOs[i]);
+                    DestroyImmediate(rootGOs[i]);
                 }
             }
         }
@@ -2852,16 +3304,14 @@ namespace Gaia
         private void DrawLODLevel(bool helpEnabled)
         {
             m_currentLODSettings.namePrefix = "LOD" + m_currentLODLevel.ToString() + "_";
-            m_currentLODSettings.m_saveResolution = (SaveResolution)m_editorUtils.EnumPopup("Resolution", m_currentLODSettings.m_saveResolution, helpEnabled);
-
-            if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.HighDefinition)
+            //Mesh Resolution only displayed for LOD level 0 - following levels will inherit the mesh from the foregoing LOD
+            if (m_currentLODLevel == 0)
             {
-                if (m_currentLODSettings.m_textureExportMethod == TextureExportMethod.OrthographicBake)
-                {
-                    EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("HDPipeline"), MessageType.Warning);
-                }
+                m_currentLODSettings.m_saveResolution = (SaveResolution)m_editorUtils.EnumPopup("Resolution", m_currentLODSettings.m_saveResolution, helpEnabled);
             }
-
+#if GAIA_MESH_PRESENT
+            DrawMeshSimplificationSettings(ref m_currentLODSettings.m_simplifyQuality, ref m_currentLODSettings.m_customSimplifySettingsFoldedOut, m_currentLODSettings.m_simplificationOptions, helpEnabled);
+#endif
             if (m_currentLODSettingsList.Count > 1)
             {
 
@@ -3026,7 +3476,7 @@ namespace Gaia
                         m_currentLODSettings.m_VertexColorSmoothing = m_editorUtils.IntSlider("VertexColorSmoothing", m_currentLODSettings.m_VertexColorSmoothing, 0, 10, helpEnabled);
                         EditorGUI.indentLevel--;
                     }
-                    
+
                     EditorGUI.indentLevel--;
 
                 }
@@ -3045,6 +3495,63 @@ namespace Gaia
                 }
             }
         }
+#if GAIA_MESH_PRESENT
+        private void DrawMeshSimplificationSettings(ref float simplifyQuality, ref bool customSettingsFoldedOut, UnityMeshSimplifierGaia.SimplificationOptions simplificationOptions, bool helpEnabled)
+        {
+            EditorGUILayout.BeginHorizontal();
+            {
+                simplifyQuality = m_editorUtils.Slider("SimplifyQuality", simplifyQuality * 100f, 0, 100, helpEnabled) / 100f;
+                if (!customSettingsFoldedOut)
+                {
+                    if (m_editorUtils.Button("PlusButtonCustomSimplifySettings", GUILayout.Width(20), GUILayout.Height(18)))
+                    {
+                        customSettingsFoldedOut = true;
+                    }
+                }
+                else
+                {
+                    if (m_editorUtils.Button("MinusButtonCustomSimplifySettings", GUILayout.Width(20), GUILayout.Height(18)))
+                    {
+                        customSettingsFoldedOut = false;
+                    }
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            if (customSettingsFoldedOut)
+            {
+                bool currentGUIState = GUI.enabled;
+                if (simplifyQuality >= 1)
+                {
+                    GUI.enabled = false;
+                }
+
+                EditorGUI.indentLevel++;
+                simplificationOptions.PreserveBorderEdges = m_editorUtils.Toggle("SimplifyPreserveBorderEdges", simplificationOptions.PreserveBorderEdges, helpEnabled);
+                simplificationOptions.PreserveUVSeamEdges = m_editorUtils.Toggle("SimplifyPreserveUVSeamEdges", simplificationOptions.PreserveUVSeamEdges, helpEnabled);
+                simplificationOptions.PreserveUVFoldoverEdges = m_editorUtils.Toggle("SimplifyPreserveUVFoldoverEdges", simplificationOptions.PreserveUVFoldoverEdges, helpEnabled);
+                simplificationOptions.PreserveSurfaceCurvature = m_editorUtils.Toggle("SimplifyPreserveSurfaceCurvature", simplificationOptions.PreserveSurfaceCurvature, helpEnabled);
+                simplificationOptions.EnableSmartLink = m_editorUtils.Toggle("SimplifyEnableSmartLink", simplificationOptions.EnableSmartLink, helpEnabled);
+                if (simplificationOptions.EnableSmartLink)
+                {
+                    EditorGUI.indentLevel++;
+                    simplificationOptions.VertexLinkDistance = m_editorUtils.FloatField("SimplifyVertexLinkDistance", (float)simplificationOptions.VertexLinkDistance, helpEnabled);
+                    EditorGUI.indentLevel--;
+                }
+                simplificationOptions.MaxIterationCount = m_editorUtils.IntField("SimplifyMaxInterationCount", simplificationOptions.MaxIterationCount, helpEnabled);
+                simplificationOptions.Agressiveness = m_editorUtils.DoubleField("SimplifyAggressiveness", simplificationOptions.Agressiveness, helpEnabled);
+                simplificationOptions.ManualUVComponentCount = m_editorUtils.Toggle("SimplifyManualUVComponentCount", simplificationOptions.ManualUVComponentCount, helpEnabled);
+                if (simplificationOptions.ManualUVComponentCount)
+                {
+                    EditorGUI.indentLevel++;
+                    simplificationOptions.UVComponentCount = m_editorUtils.IntSlider("SimplifyManualUVComponentCountValue", 0, 4, simplificationOptions.UVComponentCount, helpEnabled);
+                    EditorGUI.indentLevel--;
+                }
+
+                EditorGUI.indentLevel--;
+                GUI.enabled = currentGUIState;
+            }
+        }
+#endif
 
         /// <summary>
         /// Gets all Mesh terrain game objects in the scene
@@ -3099,7 +3606,7 @@ namespace Gaia
                     return;
                 }
             }
-            for (int i = meshTerrainGOs.Count-1; i>=0; i--)
+            for (int i = meshTerrainGOs.Count - 1; i >= 0; i--)
             {
                 GameObject go = meshTerrainGOs[i];
                 DestroyImmediate(go);

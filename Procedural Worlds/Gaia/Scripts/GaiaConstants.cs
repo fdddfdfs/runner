@@ -122,12 +122,12 @@ namespace Gaia
         /// <summary>
         /// Preset Environment Sizes
         /// </summary>
-        public enum EnvironmentSizePreset { Tiny, Small, Medium, Large, Custom }
+        public enum EnvironmentSizePreset {Micro, Tiny, Small, Medium, Large, Custom }
 
         /// <summary>
         /// The size of the environment we are targeting
         /// </summary>
-        public enum EnvironmentSize { Is256MetersSq, Is512MetersSq, Is1024MetersSq, Is2048MetersSq, Is4096MetersSq, Is8192MetersSq, Is16384MetersSq }
+        public enum EnvironmentSize {Is128MetersSq, Is256MetersSq, Is512MetersSq, Is1024MetersSq, Is2048MetersSq, Is4096MetersSq, Is8192MetersSq, Is16384MetersSq }
 
         /// <summary>
         /// The heightmap resolution per terrain chunk 
@@ -137,7 +137,7 @@ namespace Gaia
         /// <summary>
         /// The texture resolution per terrain chunk (This enum is used both for control and base texture since they allow the same values)
         /// </summary>
-        public enum TerrainTextureResolution { _16 = 16, _32 = 32, _64 = 64, _128 = 128, _256 = 256, _512 = 512, _1024 = 1024, _2048 = 2048 }
+        public enum TerrainTextureResolution { _16 = 16, _32 = 32, _64 = 64, _128 = 128, _256 = 256, _512 = 512, _1024 = 1024, _2048 = 2048, _4096 = 4096 }
 
         /// <summary>
         /// The different Ambient Skies samples
@@ -269,7 +269,7 @@ namespace Gaia
         /// </summary>
         public static readonly Color spawnerInitColor = new Color(1f, 0.9849656f, 0.7688679f, 0f);
 
-        public static readonly string HDRPPWSkyExperimental = "Procedural Worlds Sky is not yet available in HDRP, this will be available soon. If you would like to try it out then you can enable this feature by adding GAIA_EXPERIMENTAL to the scripting defines in Project Settings/Player settings.";
+        public static readonly string HDRPPWSkyExperimental = "Procedural Worlds Sky is in preview in HDRP, more features and improvements will be added in future updates.";
         /// <summary>
         /// 
         /// </summary>
@@ -730,11 +730,17 @@ namespace Gaia
         public static string gaiaScreenshotter = "Screen Shotter";
 
         /// <summary>
+        /// Name for the Game Object to collect the trees converted into Game Objects under
+        /// </summary>
+        public static string gameObjectTreeContainer = "Converted Trees";
+
+        /// <summary>
         /// HTML Color string for the highlighting of loader settings in the Gaia Tools. Used when selecting a loader from the Terrain Loader Manager
         /// to highlight where the loading specific settings are on the tool in question.
         /// </summary>
         public static string TerrainLoadingSettingsHighlightColor = "ffa100cc";
 
+        
     }
 }
 

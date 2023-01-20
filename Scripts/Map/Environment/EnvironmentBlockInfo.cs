@@ -4,11 +4,24 @@
 public sealed class EnvironmentBlockInfo : ScriptableObject, IWeightable
 {
     [SerializeField] private int _weight;
-    [SerializeField] private Terrain _terrain;
+    [SerializeField] private GameObject _prefab;
 
+    private Terrain _terrain;
+    
     public int Weight => _weight;
     
-    public GameObject Prefab => _terrain.gameObject;
+    public GameObject Prefab => _prefab;
 
-    public Terrain Terrain => _terrain;
+    public Terrain Terrain
+    {
+        get
+        {
+            if (!_terrain)
+            {
+                _terrain = _prefab.GetComponentInChildren<Terrain>();
+            }
+            
+            return _terrain;
+        }
+    }
 }

@@ -68,7 +68,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void EndRun()
     {
-        Stats.Instance.Money += _money;
+        Stats.Money.Value += _money;
 
         ChangeMenuVisible(false);
         

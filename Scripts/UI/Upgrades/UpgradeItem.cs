@@ -35,9 +35,9 @@ public sealed class UpgradeItem : MonoBehaviour
         {
             int level = getLevel.Invoke();
             int price = CalculateUpgradePrice(level);
-            if (price > Stats.Instance.Money) return;
+            if (price > Stats.Money.Value) return;
 
-            Stats.Instance.Money -= price;
+            Stats.Money.Value -= price;
             increaseLevel.Invoke();
             
             Instantiate(_firstLevel, _firstLevel.transform.parent);

@@ -121,7 +121,7 @@ namespace Gaia
             //editorUtils.Panel("MaskBaking", DrawMaskBaking, false);
         }
 
-        public static void DrawListElement(Rect rect, AutoSpawner listEntry, ref bool changesMade)
+        public static void DrawListElement(Rect rect, AutoSpawner listEntry, UnityEngine.Object parentObject, ref bool changesMade)
         {
             int oldIndent = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
@@ -143,6 +143,7 @@ namespace Gaia
             if (EditorGUI.EndChangeCheck())
             {
                 changesMade = true;
+                EditorUtility.SetDirty(parentObject);
             }
             GUI.enabled = currentGUIState;
             EditorGUI.indentLevel = oldIndent;

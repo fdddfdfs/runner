@@ -251,7 +251,7 @@ namespace Gaia
             }
             gsm.m_session.m_worldBiomeMaskSettings = spawner.m_settings;
 #if UNITY_EDITOR
-            spawner.SetRecommendedStampSizes();
+            spawner.SetRecommendedStampSizes(false);
             spawner.FocusSceneViewOnWorldDesignerPreview();
             //For the pre-defined sizes we can do a spawn right away so the terrain is populated
             if (spawner.m_worldCreationSettings.m_targetSizePreset != GaiaConstants.EnvironmentSizePreset.Custom)

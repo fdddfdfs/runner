@@ -1,4 +1,4 @@
-﻿public sealed class DoubleScore : ActivatableItem<DoubleMoney>
+﻿public sealed class DoubleScore : ActivatableItem
 {
     private RunProgress _runProgress;
     

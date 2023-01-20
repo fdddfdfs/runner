@@ -105,7 +105,7 @@ namespace Gaia
     /// inherit from this in order to be considered a valid NoiseType and included in the noise
     /// shader generation and available for use with the various noise tools.
     /// </summary>
-    public abstract class NoiseType<T> : ScriptableSingleton<T>, INoiseType where T : NoiseType<T>
+    public abstract class NoiseType<T> : UnityEditor.ScriptableSingleton<T>, INoiseType where T : NoiseType<T>
     {
         /// <summary>
         /// Returns a descriptor struct defining the NoiseType

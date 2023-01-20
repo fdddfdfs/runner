@@ -175,7 +175,7 @@ namespace Gaia
 
         private void ProfileSettings(bool helpEnabled)
         {
-            if (Application.isPlaying)
+            if (Application.isPlaying && m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
             {
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("EditLightingInPlayMode"), MessageType.Warning);
             }
@@ -242,19 +242,23 @@ namespace Gaia
                         selectedProfile = EditorGUILayout.IntPopup("Lighting Profile", selectedProfile, profileNames, lightingProfileValuesIndices);
                         if (selectedProfile != m_profile.m_selectedLightingProfileValuesIndex)
                         {
-#if !GAIA_EXPERIMENTAL
+#if !UNITY_2021_2_OR_NEWER
                             if (m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
                             {
-                                if (selectedProfile != -99)
+                                if (m_profile.m_lightingProfiles[selectedProfile].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
                                 {
-                                    if (m_profile.m_lightingProfiles[selectedProfile].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
+                                    if (EditorUtility.DisplayDialog("Procedural Worlds Sky Only Supported In 2021.2+",
+                                            "Procedural Worlds Sky system is only supported in 2021.2 in HDRP, the selected profile will be reverted to the '" + "Day" + "'" + " profile",
+                                            "Ok"))
                                     {
-                                        EditorUtility.DisplayDialog("Not Yet Supported", GaiaConstants.HDRPPWSkyExperimental, "Ok");
                                         return;
                                     }
+                                    
+                                    return;
                                 }
                             }
 #endif
+
                             m_profile.m_selectedLightingProfileValuesIndex = selectedProfile;
                             if (m_profile.m_selectedLightingProfileValuesIndex != -99)
                             {
@@ -568,10 +572,20 @@ namespace Gaia
                     GUI.enabled = true;
                     EditorGUI.BeginChangeCheck();
 #if GAIA_PRO_PRESENT
-#if !GAIA_EXPERIMENTAL
+#if UNITY_2021_2_OR_NEWER && HDPipeline
                     if (m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
                     {
                         EditorGUILayout.HelpBox(GaiaConstants.HDRPPWSkyExperimental, MessageType.Info);
+                        if (GUILayout.Button("Select HDRP Time Of Day"))
+                        {
+
+                            ProceduralWorlds.HDRPTOD.HDRPTimeOfDay timeOfDay = ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.Instance;
+                            if (timeOfDay != null)
+                            {
+                                Selection.activeObject = timeOfDay;
+                                EditorGUIUtility.ExitGUI();
+                            }
+                        }
                     }
                     else
 #else
@@ -1144,11 +1158,8 @@ namespace Gaia
                     {
                         EditorGUI.BeginChangeCheck();
 
-                        #if UNITY_2020_2_OR_NEWER
-
                         m_profileValues.m_useGlobalIllumination = m_editorUtils.Toggle("UseGlobalIllumination", m_profileValues.m_useGlobalIllumination, helpEnabled);
-
-                        #endif
+                        m_profileValues.m_hDContactShadows = m_editorUtils.Toggle("UseContactShadows", m_profileValues.m_hDContactShadows, helpEnabled);
 
                         m_editorUtils.Heading("SunSettings");
                         EditorGUI.indentLevel++;

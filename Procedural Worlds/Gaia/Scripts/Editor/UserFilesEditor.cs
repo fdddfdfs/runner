@@ -47,7 +47,10 @@ namespace Gaia
         {
             m_userFiles.m_autoAddNewFiles = m_editorUtils.Toggle("AutoAddNewFiles", m_userFiles.m_autoAddNewFiles, helpEnabled);
             m_userFiles.m_updateFilesWithGaiaUpdate = m_editorUtils.Toggle("UpdateWithGaia", m_userFiles.m_updateFilesWithGaiaUpdate, helpEnabled);
+            m_userFiles.m_sortBiomesBy = (SortBiomesBy)m_editorUtils.EnumPopup("SortBiomesBy", m_userFiles.m_sortBiomesBy, helpEnabled);
+            EditorGUI.BeginChangeCheck();
             GUILayout.Space(10);
+            GUILayout.BeginHorizontal();
             if (m_editorUtils.Button("AddDefaults"))
             {
                 if (EditorUtility.DisplayDialog("Add Gaia Default Biomes?", "This will add the default Biomes & Spawners of Gaia back to the lists in case they are missing. Continue?", "Add Defaults", "Cancel"))
@@ -55,6 +58,11 @@ namespace Gaia
                     GaiaUtils.ResetBiomePresets(true);
                 }
             }
+            if (m_editorUtils.Button("SearchForBiomes"))
+            {
+                GaiaEditorUtils.SearchAndAddBiomePresets();
+            }
+            GUILayout.EndHorizontal();
             GUILayout.Space(10);
             m_editorUtils.Heading("BiomePresetHeading");
             m_editorUtils.InlineHelp("BiomePresetHeading", helpEnabled);
@@ -130,6 +138,11 @@ namespace Gaia
                 }
             }
             GUILayout.EndHorizontal();
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(m_userFiles);
+                AssetDatabase.SaveAssets();
+            }
         }
     }
          

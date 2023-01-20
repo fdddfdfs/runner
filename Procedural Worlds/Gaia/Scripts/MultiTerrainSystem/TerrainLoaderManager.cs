@@ -35,7 +35,7 @@ namespace Gaia
         public List<ParticleSystem> m_allWorldSpaceParticleSystems = new List<ParticleSystem>();
         public GaiaLoadingScreen m_loadingScreen;
 #endif
-
+        public bool m_autoTerrainStitching = true;
         public bool m_assembliesAreReloading = false;
         public int m_originTargetTileX;
         public int m_originTargetTileZ;
@@ -98,7 +98,7 @@ namespace Gaia
         {
             if (instance == null)
             {
-                GameObject go =  GaiaUtils.GetTerrainLoaderManagerObject(false);
+                GameObject go = GaiaUtils.GetTerrainLoaderManagerObject(false);
                 if (go != null)
                 {
                     instance = go.GetComponent<TerrainLoaderManager>();
@@ -137,7 +137,6 @@ namespace Gaia
                 }
             }
         }
-
 
         public void ResetStorage()
         {
@@ -353,8 +352,18 @@ namespace Gaia
             }
         }
 
-        private bool m_showLocalTerrain = true;
+
+        /// <summary>
+        /// Used to determine if the terrain loader manager is ready to start loading terrains during runtime
+        /// </summary>
         private bool m_runtimeInitialized;
+        public bool RuntimeIsInitialized
+        {
+            get { return m_runtimeInitialized; }
+        }
+
+
+        private bool m_showLocalTerrain = true;
         [SerializeField]
         private string m_lastUsedGUID;
         private bool m_progressTrackingRunning;
@@ -478,11 +487,8 @@ namespace Gaia
                 m_loadingScreen.gameObject.SetActive(true);
             }
 
-             StartTrackingProgress();
+            StartTrackingProgress();
 #endif
-
-
-
         }
 
         private void Update()
@@ -510,7 +516,7 @@ namespace Gaia
                     }
                 }
 
-                if (OnLoadProgressUpdated !=null)
+                if (OnLoadProgressUpdated != null)
                 {
                     OnLoadProgressUpdated(progress);
                 }
@@ -639,11 +645,20 @@ namespace Gaia
             GaiaSettings gaiaSettings = GaiaUtils.GetGaiaSettings();
 
             m_assembliesAreReloading = false;
+
+            SubscribeToAssemblyReloadEvents();
+
+
+        }
+
+        public void SubscribeToAssemblyReloadEvents()
+        {
 #if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
 #endif
-
         }
 
         void OnDisable()
@@ -863,6 +878,23 @@ namespace Gaia
             }
         }
 
+        /// <summary>
+        /// Creates a small loading bounds at a vector3 position in world space to load the terrains located there.
+        /// </summary>
+        /// <param name="position">Position to load the terrains at.</param>
+        /// <param name="range">The range to load around that point.</param>
+        /// <param name="referenceGO">The game object referencing that point in the world.</param>
+        public void LoadTerrainByPosition(Vector3 position, float range = 1, GameObject referenceGO = null)
+        {
+            BoundsDouble loadingBounds = new BoundsDouble(position, new Vector3Double(range, range, range));
+            if (referenceGO == null)
+            {
+                referenceGO = this.gameObject;
+            }
+            UpdateTerrainLoadState(loadingBounds, loadingBounds, referenceGO);
+        }
+
+
 
         /// <summary>
         /// Load and unload the terrain scenes stored in the current session for a certain object
@@ -887,7 +919,7 @@ namespace Gaia
             {
                 return;
             }
- 
+
             if (requestingObject == null)
             {
                 requestingObject = gameObject;
@@ -1042,7 +1074,7 @@ namespace Gaia
             if (TerrainScene.GetCoords(terrainScene.GetTerrainName(), ref coordX, ref coordZ))
             {
                 TerrainScene returnScene = null;
-                string searchString ="";
+                string searchString = "";
                 switch (direction)
                 {
                     case StitchDirection.North:
@@ -1204,6 +1236,24 @@ namespace Gaia
             }
         }
 
+        /// <summary>
+        /// Removes all references to terrains or impostors originating by the given game object - this will allow the affected terrains to unload (assuming the GameObject was the only reference)
+        /// </summary>
+        /// <param name="go">The GameObject whose references will be removed</param>
+        public void RemoveAllReferencesOfGameObject(GameObject go)
+        {
+            if (m_terrainSceneStorage != null)
+            {
+                foreach (TerrainScene terrainScene in m_terrainSceneStorage.m_terrainScenes.Where(x => x.RegularReferences.Contains(go) || x.ImpostorReferences.Contains(go)))
+                {
+                    terrainScene.RemoveRegularReference(go);
+                    terrainScene.RemoveImpostorReference(go);
+                    terrainScene.m_nextUpdateTimestamp = 0;
+                }
+            }
+
+        }
+
         public void UnloadAll(bool forceUnload = false)
         {
             if (m_terrainSceneStorage != null)
@@ -1239,6 +1289,14 @@ namespace Gaia
             }
         }
 
+
+        public void DirtyStorageData()
+        {
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(m_terrainSceneStorage);
+#endif
+        }
+
         public void SaveStorageData()
         {
 #if UNITY_EDITOR
@@ -1246,6 +1304,47 @@ namespace Gaia
             AssetDatabase.SaveAssets();
             LoadStorageData();
 #endif
+        }
+
+        /// <summary>
+        /// //Update impostor state in the addressable / build scriptable object, if the scene of the terrain loader manager is found in the current configuration.
+        /// </summary>
+        public void UpdateImpostorStateInBuildSettings()
+        {
+#if UNITY_EDITOR
+            BuildConfig config = GaiaUtils.GetOrCreateBuildConfig();
+            SceneBuildEntry sceneBuildEntry = config.m_sceneBuildEntries.Find(x => x.m_masterScene.name == this.gameObject.scene.name);
+            if (sceneBuildEntry != null)
+            {
+                if (TerrainSceneStorage.m_terrainScenes.Count > 0)
+                {
+                    if (TerrainSceneStorage.m_terrainScenes.Exists(x => !string.IsNullOrEmpty(x.m_impostorScenePath)))
+                    {
+                        sceneBuildEntry.m_impostorState = ImpostorState.ImpostorsCreated;
+                    }
+                    else
+                    {
+                        sceneBuildEntry.m_impostorState = ImpostorState.ImpostorsNotCreated;
+                    }
+                }
+                else
+                {
+                    sceneBuildEntry.m_impostorState = ImpostorState.NoTerrainLoading;
+                }
+            }
+            EditorUtility.SetDirty(config);
+#endif
+        }
+
+        /// <summary>
+        /// Gets a terrain scene from the terrain scene storage by the x-z tile index
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="z"></param>
+        /// <returns></returns>
+        public TerrainScene GetTerrainSceneByIndices(int x, int z)
+        {
+            return m_terrainSceneStorage.m_terrainScenes.Find(k => k.m_scenePath.Contains($"_{x}_{z}-"));
         }
 
         public TerrainScene GetTerrainSceneAtPosition(Vector3Double center)
@@ -1261,6 +1360,178 @@ namespace Gaia
         public static double GetDefaultLoadingRangeForTilesize(int tileSize)
         {
             return Mathf.Round((tileSize * 1.9f) / 2f);
+        }
+
+        public static void FloatingPointFix_Add()
+        {
+#if GAIA_PRO_PRESENT
+            //Add main fix to player
+
+            GameObject playerObj = GameObject.Find(GaiaConstants.playerFlyCamName);
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerFirstPersonName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerThirdPersonName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.m_carPlayerPrefabName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerXRName);
+            }
+
+            if (playerObj != null)
+            {
+                FloatingPointFix fix = playerObj.GetComponent<FloatingPointFix>();
+                if (fix == null)
+                {
+                    fix = playerObj.AddComponent<FloatingPointFix>();
+                }
+
+                fix.threshold = GaiaUtils.GetGaiaSettings().m_FPFDefaultThreshold;
+            }
+
+            //Check if we are in a placeholder / terrain loading setup - if yes switch on all placeholders for the fix
+            if (GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                foreach (TerrainScene ts in TerrainLoaderManager.TerrainScenes)
+                {
+                    ts.m_useFloatingPointFix = true;
+                }
+
+                if (GaiaUtils.DisplayDialogNoEditor("Adjust unloaded Terrains?", "You are using dynamic terrain loading with terrain placeholders. Do you want to load all terrains after another to apply the fix to them and make all objects non-static?", "OK", "Cancel"))
+                {
+                    GaiaUtils.CallFunctionOnDynamicLoadedTerrains(AddFloatingPointFixToTerrain, true);
+                }
+            }
+            else
+            {
+                //regular terrain setup - add the membership to all terrains in the scene instead.
+                foreach (Terrain terrain in Terrain.activeTerrains)
+                {
+                    AddFloatingPointFixToTerrain(terrain);
+                }
+            }
+#endif
+        }
+
+        public static void AddFloatingPointFixToTerrain(Terrain terrain)
+        {
+#if GAIA_PRO_PRESENT
+            FloatingPointFixMember ffMember = terrain.gameObject.GetComponent<FloatingPointFixMember>();
+            if (ffMember == null)
+            {
+                ffMember = terrain.gameObject.AddComponent<FloatingPointFixMember>();
+            }
+            SetAllChildsNonStatic(terrain.transform);
+#endif
+        }
+
+        private static void RemoveFloatingPointFixToTerrain(Terrain terrain)
+        {
+#if GAIA_PRO_PRESENT
+            FloatingPointFixMember ffMember = terrain.gameObject.GetComponent<FloatingPointFixMember>();
+            if (ffMember != null)
+            {
+                Component.DestroyImmediate(ffMember);
+            }
+#endif
+        }
+
+
+        public static void SetAllChildsNonStatic(Transform transform)
+        {
+            transform.gameObject.isStatic = false;
+            foreach (Transform t in transform)
+            {
+                SetAllChildsNonStatic(t);
+            }
+        }
+
+
+        /// <summary>
+        /// Removes floating point fix system from the scene
+        /// </summary>
+        public static void FloatingPointFix_Remove()
+        {
+#if GAIA_PRO_PRESENT
+            //Remove main fix to player
+
+            GameObject playerObj = GameObject.Find(GaiaConstants.playerFlyCamName);
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerFirstPersonName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerThirdPersonName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.m_carPlayerPrefabName);
+            }
+
+            if (playerObj == null)
+            {
+                playerObj = GameObject.Find(GaiaConstants.playerXRName);
+            }
+
+
+            if (playerObj != null)
+            {
+                FloatingPointFix fix = playerObj.GetComponent<FloatingPointFix>();
+                if (fix != null)
+                {
+                    Component.DestroyImmediate(fix);
+                }
+            }
+
+            //Remove membership from water
+
+            GameObject waterGO = GameObject.Find(GaiaConstants.waterSurfaceObject);
+            if (waterGO != null)
+            {
+                FloatingPointFixMember ffMember = waterGO.transform.parent.gameObject.GetComponent<FloatingPointFixMember>();
+                if (ffMember != null)
+                {
+                    Component.DestroyImmediate(ffMember);
+                }
+            }
+
+            //Check if we are in a terrain loading setup - if yes switch off all placeholders for the fix
+            if (GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                foreach (TerrainScene ts in TerrainLoaderManager.TerrainScenes)
+                {
+                    ts.m_useFloatingPointFix = false;
+                }
+
+                if (GaiaUtils.DisplayDialogNoEditor("Adjust unloaded Terrains?", "You are using dynamic terrain loading with terrain placeholders. Do you want to load all terrains one after another to remove the fix from those as well?", "OK", "Cancel"))
+                {
+                    GaiaUtils.CallFunctionOnDynamicLoadedTerrains(RemoveFloatingPointFixToTerrain, true);
+                }
+            }
+            else
+            {
+                //regular terrain setup - add the membership to all terrains in the scene instead.
+                foreach (Terrain terrain in Terrain.activeTerrains)
+                {
+                    RemoveFloatingPointFixToTerrain(terrain);
+                }
+            }
+#endif
         }
     }
 }

@@ -19,6 +19,21 @@ namespace Gaia
         public bool m_terrainLoadingEnabled = true;
 
         /// <summary>
+        /// Controls if a warning popup will be shown if terrain loading is disabled but loading a terrain is still attempted.
+        /// </summary>
+        public bool m_showTerrainLoadingDisabledWarning = true;
+        
+                /// <summary>
+        /// Uses the unity addressable system to manage terrain loading during runtime. This can make it easier to update the terrain content of the project after release. Requires the unity addressable package to be installed in the project.
+        /// </summary>
+        public bool m_useAddressables = false;
+
+        /// <summary>
+        /// Uses the unity addressable system to manage terrain loading during runtime. This can make it easier to update the terrain content of the project after release. Requires the unity addressable package to be installed in the project.
+        /// </summary>
+        public bool m_preloadAddressablesWithImpostors = true;
+
+        /// <summary>
         /// Enables a special mode where the terrain loading will only load in collider terrain scenes instead of the regular scenes.
         /// These collider scenes can be built with the terrain mesh exporter. This allows to run a scene with collisions only without terrain rendering e.g. for a server application
         /// </summary>

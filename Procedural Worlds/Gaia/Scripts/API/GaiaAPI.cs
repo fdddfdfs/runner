@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using Gaia.Pipeline.HDRP;
 using Gaia.Pipeline.URP;
+#if GAIA_PRO_PRESENT
+using ProceduralWorlds.HDRPTOD;
+#endif
 #if FLORA_PRESENT
 using ProceduralWorlds.Flora;
 #endif
@@ -9,6 +12,7 @@ using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 #if HDPipeline
 using UnityEngine.Rendering.HighDefinition;
 #endif
@@ -41,8 +45,21 @@ namespace Gaia
             {
                 return GaiaGlobal.Instance.GaiaTimeOfDayValue;
             }
-
-            return null;
+            else
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                GaiaTimeOfDay timeOfDay = new GaiaTimeOfDay();
+                float time = HDRPTimeOfDayAPI.GetCurrentTime();
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float timeScale);
+                timeOfDay.m_todDayTimeScale = timeScale;
+                timeOfDay.m_todEnabled = autoUpdate;
+                timeOfDay.m_todHour = (int)time;
+                timeOfDay.m_todMinutes = (time / 24 * 60f);
+                return timeOfDay;
+#else
+                return null;
+#endif
+            }
         }
         /// <summary>
         /// Sets all the time of day settings
@@ -57,11 +74,47 @@ namespace Gaia
                     GaiaGlobal.Instance.GaiaTimeOfDayValue = newGaiaTimeOfDaySettings;
                     GaiaGlobal.Instance.UpdateGaiaTimeOfDay(false);
                 }
+                else
+                {
+                    float time = newGaiaTimeOfDaySettings.m_todHour + (newGaiaTimeOfDaySettings.m_todMinutes / 60f);
+                    SetTimeOfDaySettingsHDRP(time, newGaiaTimeOfDaySettings.m_todEnabled, newGaiaTimeOfDaySettings.m_todDayTimeScale);
+                }
             }
             else
             {
                 Debug.LogError("The time of day profile data you have provided is null. Please make sure it's not null.");
             }
+        }
+
+        /// <summary>
+        /// Sets all the time of day settings in HDRP
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="enabled"></param>
+        /// <param name="timeScale"></param>
+        public static void SetTimeOfDaySettingsHDRP(float time, bool enabled, float timeScale)
+        {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            HDRPTimeOfDayAPI.SetCurrentTime(time);
+            HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(enabled, timeScale);
+#endif
+        }
+        /// <summary>
+        /// Gets the time of day settings in HDRP
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="enabled"></param>
+        /// <param name="timeScale"></param>
+        public static void GetTimeOfDaySettingsHDRP(out float time, out bool enabled, out float timeScale)
+        {
+            time = 0f;
+            enabled = false;
+            timeScale = 1f;
+
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            time = HDRPTimeOfDayAPI.GetCurrentTime();
+            HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out enabled, out timeScale);
+#endif
         }
         /// <summary>
         /// Gets the current hour value in time of day
@@ -119,9 +172,19 @@ namespace Gaia
         /// <returns></returns>
         public static bool GetTimeOfDayEnabled()
         {
-            if (GaiaUtils.CheckIfSceneProfileExists())
+            if (GaiaUtils.GetActivePipeline() != GaiaConstants.EnvironmentRenderer.HighDefinition)
             {
-                return GaiaGlobal.Instance.GaiaTimeOfDayValue.m_todEnabled;
+                if (GaiaUtils.CheckIfSceneProfileExists())
+                {
+                    return GaiaGlobal.Instance.GaiaTimeOfDayValue.m_todEnabled;
+                }
+            }
+            else
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float value);
+                return autoUpdate;
+#endif
             }
 
             return false;
@@ -137,6 +200,13 @@ namespace Gaia
                 GaiaGlobal.Instance.GaiaTimeOfDayValue.m_todEnabled = timeOfDayEnabled;
                 GaiaGlobal.Instance.UpdateGaiaTimeOfDay(false);
             }
+            else
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float timeScale);
+                HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(timeOfDayEnabled, timeScale);
+#endif
+            }
         }
         /// <summary>
         /// Gets the time of day scale. How quick Day/Night lasts
@@ -149,8 +219,15 @@ namespace Gaia
             {
                 return GaiaGlobal.Instance.GaiaTimeOfDayValue.m_todDayTimeScale;
             }
-
-            return 0f;
+            else
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float timeScale);
+                return timeScale;
+#else
+                return 0f;
+#endif
+            }
         }
         /// <summary>
         /// Sets the time scale
@@ -164,21 +241,36 @@ namespace Gaia
                 GaiaGlobal.Instance.GaiaTimeOfDayValue.m_todDayTimeScale = newTimeScale;
                 GaiaGlobal.Instance.UpdateGaiaTimeOfDay(false);
             }
+            else
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float timeScale);
+                HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(autoUpdate, newTimeScale);
+#endif
+            }
         }
 #endif
 
-        #endregion
-        #region Gaia Weather
+#endregion
+            #region Gaia Weather
 
-        /// <summary>
-        /// Gets the gaia wind settings
-        /// </summary>
-        /// <param name="windSpeed"></param>
-        /// <param name="windDirection"></param>
-        public static bool GetGaiaWindSettings(out float windSpeed, out float windDirection)
+            /// <summary>
+            /// Gets the gaia wind settings
+            /// </summary>
+            /// <param name="windSpeed"></param>
+            /// <param name="windDirection"></param>
+            public static bool GetGaiaWindSettings(out float windSpeed, out float windDirection, out bool overrideWind)
         {
             windSpeed = 0.35f;
             windDirection = 0f;
+            overrideWind = false;
+
+            PhotoModeValues values = GaiaAPI.LoadPhotoModeValues();
+            if (values != null)
+            {
+                overrideWind = values.m_gaiaWindSettingsOverride;
+            }
+
 #if GAIA_PRO_PRESENT
             if (ProceduralWorldsGlobalWeather.Instance != null)
             {
@@ -401,7 +493,7 @@ namespace Gaia
         /// Gets the current season settings
         /// </summary>
         /// <returns></returns>
-        public static PWSkySeason GetWeaterSeasonSettings()
+        public static PWSkySeason GetWeatherSeasonSettings()
         {
             if (GaiaWeatherInScene())
             {
@@ -424,7 +516,7 @@ namespace Gaia
         /// Sets the new season setting
         /// </summary>
         /// <param name="season"></param>
-        public static void SetWeaterSeasonSettings(PWSkySeason season)
+        public static void SetWeatherSeasonSettings(PWSkySeason season)
         {
             if (season != null)
             {
@@ -737,11 +829,12 @@ namespace Gaia
         /// <param name="exposure"></param>
         /// <param name="rotation"></param>
         /// <param name="tint"></param>
-        public static bool GetUnityHDRISkybox(out float exposure, out float rotation, out Color tint)
+        public static bool GetUnityHDRISkybox(out float exposure, out float rotation, out Color tint, out bool overrideSkybox)
         {
             exposure = 0f;
             rotation = 0f;
             tint = Color.white;
+            overrideSkybox = false;
 
             Material skybox = RenderSettings.skybox;
             if (skybox != null)
@@ -753,6 +846,12 @@ namespace Gaia
                         exposure = skybox.GetFloat(GaiaShaderID.m_unitySkyboxExposure);
                         rotation = skybox.GetFloat(GaiaShaderID.m_unitySkyboxRotation);
                         tint = skybox.GetColor(GaiaShaderID.m_unitySkyboxTintHDRI);
+
+                        PhotoModeValues values = GaiaAPI.LoadPhotoModeValues();
+                        if (values != null)
+                        {
+                            overrideSkybox = values.m_fogOverride;
+                        }
                         return true;
                     }
                 }
@@ -787,7 +886,7 @@ namespace Gaia
         /// </summary>
         /// <param name="intensity"></param>
         /// <param name="sunColor"></param>
-        public static void GetUnitySunSettings(out float intensity, out Color sunColor, out float kelvin, Light sunLight = null)
+        public static void GetUnitySunSettings(out float intensity, out Color sunColor, out float kelvin, out bool overrideSun, Light sunLight = null)
         {
             intensity = 1f;
             kelvin = 6500f;
@@ -816,6 +915,13 @@ namespace Gaia
                     sunColor = sunLight.color;
                     kelvin = sunLight.colorTemperature;
                 }
+            }
+
+            overrideSun = false;
+            PhotoModeValues values = GaiaAPI.LoadPhotoModeValues();
+            if (values != null)
+            {
+                overrideSun = values.m_fogOverride;
             }
         }
         /// <summary>
@@ -890,6 +996,45 @@ namespace Gaia
             }
         }
         /// <summary>
+        /// Sets the ambient color for sky, equaotr and ground colors
+        /// </summary>
+        /// <param name="skyValue"></param>
+        /// <param name="equatorValue"></param>
+        /// <param name="groundValue"></param>
+        public static void SetAmbientColor(Color skyValue, Color equatorValue, Color groundValue)
+        {
+            if (GaiaUtils.GetActivePipeline() != GaiaConstants.EnvironmentRenderer.HighDefinition)
+            {
+                RenderSettings.ambientSkyColor = skyValue * skyValue.a;
+                RenderSettings.ambientEquatorColor = equatorValue * equatorValue.a;
+                RenderSettings.ambientGroundColor = groundValue * groundValue.a;
+            }
+        }
+        /// <summary>
+        /// Gets the ambient colors
+        /// </summary>
+        /// <param name="skyValue"></param>
+        /// <param name="equatorValue"></param>
+        /// <param name="groundValue"></param>
+        public static void GetAmbientColor(out Color skyValue, out Color equatorValue, out Color groundValue)
+        {
+
+            skyValue = RenderSettings.ambientSkyColor;
+            //skyValue.a = GetHDRIntensityValue(skyValue);
+            skyValue.a = 1f;
+            equatorValue = RenderSettings.ambientEquatorColor;
+            //equatorValue.a = GetHDRIntensityValue(equatorValue);
+            equatorValue.a = 1f;
+            groundValue = RenderSettings.ambientGroundColor;
+            //groundValue.a = GetHDRIntensityValue(groundValue);
+            groundValue.a = 1f;
+        }
+
+        public static float GetHDRIntensityValue(Color color)
+        {
+            return (color.r + color.g + color.b) / 3f;
+        }
+        /// <summary>
         /// Gets the built-in and Universal render pipeline fog settings
         /// </summary>
         /// <param name="fogMode"></param>
@@ -897,13 +1042,20 @@ namespace Gaia
         /// <param name="fogDensity"></param>
         /// <param name="linearFogStart"></param>
         /// <param name="linearFogEnd"></param>
-        public static void GetFogSettings(out FogMode fogMode, out Color fogColor, out float fogDensity, out float linearFogStart, out float linearFogEnd)
+        public static void GetFogSettings(out FogMode fogMode, out Color fogColor, out float fogDensity, out float linearFogStart, out float linearFogEnd, out bool overrideFog)
         {
             fogMode = RenderSettings.fogMode;
             fogColor = RenderSettings.fogColor;
             fogDensity = RenderSettings.fogDensity;
             linearFogStart = RenderSettings.fogStartDistance;
             linearFogEnd = RenderSettings.fogEndDistance;
+
+            overrideFog = false;
+            PhotoModeValues values = GaiaAPI.LoadPhotoModeValues();
+            if (values != null)
+            {
+                overrideFog = values.m_fogOverride;
+            }
         }
         /// <summary>
         /// Sets the built-in and Universal render pipeline fog settings
@@ -1000,6 +1152,38 @@ namespace Gaia
             }
 
             return 1f;
+        }
+        /// <summary>
+        /// Gets HDRP dof mode
+        /// </summary>
+        /// <returns></returns>
+        public static int GetHDRPDOFFocusMode()
+        {
+            VolumeProfile profile = GetGlobalProcessingProfileHDRP();
+            if (profile != null)
+            {
+                if (profile.TryGet(out UnityEngine.Rendering.HighDefinition.DepthOfField dof))
+                {
+                    return (int)dof.focusMode.value;
+                }
+            }
+
+            return 0;
+        }
+        /// <summary>
+        /// Sets HDRP dof mode
+        /// </summary>
+        /// <param name="value"></param>
+        public static void SetHDRPDOFFocusMode(int value)
+        {
+            VolumeProfile profile = GetGlobalProcessingProfileHDRP();
+            if (profile != null)
+            {
+                if (profile.TryGet(out UnityEngine.Rendering.HighDefinition.DepthOfField dof))
+                {
+                    dof.focusMode.value = (DepthOfFieldMode)value;
+                }
+            }
         }
         /// <summary>
         /// Sets HDRP Ambient lighting
@@ -1179,6 +1363,7 @@ namespace Gaia
                     if (hdrpReflection != null)
                     {
                         hdrpReflection.ReflectionsActive(enabled);
+                        hdrpReflection.RequestRender = true;
                     }
                 }
             }
@@ -1405,7 +1590,14 @@ namespace Gaia
             if (underwaterEffects != null)
             {
                 fogDensity = underwaterEffects.m_fogDensity;
-                fogDistance = underwaterEffects.m_fogDistance;
+                if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.HighDefinition)
+                {
+                    fogDistance = underwaterEffects.m_hdrpFogDistance;
+                }
+                else
+                {
+                    fogDistance = underwaterEffects.m_fogDistance;
+                }
             }
         }
         /// <summary>
@@ -1418,7 +1610,14 @@ namespace Gaia
             if (underwaterEffects != null)
             {
                 underwaterEffects.m_fogDensity = fogDensity;
-                underwaterEffects.m_fogDistance = fogDistance;
+                if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.HighDefinition)
+                {
+                    underwaterEffects.m_hdrpFogDistance = fogDistance;
+                }
+                else
+                {
+                    underwaterEffects.m_fogDistance = fogDistance;
+                }
             }
         }
         /// <summary>
@@ -2404,12 +2603,13 @@ namespace Gaia
         /// <param name="fogDistance"></param>
         /// <param name="effectType"></param>
         /// <param name="tilingResolution"></param>
-        public static void GetHDRPDensityVolume(out Color albedoColor, out float fogDistance, out int effectType, out int tilingResolution)
+        public static void GetHDRPDensityVolume(out Color albedoColor, out float fogDistance, out int effectType, out int tilingResolution, out bool overrideDensity)
         {
             albedoColor = Color.white;
             fogDistance = 250f;
             effectType = 1;
             tilingResolution = 3;
+            overrideDensity = false;
 
             HDRPDensityVolumeController controller = HDRPDensityVolumeController.Instance;
             if (controller != null)
@@ -2418,6 +2618,12 @@ namespace Gaia
                 fogDistance = controller.DensityVolumeProfile.m_fogDistance;
                 effectType = (int)controller.DensityVolumeProfile.m_effectType;
                 tilingResolution = (int)controller.DensityVolumeProfile.m_resolution;
+
+                PhotoModeValues values = GaiaAPI.LoadPhotoModeValues();
+                if (values != null)
+                {
+                    overrideDensity = values.m_overrideDensityVolume;
+                }
             }
         }
         /// <summary>
@@ -2553,18 +2759,15 @@ namespace Gaia
             }
 
             AutoDepthOfField autoDOF = camera.GetComponent<AutoDepthOfField>();
-            if (enabled)
+            if (autoDOF != null)
             {
-                if (autoDOF == null)
+                if (enabled)
                 {
-                    camera.gameObject.AddComponent<AutoDepthOfField>();
+                    autoDOF.m_disableSystem = false;
                 }
-            }
-            else
-            {
-                if (autoDOF != null)
+                else
                 {
-                    GameObject.DestroyImmediate(autoDOF);
+                    autoDOF.m_disableSystem = true;
                 }
             }
         }
@@ -2778,8 +2981,8 @@ namespace Gaia
         {
             loadSavedSettings = true;
             revertOnDisabled = true;
-            showreticule = true;
-            showRuleOfThirds = true;
+            showreticule = false;
+            showRuleOfThirds = false;
             showPhotoMode = KeyCode.F11;
 
             UIConfiguration ui = UIConfiguration.Instance;
@@ -2850,9 +3053,45 @@ namespace Gaia
                 PhotoMode photoMode = PhotoMode.Instance;
                 if (photoMode.m_photoModeProfile != null)
                 {
+                    string sceneName = SceneManager.GetActiveScene().name;
                     values.Save(photoMode.m_photoModeProfile.Profile);
+                    values.m_lastSceneName = sceneName;
                     photoMode.m_photoModeProfile.m_everBeenSaved = true;
                     photoMode.m_photoModeProfile.LastRenderPipeline = currentRenderPipeline;
+                    photoMode.m_photoModeProfile.Profile.m_lastSceneName = sceneName;
+#if UNITY_EDITOR
+                    EditorUtility.SetDirty(photoMode.m_photoModeProfile);
+#endif
+                }
+            }
+        }
+        /// <summary>
+        /// Saves the photo mode values this is really useful to keep the changes you made in photo mode
+        /// These will be removed when you exit play mode
+        /// </summary>
+        /// <param name="values"></param>
+        public static void SaveImportantPhotoModeValues(PhotoModeValues values, GaiaConstants.EnvironmentRenderer currentRenderPipeline)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            if (PhotoMode.Instance != null)
+            {
+                PhotoMode photoMode = PhotoMode.Instance;
+                if (photoMode.m_photoModeProfile != null)
+                {
+                    string sceneName = SceneManager.GetActiveScene().name;
+                    photoMode.m_photoModeProfile.Profile.m_screenshotResolution = values.m_screenshotResolution;
+                    photoMode.m_photoModeProfile.Profile.m_screenshotImageFormat = values.m_screenshotImageFormat;
+                    photoMode.m_photoModeProfile.Profile.m_showFPS = values.m_showFPS;
+                    photoMode.m_photoModeProfile.Profile.m_showReticle = values.m_showReticle;
+                    photoMode.m_photoModeProfile.Profile.m_showRuleOfThirds = values.m_showRuleOfThirds;
+                    photoMode.m_photoModeProfile.Profile.m_loadSavedSettings = values.m_loadSavedSettings;
+                    photoMode.m_photoModeProfile.Profile.m_revertOnDisabled = values.m_revertOnDisabled;
+                    photoMode.m_photoModeProfile.LastRenderPipeline = currentRenderPipeline;
+                    photoMode.m_photoModeProfile.Profile.m_lastSceneName = sceneName;
 #if UNITY_EDITOR
                     EditorUtility.SetDirty(photoMode.m_photoModeProfile);
 #endif
@@ -2990,14 +3229,14 @@ namespace Gaia
             if (enabled)
             {
                 Cursor.lockState = CursorLockMode.None;
-                //Cursor.visible = true;
+                Cursor.visible = true;
             }
             else
             {
                 if (PhotoMode.Instance == null)
                 {
                     Cursor.lockState = CursorLockMode.Locked;
-                    //Cursor.visible = false;
+                    Cursor.visible = false;
                 }
             }
 
@@ -3198,12 +3437,12 @@ namespace Gaia
         /// <param name="dest"></param>
         public static void CopyCameraSettingsURP(Camera source, Camera dest)
         {
+#if UPPipeline
             if (source == null || dest == null)
             {
                 return;
             }
 
-#if UPPipeline
             UniversalAdditionalCameraData dataSource = GaiaURPRuntimeUtils.GetUPCameraData(source);
             UniversalAdditionalCameraData dataDest = GaiaURPRuntimeUtils.GetUPCameraData(dest);
 

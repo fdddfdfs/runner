@@ -19,9 +19,9 @@ namespace Gaia
                 polys[i] = numPolys - i;
             }
         }
-        
 
-        public static Color[] BakeSharpVertexColorsToArray(Vector3[] flatVertices, int[] tPolys, Color[] textureColors, int mipWidth, Terrain terrain)
+
+        public static Color[] BakeSharpVertexColorsToArray(Vector3[] flatVertices, int[] tPolys, Color[] textureColors, int mipWidth, Terrain terrain, ExportTerrainLODSettings LODSettings)
         {
             Color[] returnArray = new Color[flatVertices.Length];
             Color color1 = Color.white;
@@ -29,17 +29,17 @@ namespace Gaia
             Color color3 = Color.white;
             Color finalColor = Color.white;
             Vector3 colorVertex = Vector3.zero;
-            int numPolys = tPolys.Length-1;
+            int numPolys = tPolys.Length - 1;
             for (int i = 0; i <= numPolys; i += 3)
             {
                 colorVertex = flatVertices[tPolys[i]];
-                color1 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex);
+                color1 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex, LODSettings);
 
                 colorVertex = flatVertices[tPolys[i + 1]];
-                color2 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex);
+                color2 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex, LODSettings);
 
                 colorVertex = flatVertices[tPolys[i + 2]];
-                color3 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex);
+                color3 = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex, LODSettings);
 
                 finalColor = (color1 + color2 + color3) / 3f;
 
@@ -50,7 +50,7 @@ namespace Gaia
             return returnArray;
         }
 
-        public static Color[] BakeSmoothVertexColorsToArray(Vector3[] vertices, Color[] textureColors, int mipWidth, Terrain terrain)
+        public static Color[] BakeSmoothVertexColorsToArray(Vector3[] vertices, Color[] textureColors, int mipWidth, Terrain terrain, ExportTerrainLODSettings LODSettings)
         {
             int numVertices = vertices.Length;
             Color[] returnArray = new Color[vertices.Length];
@@ -59,17 +59,29 @@ namespace Gaia
             for (int i = 0; i < numVertices; i++)
             {
                 colorVertex = vertices[i];
-                color = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex);
+                color = GetColorFromTextureArray(textureColors, mipWidth, terrain, colorVertex, LODSettings);
                 returnArray[i] = color;
             }
             return returnArray;
         }
 
-        private static Color GetColorFromTextureArray(Color[] textureColors, int mipWidth, Terrain terrain, Vector3 colorVertex)
+        private static Color GetColorFromTextureArray(Color[] textureColors, int mipWidth, Terrain terrain, Vector3 colorVertex, ExportTerrainLODSettings LODSettings)
         {
             int textureXPos = Math.Max(0, Mathf.RoundToInt((colorVertex.x / terrain.terrainData.size.x) * mipWidth) - 1);
             int textureZPos = Math.Max(0, Mathf.RoundToInt((colorVertex.z / terrain.terrainData.size.z) * mipWidth) - 1);
+
+#if HDPipeline || UPPipeline
+            if (LODSettings.m_textureExportMethod == TextureExportMethod.OrthographicBake)
+            {
+                return textureColors[Math.Max(0, textureZPos * mipWidth + textureXPos)].linear;
+            }
+            else 
+            {
+                return textureColors[Math.Max(0, textureZPos * mipWidth + textureXPos)];
+            }
+#else
             return textureColors[Math.Max(0, textureZPos * mipWidth + textureXPos)];
+#endif
         }
     }
 }

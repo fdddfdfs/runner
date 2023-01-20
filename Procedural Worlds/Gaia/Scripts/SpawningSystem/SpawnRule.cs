@@ -129,6 +129,9 @@ namespace Gaia
         public bool m_usesBoxStandIn;
         public bool m_boundsCollisionCheck;
         public bool m_changesHeightmap;
+        public float m_startOffsetX;
+        public float m_startOffsetZ;
+        public LayerMask m_collisionLayersToClear = new LayerMask();
 
         public SpawnRule()
         {
@@ -932,6 +935,13 @@ namespace Gaia
                     return spawnerSettings.m_resources.m_texturePrototypes[m_resourceIdx].m_texture == null;
                 case GaiaConstants.SpawnerResourceType.TerrainDetail:
                     ResourceProtoDetail detailProto = spawnerSettings.m_resources.m_detailPrototypes[m_resourceIdx];
+
+#if UNITY_2021_2_OR_NEWER
+                    if (detailProto.m_useInstancing)
+                    {
+                        return detailProto.m_detailProtoype == null;
+                    }
+#endif
                     switch (detailProto.m_renderMode)
                     {
                         case DetailRenderMode.VertexLit:

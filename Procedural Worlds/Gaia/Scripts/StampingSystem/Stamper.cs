@@ -1553,6 +1553,7 @@ namespace Gaia
 #endif
                         //no terrain, no placeholder? Default to arbitary values then
                         m_settings.m_width = 100;
+                        m_settings.m_height = 100;
                         m_settings.m_y = 0;
 #if GAIA_PRO_PRESENT
                     }
@@ -2351,10 +2352,20 @@ namespace Gaia
                         foreach (ImageMask mask in m_settings.m_imageMasks)
                         {
                             mask.m_imageMaskSpace = ImageMaskSpace.World;
-                            mask.m_xOffSet = 0;
-                            mask.m_zOffSet = 0;
-                            mask.m_xScale = m_worldDesignerPreviewTiles;
-                            mask.m_zScale = m_worldDesignerPreviewTiles;
+                            if (mask.m_operation != ImageMaskOperation.ImageMask)
+                            {
+                                mask.m_xOffSet = 0;
+                                mask.m_zOffSet = 0;
+                                mask.m_xScale = m_worldDesignerPreviewTiles;
+                                mask.m_zScale = m_worldDesignerPreviewTiles;
+                            }
+                            else
+                            {
+                                //Do not mess with the offset in case of an image mask, but adjust the scale according to the 
+                                //zoom factor, since the user might have entered their own scaling for image input which we need to respect
+                                mask.m_xScale *= m_worldDesignerPreviewTiles;
+                                mask.m_zScale *= m_worldDesignerPreviewTiles;
+                            }
                         }
                     }
                     else
@@ -2363,10 +2374,13 @@ namespace Gaia
                         foreach (ImageMask mask in m_settings.m_imageMasks)
                         {
                             mask.m_imageMaskSpace = ImageMaskSpace.World;
-                            mask.m_xOffSet = 0;
-                            mask.m_zOffSet = 0;
-                            mask.m_xScale = 1;
-                            mask.m_zScale = 1;
+                            if (mask.m_operation != ImageMaskOperation.ImageMask)
+                            {
+                                mask.m_xOffSet = 0;
+                                mask.m_zOffSet = 0;
+                                mask.m_xScale = 1;
+                                mask.m_zScale = 1;
+                            }
                         }
                     }
                 }

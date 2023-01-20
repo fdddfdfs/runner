@@ -74,8 +74,9 @@
     	[Toggle(_PW_SF_WIND_ON)] _PW_SF_WIND ("_PW_SF_WIND_ON ", Float) 				= 0.0
     	[Toggle(_PW_SF_WORLDMAP_ON)] _PW_SF_WORLDMAP ("_PW_SF_WORLDMAP_ON ", Float) = 0.0
     	[Toggle(_PW_SF_BILLBOARD_ON)] _PW_SF_BILLBOARD ("_PW_SF_BILLBOARD_ON ", Float) = 0.0
+    	[Toggle(_PW_SF_FLORA_INDIRECT_ON)] _PW_SF_FLORA_INDIRECT ("_PW_SF_FLORA_INDIRECT_ON", Float) = 0.0
     	
-    	[Enum(Gaia.ShaderUtilitys.ShaderIDs)] _PW_ShaderID ("Shader ID", Float) = 0
+    	[Enum(Gaia.ShaderUtilities.ShaderIDs)] _PW_ShaderID ("Shader ID", Float) = 0
     }
 
     SubShader
@@ -93,6 +94,7 @@
 		#pragma shader_feature_local _PW_SF_WIND_ON
 		#pragma shader_feature_local _PW_SF_WORLDMAP_ON
         #pragma shader_feature_local _PW_SF_BILLBOARD_ON
+		#pragma shader_feature_local _PW_SF_FLORA_INDIRECT_ON
 
 		#define _PW_SF_GLOBAL_CONTROL_ON
         #define _PW_VERTEX_SHADOWS
@@ -102,6 +104,10 @@
 		#include "PW_GeneralVars.cginc"
 		#include "PW_GeneralFuncs.cginc"
 		#include "PW_GeneralWind.cginc"
+
+		#include "../../../Flora/Content Resources/Shaders/PW_FloraIncludes.hlsl"
+        #pragma multi_compile_instancing
+        #pragma instancing_options procedural:setup
 
 		struct Input
 		{
@@ -145,6 +151,8 @@
 
 			data.screenPosition = ComputeScreenPos( UnityObjectToClipPos( v.vertex ) );
 		}
+
+		float4 _PW_SnowColor;
 
 		//=====================================================================
         void surf ( Input IN, inout SurfaceOutputStandard o)
@@ -224,7 +232,7 @@
 						   out_Smoothness,  
 						   out_SSS );
 
-			half4 layer1_CoverRGBA 		= tex2D ( _PW_CoverLayer1, IN.coverLayer1UV ) * _PW_CoverLayer1Color;
+			half4 layer1_CoverRGBA 		= tex2D ( _PW_CoverLayer1, IN.coverLayer1UV ) * _PW_CoverLayer1Color * _PW_SnowColor;
 			half3 layer1_CoverNormal 	= UnpackScaleNormal ( tex2D ( _PW_CoverLayer1Normal, IN.coverLayer1UV ), _PW_CoverLayer1NormalScale );
 
 			CombineLocalGlobal ( _PW_CoverLayer1FadeStart, _PW_Global_CoverLayer1FadeStart, fadeStart );
@@ -236,7 +244,7 @@
 						   out_Metallic, 
 						   out_Smoothness, 
 						   out_SSS,
-						   IN.worldPos.y,
+						   IN.worldPos.y * 2,
 						   e.worldNormal.y,
 						   layer1_CoverRGBA, 
 						   layer1_CoverNormal, 
@@ -264,12 +272,24 @@
 			half4 addLight = 0;
 			half3 viewDir = normalize ( _WorldSpaceCameraPos.xyz - IN.worldPos.xyz );
 
-#ifdef LOD_FADE_CROSSFADE
-			float vpos = IN.screenPosition.xy / IN.screenPosition.w * _ScreenParams.xy;
-			UnityApplyDitherCrossFade ( vpos );
-			//DitherCrossFade ( vpos );
-#endif
 
+
+// Dither Fade
+#ifdef _PW_SF_FLORA_INDIRECT_ON
+            float2 vpos = IN.screenPosition.xy / IN.screenPosition.w * _ScreenParams.xy;
+            float fade;
+            float dist = length(float3(unity_ObjectToWorld._m03,unity_ObjectToWorld._m13,unity_ObjectToWorld._m23) - _WorldSpaceCameraPos);
+            DistanceFade_float(dist,fade);
+            DitherCrossFade(vpos,fade);
+#else
+	#ifdef LOD_FADE_CROSSFADE
+				float vpos = IN.screenPosition.xy / IN.screenPosition.w * _ScreenParams.xy;
+				UnityApplyDitherCrossFade ( vpos );
+				//DitherCrossFade ( vpos );
+
+
+	#endif
+#endif
         }
         ENDCG
 

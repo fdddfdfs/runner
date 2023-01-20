@@ -270,3 +270,40 @@ MonoBehaviour:
   - m_tooltipID: Global Camera Cell Subdivision
     m_header: 
     m_text: 
+  - m_tooltipID: Sky Ambient Color
+    m_header: Sky Ambient Color
+    m_text: 'Ambient lighting coming from above.
+
+
+      HDR value is the alpha value
+      in the color, this value ranges from -5 to 5 in the color picker and grey color
+      value is 0. This will multiply the current color to make it brighter or darker.'
+  - m_tooltipID: Equator Ambient Color
+    m_header: Equator Ambient Color
+    m_text: 'Ambient lighting coming from the sides.
+
+
+      HDR value is the alpha
+      value in the color, this value ranges from -5 to 5 in the color picker and
+      grey color value is 0. This will multiply the current color to make it brighter
+      or darker.'
+  - m_tooltipID: Ground Ambient Color
+    m_header: Ground Ambient Color
+    m_text: 'Ambient lighting coming from below.
+
+
+      HDR value is the alpha value
+      in the color, this value ranges from -5 to 5 in the color picker and grey color
+      value is 0. This will multiply the current color to make it brighter or darker.'
+  - m_tooltipID: Show FPS
+    m_header: Show FPS
+    m_text: If enabled will show the FPS counter in photo mode.
+  - m_tooltipID: Light Intensity Multiplier
+    m_header: Light Intensity Multiplier
+    m_text: Multiplies the sun and the moon light intensity by the value.
+  - m_tooltipID: Fog Density Multiplier
+    m_header: Fog Density Multiplier
+    m_text: Multiplies the global local fog density by the value.
+  - m_tooltipID: Shadow Distance Multiplier
+    m_header: Shadow Distance Multiplier
+    m_text: Multiplies the global shadow render distance by the value.

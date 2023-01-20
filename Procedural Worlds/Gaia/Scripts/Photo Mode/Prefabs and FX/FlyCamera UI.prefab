@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 9189957603920657273}
   - component: {fileID: 722837058967763113}
   - component: {fileID: 9164357621205257110}
+  - component: {fileID: -3515951577810157270}
   m_Layer: 5
   m_Name: FlyCamera UI
   m_TagString: Untagged
@@ -189,6 +190,18 @@ MonoBehaviour:
   m_InputActionsPerSecond: 10
   m_RepeatDelay: 0.5
   m_ForceModuleActive: 0
+--- !u!114 &-3515951577810157270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1987081325453708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9faa4e65f1819d42bd0a15d22e9c28b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &207781141579891378
 GameObject:
   m_ObjectHideFlags: 0

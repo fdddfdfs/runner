@@ -12,7 +12,8 @@ namespace Gaia
     {
         public string m_tooltipID;
         public string m_header;
-        [Multiline]
+        //[Multiline]
+        [TextArea]
         public string m_text;
     }
 

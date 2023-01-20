@@ -213,9 +213,13 @@ namespace Gaia
                 m_cullingProfile = value;
                 RefreshCullingProfileLayers();
                 GaiaAPI.RefreshCameraCulling();
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 EditorUtility.SetDirty(this);
-                #endif
+                if (value != null)
+                {
+                    EditorUtility.SetDirty(value);
+                }
+#endif
             }
         }
 

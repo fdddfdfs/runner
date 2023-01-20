@@ -77,9 +77,23 @@ namespace Gaia
                     height += EditorGUIUtility.singleLineHeight;
                     break;
                 case ImageMaskOperation.CollisionMask:
-                    //height of the default fields + one line each for each collision mask entry + 4 bonus lines for better
-                    //accomodating the collision mask list
-                    height += EditorGUIUtility.singleLineHeight * (imageMask.m_collisionMasks.Length+4);
+                    //height of the default fields
+                    //+ the height required for the tree radius selection dropdowns
+                    //+ one line each for each other collision mask entry
+                    //+ 4 bonus lines for better accomodating the collision mask list
+                    foreach (CollisionMask cm in imageMask.m_collisionMasks)
+                    {
+                        if (cm.m_type == BakedMaskType.RadiusTree)
+                        {
+                            height += EditorGUIUtility.singleLineHeight * Mathf.CeilToInt((float)CollisionMask.m_allTreeSpawnRuleNames.Length / 32f);
+                        }
+                        else
+                        {
+                            height += EditorGUIUtility.singleLineHeight;
+                        }
+                    }
+
+                    height += EditorGUIUtility.singleLineHeight * 4; 
                     break;
                 case ImageMaskOperation.PROHydraulicErosion:
 #if GAIA_PRO_PRESENT
@@ -206,10 +220,15 @@ namespace Gaia
             {
                 newList[i] = oldList[i];
             }
-            newList[newList.Length - 1] = new ImageMask();
-            newList[newList.Length - 1].m_maxWorldHeight = maxCurrentTerrainHeight;
-            newList[newList.Length - 1].m_minWorldHeight = minCurrentTerrainHeight;
-            newList[newList.Length - 1].m_seaLevel = seaLevel;
+            ImageMask newMask = new ImageMask();
+            newMask.m_maxWorldHeight = maxCurrentTerrainHeight;
+            newMask.m_minWorldHeight = minCurrentTerrainHeight;
+            newMask.m_seaLevel = seaLevel;
+            //make sure that the min max for the height mask lies within the min max of the world - otherwise user ends up with a locked slider!
+            float spread = newMask.MaxPossiblePercent - newMask.MinPossiblePercent;
+            newMask.m_relativeHeightMin = newMask.MinPossiblePercent + spread * 0.25f;
+            newMask.m_relativeHeightMax = newMask.MaxPossiblePercent - spread * 0.25f;
+            newList[newList.Length - 1] = newMask;
             return newList;
         }
 
@@ -513,14 +532,7 @@ namespace Gaia
                         imageMask.m_heightMaskType = (HeightMaskType)EditorGUI.EnumPopup(heightMaskTypeRect, m_editorUtils.GetContent("MaskHeightMaskType"), imageMask.m_heightMaskType);
                         imageMask.HeightMaskUnit = (HeightMaskUnit)EditorGUI.EnumPopup(heightMaskUnitRect, imageMask.HeightMaskUnit);
                         rect.y += EditorGUIUtility.singleLineHeight;
-                        float scalarSeaLevel = Mathf.InverseLerp(imageMask.m_minWorldHeight, imageMask.m_maxWorldHeight, imageMask.m_seaLevel);
-                        float minPossibleMeter = imageMask.m_minWorldHeight - imageMask.m_seaLevel;
-                        float maxPossibleMeter = imageMask.m_maxWorldHeight - imageMask.m_seaLevel;
-                        float worldHeightDifference = imageMask.m_maxWorldHeight - imageMask.m_minWorldHeight;
-                        float worldHeightPercentInMeter = worldHeightDifference / 100f;
-                        float minPossiblePercent = minPossibleMeter / worldHeightPercentInMeter;
-                        float maxPossiblePercent = maxPossibleMeter / worldHeightPercentInMeter;
-                        float seaLevelInPercent = imageMask.m_seaLevel / worldHeightPercentInMeter;
+
                         if (imageMask.HeightMaskUnit == HeightMaskUnit.Meter)
                         {
                             //If min and max world height are switched or the same, the slider cannot display the handles properly. Therefore make sure there is at least 1 unit of height difference
@@ -556,7 +568,7 @@ namespace Gaia
                             }
                             else
                             {
-                                if (imageMask.m_relativeHeightMin >= minPossibleMeter && imageMask.m_relativeHeightMax <= maxPossibleMeter)
+                                if (imageMask.m_relativeHeightMin >= imageMask.MinPossibleMeter && imageMask.m_relativeHeightMax <= imageMask.MaxPossibleMeter)
                                 {
                                     EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref imageMask.m_relativeHeightMin, ref imageMask.m_relativeHeightMax, imageMask.m_minWorldHeight - imageMask.m_seaLevel + 0.01f, imageMask.m_maxWorldHeight - imageMask.m_seaLevel - 0.01f);
                                     imageMask.m_absoluteHeightMin = imageMask.m_relativeHeightMin + imageMask.m_seaLevel;
@@ -580,8 +592,8 @@ namespace Gaia
                                 if (imageMask.m_absoluteHeightMin >= 0 && imageMask.m_absoluteHeightMax <= 100)
                                 {
                                     EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref imageMask.m_absoluteHeightMin, ref imageMask.m_absoluteHeightMax, 0, 100f);
-                                    imageMask.m_relativeHeightMin = imageMask.m_absoluteHeightMin - seaLevelInPercent;
-                                    imageMask.m_relativeHeightMax = imageMask.m_absoluteHeightMax - seaLevelInPercent;
+                                    imageMask.m_relativeHeightMin = imageMask.m_absoluteHeightMin - imageMask.SeaLevelInPercent;
+                                    imageMask.m_relativeHeightMax = imageMask.m_absoluteHeightMax - imageMask.SeaLevelInPercent;
                                 }
                                 else
                                 {
@@ -595,25 +607,25 @@ namespace Gaia
                             }
                             else
                             {
-                                if (imageMask.m_relativeHeightMin >= minPossiblePercent && imageMask.m_relativeHeightMax <= maxPossiblePercent)
+                                if (imageMask.m_relativeHeightMin >= imageMask.MinPossiblePercent && imageMask.m_relativeHeightMax <= imageMask.MaxPossiblePercent)
                                 {
-                                    EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref imageMask.m_relativeHeightMin, ref imageMask.m_relativeHeightMax, minPossiblePercent + 0.01f, maxPossiblePercent -0.01f);
-                                    imageMask.m_absoluteHeightMin = imageMask.m_relativeHeightMin + seaLevelInPercent;
-                                    imageMask.m_absoluteHeightMax = imageMask.m_relativeHeightMax + seaLevelInPercent;
+                                    EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref imageMask.m_relativeHeightMin, ref imageMask.m_relativeHeightMax, imageMask.MinPossiblePercent + 0.01f, imageMask.MaxPossiblePercent - 0.01f);
+                                    imageMask.m_absoluteHeightMin = imageMask.m_relativeHeightMin + imageMask.SeaLevelInPercent;
+                                    imageMask.m_absoluteHeightMax = imageMask.m_relativeHeightMax + imageMask.SeaLevelInPercent;
                                 }
                                 else
                                 {
                                     bool previousGUIState = GUI.enabled;
                                     GUI.enabled = false;
-                                    float fake1 = minPossiblePercent;
-                                    float fake2 = maxPossiblePercent;
-                                    EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref fake1, ref fake2, minPossiblePercent, maxPossiblePercent);
+                                    float fake1 = imageMask.MinPossiblePercent;
+                                    float fake2 = imageMask.MaxPossiblePercent;
+                                    EditorGUI.MinMaxSlider(rect, m_editorUtils.GetContent("MaskHeightMinMax"), ref fake1, ref fake2, imageMask.MinPossiblePercent, imageMask.MaxPossiblePercent);
                                     GUI.enabled = previousGUIState;
                                 }
                             }
                         }
 
-                        float seaLevelMarkerXPos = rect.x + EditorGUIUtility.labelWidth + (rect.width - EditorGUIUtility.labelWidth) * scalarSeaLevel;
+                        float seaLevelMarkerXPos = rect.x + EditorGUIUtility.labelWidth + (rect.width - EditorGUIUtility.labelWidth) * imageMask.ScalarSeaLevel;
                         EditorGUI.DrawRect(new Rect(seaLevelMarkerXPos, rect.y, 3f, EditorGUIUtility.singleLineHeight), Color.red);
                         rect.y += EditorGUIUtility.singleLineHeight;
                         //Draw the input fields for numerical reference / entry
@@ -630,7 +642,7 @@ namespace Gaia
                             }
                             else
                             {
-                                minContent.text += String.Format(" {0:N0}", minPossibleMeter);
+                                minContent.text += String.Format(" {0:N0}", imageMask.MinPossibleMeter);
                             }
                         }
                         else
@@ -641,7 +653,7 @@ namespace Gaia
                             }
                             else
                             {
-                                minContent.text += String.Format(" {0:N0}%", minPossiblePercent);
+                                minContent.text += String.Format(" {0:N0}%", imageMask.MinPossiblePercent);
                             }
                         }
                         EditorGUI.LabelField(numFieldRect, minContent, alignmentStyleLeft);
@@ -707,7 +719,7 @@ namespace Gaia
                             }
                             else
                             {
-                                maxContent.text += String.Format(" {0:N0}", maxPossibleMeter);
+                                maxContent.text += String.Format(" {0:N0}", imageMask.MaxPossibleMeter);
                             }
                         }
                         else
@@ -718,7 +730,7 @@ namespace Gaia
                             }
                             else
                             {
-                                maxContent.text += String.Format(" {0:N0}%", maxPossiblePercent);
+                                maxContent.text += String.Format(" {0:N0}%", imageMask.MaxPossiblePercent);
                             }
                         }
 

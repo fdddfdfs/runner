@@ -11,13 +11,11 @@ namespace Gaia
     {
         private EditorUtils m_editorUtils;
         private InteriorWeatherController m_profile;
-        private GameObject m_ambientAudioObject;
 
         private void OnEnable()
         {
             //Get Profile object
             m_profile = (InteriorWeatherController)target;
-
             if (m_editorUtils == null)
             {
                 // Get editor utils for this
@@ -45,8 +43,7 @@ namespace Gaia
 
         private void GlobalSettingsEnabled(bool helpEnabled)
         {
-            ProceduralWorldsGlobalWeather globalWeather = FindObjectOfType<ProceduralWorldsGlobalWeather>();
-
+            EditorGUI.BeginChangeCheck();
             m_editorUtils.Heading("TriggerSettings");
             m_profile.TriggerType = (CollisionDetectionType)m_editorUtils.EnumPopup("TriggerType", m_profile.TriggerType, helpEnabled);
             if (m_profile.TriggerType == CollisionDetectionType.Box)
@@ -57,6 +54,20 @@ namespace Gaia
             {
                 m_profile.TriggerRadius = m_editorUtils.FloatField("TriggerRadius", m_profile.TriggerRadius, helpEnabled);
             }
+            m_profile.m_triggerMode = (InteriorWeatherTriggerMode)m_editorUtils.EnumPopup("TriggerMode", m_profile.m_triggerMode, helpEnabled);
+            switch (m_profile.m_triggerMode)
+            {
+                case InteriorWeatherTriggerMode.Trigger:
+                {
+                    m_profile.m_playerTag = m_editorUtils.TextField("PlayerTag", m_profile.m_playerTag, helpEnabled);
+                    break;
+                }
+                case InteriorWeatherTriggerMode.Bounds:
+                {
+                    m_profile.m_playerTransform = (Transform)m_editorUtils.ObjectField("PlayerTransform", m_profile.m_playerTransform, typeof(Transform), true, helpEnabled);
+                    break;
+                }
+            }
             EditorGUILayout.Space();
 
             m_editorUtils.Heading("ReverbSettings");
@@ -65,18 +76,31 @@ namespace Gaia
             EditorGUILayout.Space();
 
             m_editorUtils.Heading("WeatherSettings");
-            m_profile.m_enableWeatherParticleColliders = m_editorUtils.Toggle("EnableWeatherColliders", m_profile.m_enableWeatherParticleColliders, helpEnabled);
-            if (m_profile.m_enableWeatherParticleColliders)
+            m_profile.m_controllerMode = (InteriorWeatherControllerMode)m_editorUtils.EnumPopup("ControllerMode", m_profile.m_controllerMode, helpEnabled);
+            EditorGUI.indentLevel++;
+            switch (m_profile.m_controllerMode)
             {
-                m_profile.m_colliderQuality = (ParticleSystemCollisionQuality)m_editorUtils.EnumPopup("ColliderQuality", m_profile.m_colliderQuality, helpEnabled);
-                if (globalWeather != null)
+                case InteriorWeatherControllerMode.Collision:
                 {
-                    if (globalWeather.m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition && m_profile.m_colliderQuality == ParticleSystemCollisionQuality.High)
+                    m_profile.m_colliderQuality = (ParticleSystemCollisionQuality)m_editorUtils.EnumPopup("ColliderQuality", m_profile.m_colliderQuality, helpEnabled);
+                    if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.HighDefinition && m_profile.m_colliderQuality == ParticleSystemCollisionQuality.High)
                     {
                         EditorGUILayout.HelpBox("Collider Quality can be really expensive in HDRP and we recommend using Low or Medium quality. High will cause some performance issues", MessageType.Info);
                     }
+                    m_profile.m_collideLayers = LayerMaskField(m_editorUtils, "ColliderLayers", m_profile.m_collideLayers, helpEnabled);
+                    EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("CollisionMode"), MessageType.Info);
+                    break;
                 }
-                m_profile.m_collideLayers = LayerMaskField(m_editorUtils, "ColliderLayers", m_profile.m_collideLayers, helpEnabled);
+                case InteriorWeatherControllerMode.DisableVFX:
+                {
+                    EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("DisableWeatherVFXMode"), MessageType.Info);
+                    break;
+                }
+            }
+            EditorGUI.indentLevel--;
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(m_profile);
             }
         }
 

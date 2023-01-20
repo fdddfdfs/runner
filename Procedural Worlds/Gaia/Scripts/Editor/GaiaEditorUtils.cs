@@ -200,5 +200,39 @@ namespace Gaia
             layerMask.value = mask;
             return layerMask;
         }
+
+        /// <summary>
+        /// Searches the entire project for new biomes and prompts the user if they want to add any found biomes to the Gaia User files settings object,
+        /// </summary>
+        public static void SearchAndAddBiomePresets(bool newBiomesOnly = true)
+        {
+            List<BiomePreset> foundPresets = GaiaUtils.SearchProjectForBiomePresets(newBiomesOnly);
+
+            if (foundPresets != null && foundPresets.Count > 0)
+            {
+                string popupText = "The following biomes were found outside of the Gaia Installation folder:\r\n\r\n";
+                for (int i = 0; i < 10 && i < foundPresets.Count; i++)
+                {
+                    popupText += foundPresets[i].name + "\r\n";
+                }
+                if (foundPresets.Count > 10)
+                {
+                    popupText += "(and more....)\r\n\r\n";
+                }
+                else
+                {
+                    popupText += "\r\n";
+                }
+                popupText += "Do you want to add these biomes to the Gaia Manager so they become available for World Creation? If not, you can still use those Biomes manually or decide to add them to the Gaia Manager manually later by adding them in the 'User Files' configuration object.";
+
+                if (EditorUtility.DisplayDialog("Found Biomes outside the Gaia Folder", popupText, "Add Biomes", "Do not add"))
+                {
+                    UserFiles userFiles = GaiaUtils.GetOrCreateUserFiles();
+                    userFiles.m_gaiaManagerBiomePresets.AddRange(foundPresets);
+                    EditorUtility.SetDirty(userFiles);
+                    AssetDatabase.SaveAssets();
+                }
+            }
+        }
     }
 }

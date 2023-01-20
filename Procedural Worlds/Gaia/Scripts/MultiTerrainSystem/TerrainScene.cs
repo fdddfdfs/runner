@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 #endif
 using UnityEngine;
+#if PW_ADDRESSABLES
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceProviders;
+#endif
 using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
 
@@ -52,9 +57,6 @@ namespace Gaia
         public bool m_stitchedSouthBorder;
         public bool m_stitchedNorthBorder;
 
-
-
-
 #if UNITY_EDITOR
         public GameObject TerrainObj { get => m_terrainObj; }
 #endif
@@ -64,10 +66,33 @@ namespace Gaia
             {
                 path = m_scenePath;
             }
-            return path.Substring(path.LastIndexOf("Terrain")).Replace(".unity", "");
+            if (path.LastIndexOf("Terrain") >= 0)
+            {
+                return path.Substring(path.LastIndexOf("Terrain")).Replace(".unity", "");
+            }
+            else
+            {
+                Debug.LogError($"Could not get the Terrain Name for the following path '{m_scenePath}'.");
+                return "";
+            }
         }
 
-
+        public string GetImpostorName(string path = "")
+        {
+            if (path == "")
+            {
+                path = m_impostorScenePath;
+            }
+            if (path.LastIndexOf("Impostor") >= 0)
+            {
+                return path.Substring(path.LastIndexOf("Impostor")).Replace(".unity", "");
+            }
+            else
+            {
+                Debug.LogError($"Could not get the Impostor Name for the following path '{m_impostorScenePath}'.");
+                return "";
+            }
+        }
 
         public void RemoveAllReferences(bool forceSceneRemove = false)
         {
@@ -243,7 +268,16 @@ namespace Gaia
                                 terrain.drawHeightmap = true;
                                 m_terrainObj = go;
                                 CheckForStitching(terrain);
+#if FLORA_PRESENT
+                                //Wake up the flora detail objects, if any
+                                foreach (ProceduralWorlds.Flora.DetailObject detailObject in terrain.transform.GetComponentsInChildren<ProceduralWorlds.Flora.DetailObject>())
+                                {
+                                    detailObject.RefreshAll();
+                                }
+#endif
                             }
+
+
                         }
                         //Is this a regular scene that just came out of cache and the Impostor is still loaded? Remove it!
                         if (!isImpostor && m_impostorLoadState == LoadState.Loaded)
@@ -331,7 +365,7 @@ namespace Gaia
                 }
                 if (isCached)
                 {
-                    
+
                     if (loadState != LoadState.Cached)
                     {
                         //Here we discover by syncing the load state that the terrain is actually cached, so we need to update the timestamp.
@@ -348,7 +382,7 @@ namespace Gaia
                 }
                 else
                 {
-                    
+
 
                     loadState = LoadState.Loaded;
                 }
@@ -378,7 +412,6 @@ namespace Gaia
             {
                 if (!loadRequested)
                 {
-
                     TerrainLoaderManager tlm = TerrainLoaderManager.Instance;
                     long currentTimeStamp = GaiaUtils.GetUnixTimestamp();
                     //don't load if the loading treshold has not passed yet
@@ -388,41 +421,72 @@ namespace Gaia
                         return;
                     }
 
-                    asyncLoadOp = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
-                    tlm.m_lastTerrainLoadedTimeStamp = currentTimeStamp;
-
-                    if (isImpostor)
+                    if (tlm.TerrainSceneStorage.m_useAddressables)
                     {
-                        asyncLoadOp.completed += SceneLoadCompletedImpostor;
+#if PW_ADDRESSABLES
+                        LoadAddressableSceneAsync(isImpostor);
+#endif
                     }
                     else
                     {
-                        asyncLoadOp.completed += SceneLoadCompletedRegular;
+                        asyncLoadOp = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+                        tlm.m_lastTerrainLoadedTimeStamp = currentTimeStamp;
+
+                        if (isImpostor)
+                        {
+                            asyncLoadOp.completed += SceneLoadCompletedImpostor;
+                        }
+                        else
+                        {
+                            asyncLoadOp.completed += SceneLoadCompletedRegular;
+                        }
                     }
                     loadRequested = true;
                 }
             }
             else
             {
-                ProgressBar.Show(ProgressBarPriority.TerrainLoading, "Loading Terrain", "Loading Terrain...", 0, 0, false, false);
-                EditorSceneManager.sceneOpened += SceneOpened;
-                EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
-                ProgressBar.Clear(ProgressBarPriority.TerrainLoading);
+                if (!TerrainLoaderManager.Instance.m_assembliesAreReloading)
+                {
+                    try
+                    {
+                        ProgressBar.Show(ProgressBarPriority.TerrainLoading, "Loading Terrain", "Loading Terrain...", 0, 0, false, false);
+                        EditorSceneManager.sceneOpened += SceneOpened;
+                        EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+                        ProgressBar.Clear(ProgressBarPriority.TerrainLoading);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex != null)
+                        {
+                            //just to shut up the warning
+                        }
+                        //Make sure the Terrain Loader Manager is subscribed to the assembly loading events
+                        TerrainLoaderManager.Instance.SubscribeToAssemblyReloadEvents();
+                    }
+                }
             }
 #else
-                if (!loadRequested)
+            if (!loadRequested)
+            {
+                TerrainLoaderManager tlm = TerrainLoaderManager.Instance;
+                long currentTimeStamp = GaiaUtils.GetUnixTimestamp();
+                //don't load if the loading treshold has not passed yet
+                //this is to prevent a bottleneck from loading too many terrains at the same time
+                if (tlm.m_lastTerrainLoadedTimeStamp + tlm.m_terrainLoadingTresholdMS > currentTimeStamp)
                 {
-                    TerrainLoaderManager tlm = TerrainLoaderManager.Instance;
-                    long currentTimeStamp = GaiaUtils.GetUnixTimestamp();
-                    //don't load if the loading treshold has not passed yet
-                    //this is to prevent a bottleneck from loading too many terrains at the same time
-                    if (tlm.m_lastTerrainLoadedTimeStamp + tlm.m_terrainLoadingTresholdMS > currentTimeStamp)
-                    {
-                        return;
-                    }
-
+                    return;
+                }
+                tlm.m_lastTerrainLoadedTimeStamp = currentTimeStamp;
+                if (tlm.TerrainSceneStorage.m_useAddressables)
+                {
+#if PW_ADDRESSABLES
+                    LoadAddressableSceneAsync(isImpostor);
+#endif
+                }
+                else { 
                     asyncLoadOp = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
-                    tlm.m_lastTerrainLoadedTimeStamp = currentTimeStamp;
+                    
                     if (isImpostor)
                     {
                         asyncLoadOp.completed += SceneLoadCompletedImpostor;
@@ -431,10 +495,82 @@ namespace Gaia
                     {
                         asyncLoadOp.completed += SceneLoadCompletedRegular;
                     }
-                    loadRequested = true;
                 }
+                loadRequested = true;
+            }
 #endif
         }
+
+#if PW_ADDRESSABLES
+        private void LoadAddressableSceneAsync(bool isImpostor)
+        {
+            if (isImpostor)
+            {
+                Addressables.GetDownloadSizeAsync(m_impostorScenePath).Completed += AddressableImpostorDownloadSizeCompleted;
+
+                if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_preloadAddressablesWithImpostors)
+                {
+                    Addressables.GetDownloadSizeAsync(m_scenePath).Completed += AddressableRegularDownloadSizeCompletedPreload;
+                }
+            }
+            else
+            {
+                //Check the download size, continue from there
+                Addressables.GetDownloadSizeAsync(m_scenePath).Completed += AddressableRegularDownloadSizeCompleted;
+            }
+        }
+
+        private void AddressableRegularDownloadSizeCompletedPreload(AsyncOperationHandle<long> obj)
+        {
+            //If the download size is greater than 0, download all the dependencies.
+            if (obj.Result > 0)
+            {
+                Addressables.DownloadDependenciesAsync(m_scenePath).Completed += AddressableDownloadCompletedRegularPreload;
+            }
+        }
+
+
+        private void AddressableRegularDownloadSizeCompleted(AsyncOperationHandle<long> obj)
+        {
+            //If the download size is greater than 0, download all the dependencies.
+            if (obj.Result > 0)
+            {
+                Addressables.DownloadDependenciesAsync(m_scenePath).Completed += AddressableDownloadCompletedRegular;
+            }
+            else
+            {
+                Addressables.LoadSceneAsync(m_scenePath, LoadSceneMode.Additive).Completed += AddressableLoadCompletedRegular;
+            }
+        }
+
+        private void AddressableImpostorDownloadSizeCompleted(AsyncOperationHandle<long> obj)
+        {
+            //If the download size is greater than 0, download all the dependencies.
+            if (obj.Result > 0)
+            {
+                Addressables.DownloadDependenciesAsync(m_impostorScenePath).Completed += AddressableDownloadCompletedImpostor;
+            }
+            else
+            {
+                Addressables.LoadSceneAsync(m_impostorScenePath, LoadSceneMode.Additive).Completed += AddressableLoadCompletedImpostor;
+            }
+        }
+
+        private void AddressableDownloadCompletedRegular(AsyncOperationHandle obj)
+        {
+            Addressables.LoadSceneAsync(m_scenePath, LoadSceneMode.Additive).Completed += AddressableLoadCompletedRegular;
+        }
+
+        private void AddressableDownloadCompletedRegularPreload(AsyncOperationHandle obj)
+        {
+        }
+
+        private void AddressableDownloadCompletedImpostor(AsyncOperationHandle obj)
+        {
+            Addressables.LoadSceneAsync(m_impostorScenePath, LoadSceneMode.Additive).Completed += AddressableLoadCompletedImpostor;
+        }
+#endif
+
         /// <summary>
         /// Will update the load state of the terrain scene for all scene types - regular, collider, impostor, with the data that is currently stored in the terrain scene.
         /// </summary>
@@ -551,7 +687,7 @@ namespace Gaia
                     TerrainLoader loader = referenceList[i].GetComponent<TerrainLoader>();
                     if (loader != null)
                     {
-                        if (!loader.enabled || !loader.gameObject.activeInHierarchy ||  loader.LoadMode == LoadMode.Disabled || (!loader.m_isSelected && loader.LoadMode == LoadMode.EditorSelected))
+                        if (!loader.enabled || !loader.gameObject.activeInHierarchy || loader.LoadMode == LoadMode.Disabled || (!loader.m_isSelected && loader.LoadMode == LoadMode.EditorSelected))
                         {
                             referenceList.RemoveAt(i);
                         }
@@ -582,7 +718,7 @@ namespace Gaia
                 }
                 return;
             }
-            
+
 
             if (scene.path == m_scenePath || scene.path == m_colliderScenePath)
             {
@@ -632,11 +768,34 @@ namespace Gaia
 
         }
 #endif
+#if PW_ADDRESSABLES
+        private void AddressableLoadCompletedRegular(AsyncOperationHandle<SceneInstance> obj)
+        {
+            SceneLoadCompletedHandling();
+            obj.Completed -= AddressableLoadCompletedRegular;
+        }
 
+        private void AddressableLoadCompletedImpostor(AsyncOperationHandle<SceneInstance> obj)
+        {
+            ImpostorLoadCompletedHandling();
+            obj.Completed -= AddressableLoadCompletedImpostor;
+        }
+#endif
         private void SceneLoadCompletedRegular(AsyncOperation obj)
         {
-#if GAIA_PRO_PRESENT
+            SceneLoadCompletedHandling();
+            obj.completed -= SceneLoadCompletedRegular;
+        }
 
+        private void SceneLoadCompletedImpostor(AsyncOperation obj)
+        {
+
+            obj.completed -= SceneLoadCompletedImpostor;
+        }
+
+        private void SceneLoadCompletedHandling()
+        {
+#if GAIA_PRO_PRESENT
             string scenePath = m_scenePath;
 
             Terrain terrain = null;
@@ -646,6 +805,12 @@ namespace Gaia
                 scenePath = m_colliderScenePath;
             }
             Scene scene = SceneManager.GetSceneByPath(scenePath);
+
+            if (!scene.isLoaded)
+            {
+                return;
+            }
+
             foreach (GameObject go in scene.GetRootGameObjects())
             {
                 if (m_useFloatingPointFix)
@@ -669,12 +834,41 @@ namespace Gaia
             {
                 CheckForStitching(terrain);
             }
-            obj.completed -= SceneLoadCompletedRegular;
+#endif
+        }
+
+        private void ImpostorLoadCompletedHandling()
+        {
+#if GAIA_PRO_PRESENT
+            Scene scene = SceneManager.GetSceneByPath(m_impostorScenePath);
+            foreach (GameObject go in scene.GetRootGameObjects())
+            {
+                if (m_useFloatingPointFix)
+                {
+                    go.transform.position += FloatingPointFix.Instance.totalOffset;
+                    if (go.transform.GetComponent<FloatingPointFixMember>() == null)
+                    {
+                        go.AddComponent<FloatingPointFixMember>();
+                    }
+                }
+                go.SetActive(true);
+            }
+            m_impostorLoadState = LoadState.Loaded;
+            //Make sure the regular scene has not been loaded in the meantime due to a race condition. If it has, remove the impostor right away.
+            if (m_regularReferences.Count >= 1 && m_regularLoadState == LoadState.Loaded)
+            {
+                ReplaceImpostor();
+            }
 #endif
         }
 
         private void CheckForStitching(Terrain terrain)
         {
+            if (!m_stitchedEastBorder || !m_stitchedWestBorder || !m_stitchedNorthBorder || !m_stitchedSouthBorder)
+            {
+                ShiftLoadedTerrain();
+            }
+
             if (m_stitchedEastBorder == false)
             {
                 TerrainHelper.TryStitch(terrain, StitchDirection.East);
@@ -708,31 +902,7 @@ namespace Gaia
 #endif
         }
 
-        private void SceneLoadCompletedImpostor(AsyncOperation obj)
-        {
-#if GAIA_PRO_PRESENT
-            Scene scene = SceneManager.GetSceneByPath(m_impostorScenePath);
-            foreach (GameObject go in scene.GetRootGameObjects())
-            {
-                if (m_useFloatingPointFix)
-                {
-                    go.transform.position += FloatingPointFix.Instance.totalOffset;
-                    if (go.transform.GetComponent<FloatingPointFixMember>() == null)
-                    {
-                        go.AddComponent<FloatingPointFixMember>();
-                    }
-                }
-                go.SetActive(true);
-            }
-            m_impostorLoadState = LoadState.Loaded;
-            //Make sure the regular scene has not been loaded in the meantime due to a race condition. If it has, remove the impostor right away.
-            if (m_regularReferences.Count >= 1 && m_regularLoadState == LoadState.Loaded)
-            {
-                ReplaceImpostor();
-            }
-#endif
-            obj.completed -= SceneLoadCompletedImpostor;
-        }
+
 
         public void ShiftLoadedTerrain()
         {

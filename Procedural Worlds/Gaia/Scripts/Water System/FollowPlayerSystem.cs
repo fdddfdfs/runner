@@ -53,7 +53,7 @@ namespace Gaia
         {
             if (m_followPlayer)
             {
-                if (m_playerExists)
+                if (m_player != null)
                 {
                     if (m_particleObjectTransforms.Count > 0)
                     {

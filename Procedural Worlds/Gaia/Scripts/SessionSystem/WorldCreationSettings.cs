@@ -120,10 +120,10 @@ namespace Gaia
                 m_gaiaDefaults.m_controlTextureResolution = Mathf.ClosestPowerOfTwo(m_gaiaDefaults.m_controlTextureResolution);
             }
 
-            if (m_gaiaDefaults.m_controlTextureResolution > 2048)
+            if (m_gaiaDefaults.m_controlTextureResolution > 4096)
             {
-                defStr.AppendFormat("Control texture resolution must be <= 2048! {0} was changed to {1}.\n", m_gaiaDefaults.m_controlTextureResolution, 2048);
-                m_gaiaDefaults.m_controlTextureResolution = 2048;
+                defStr.AppendFormat("Control texture resolution must be <= 2048! {0} was changed to {1}.\n", m_gaiaDefaults.m_controlTextureResolution, 4096);
+                m_gaiaDefaults.m_controlTextureResolution = 4096;
             }
 
             if (!Mathf.IsPowerOfTwo(m_gaiaDefaults.m_baseMapSize))
@@ -132,10 +132,10 @@ namespace Gaia
                 m_gaiaDefaults.m_baseMapSize = Mathf.ClosestPowerOfTwo(m_gaiaDefaults.m_baseMapSize);
             }
 
-            if (m_gaiaDefaults.m_baseMapSize > 2048)
+            if (m_gaiaDefaults.m_baseMapSize > 4096)
             {
-                defStr.AppendFormat("Basemap size must be <= 2048! {0} was changed to {1}.\n", m_gaiaDefaults.m_baseMapSize, 2048);
-                m_gaiaDefaults.m_baseMapSize = 2048;
+                defStr.AppendFormat("Basemap size must be <= 2048! {0} was changed to {1}.\n", m_gaiaDefaults.m_baseMapSize, 4096);
+                m_gaiaDefaults.m_baseMapSize = 4096;
             }
 
             if (!Mathf.IsPowerOfTwo(m_gaiaDefaults.m_detailResolution))

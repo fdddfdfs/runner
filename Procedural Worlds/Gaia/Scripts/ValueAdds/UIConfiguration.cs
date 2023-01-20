@@ -271,10 +271,6 @@ namespace Gaia
         {
             m_instance = this;
             m_renderPipeline = GaiaUtils.GetActivePipeline();
-            if (m_currentPhotoModeProfile != null)
-            {
-                GaiaAPI.SetPhotoModeSettings(m_currentPhotoModeProfile.Profile.m_loadSavedSettings, m_currentPhotoModeProfile.Profile.m_revertOnDisabled, m_currentPhotoModeProfile.Profile.m_showReticle, m_currentPhotoModeProfile.Profile.m_showRuleOfThirds, m_enablePhotoMode);
-            }
         }
         /// <summary>
         /// Updates the text color

@@ -338,13 +338,6 @@ namespace Gaia
         {
             get
             {
-                if (m_instance == null)
-                {
-                    if (!Application.isPlaying)
-                    {
-                        m_instance = FindObjectOfType<ProceduralWorldsGlobalWeather>();
-                    }
-                }
                 return m_instance;
             }
         }
@@ -1033,6 +1026,7 @@ namespace Gaia
                 if (m_permanentSnowHeight != value)
                 {
                     m_permanentSnowHeight = value;
+                    m_savedSnowingHeight = value;
                     m_updateSnow = true;
                     UpdateWeatherEvents();
                 }
@@ -1574,7 +1568,7 @@ namespace Gaia
         private float m_snowActualChance;
         private float m_snowRandomValue;
         private float m_newSnowIntensity = 0f;
-        private float m_savedSnowingHeight;
+        [SerializeField] private float m_savedSnowingHeight;
         //private float m_newSnowVolume = 0f;
         //Rain
         [SerializeField]
@@ -1679,10 +1673,14 @@ namespace Gaia
         private const string m_globalWaveSpeed = "PWSF_GlobalWindIntensityWater";
         //Rain
         private const string m_shaderRainIntensity = "Dynamic Rain Intensity";
+        private const string m_pwRainDataA = "_PW_RainDataA";
         //Snow
         public const string m_globalSnowIntensity = "_PW_Global_CoverLayer1Progress";
         public const string m_globalCoverLayer1FadeStart = "_PW_Global_CoverLayer1FadeStart";
         public const string m_globalCoverLayer1FadeDist = "_PW_Global_CoverLayer1FadeDist";
+        public const string m_pwSnowDataA = "_PW_SnowDataA";
+        public const string m_pwSnowDataB = "_PW_SnowDataB";
+        public const string m_globalSnowColor = "_PW_SnowColor";
         //Season
         private const string m_shaderSeasonColorShift = "_PW_SeasonalTintAmount";
         //Particles
@@ -1767,10 +1765,7 @@ namespace Gaia
 
         private void Start()
         {
-            if (m_instance == null)
-            {
-                m_instance = this;
-            }
+            m_instance = this;
             Initialize();
             InitializeShaderSetup();
         }
@@ -1779,10 +1774,7 @@ namespace Gaia
         /// </summary>
         private void OnEnable()
         {
-            if (m_instance == null)
-            {
-                m_instance = this;
-            }
+            m_instance = this;
             //If is not starting application
             if (!Application.isPlaying)
             {
@@ -1797,10 +1789,10 @@ namespace Gaia
         }
         private void OnValidate()
         {
-            GaiaSceneProfileValid = GaiaUtils.CheckIfSceneProfileExists();
+            GaiaSceneProfileValid = GaiaUtils.CheckIfSceneProfileExists(out SceneProfile sceneProfile);
             if (m_sceneProfile == null)
             {
-                m_sceneProfile = GaiaGlobal.Instance.SceneProfile;
+                m_sceneProfile = sceneProfile;
             }
             ForceUpdateSystem = true;
         }
@@ -1932,7 +1924,8 @@ namespace Gaia
                     m_thunderComponent = FindObjectOfType<ThunderStrike>();
                 }
 
-                m_savedSnowingHeight = SnowHeight;
+                UpdateSavedSnowHeight();
+
                 m_renderPipeline = GaiaUtils.GetActivePipeline();
 #if UNITY_POST_PROCESSING_STACK_V2
                 CheckPWSkyPostFXManager();
@@ -1972,8 +1965,11 @@ namespace Gaia
                             AudioReverbFilter = m_player.gameObject.AddComponent<AudioReverbFilter>();
                         }
 
-                        AudioReverbFilter.reverbPreset = AudioReverbPreset.Forest;
-                        AudioReverbPreset = AudioReverbFilter.reverbPreset;
+                        if (AudioReverbFilter != null)
+                        {
+                            AudioReverbFilter.reverbPreset = AudioReverbPreset.Forest;
+                            AudioReverbPreset = AudioReverbFilter.reverbPreset;
+                        }
                     }
                     else
                     {
@@ -1990,6 +1986,7 @@ namespace Gaia
                 {
                     m_moonLight = GaiaUtils.GetMainMoonLight();
                 }
+                m_moonLight.transform.SetParent(m_sunLight.transform);
 
                 if (m_rainAudioSource != null)
                 {
@@ -2479,6 +2476,7 @@ namespace Gaia
                 {
                     m_moonLight = GaiaUtils.GetMainMoonLight();
                 }
+                m_moonLight.transform.SetParent(m_sunLight.transform);
 
                 if (GaiaGlobal.Instance != null)
                 {
@@ -2631,6 +2629,20 @@ namespace Gaia
             catch (Exception e)
             {
                 Debug.LogError("DeInitialize Post FX had a issue " + e.Message + " This came from " + e.StackTrace);
+            }
+        }
+        /// <summary>
+        /// Updates the saved snow height value
+        /// </summary>
+        public void UpdateSavedSnowHeight()
+        {
+            if (SnowCoverAlwaysEnabled)
+            {
+                m_savedSnowingHeight = PermanentSnowHeight;
+            }
+            else
+            {
+                m_savedSnowingHeight = SnowHeight;
             }
         }
 
@@ -3024,13 +3036,18 @@ namespace Gaia
                     return;
                 }
 
+                Vector4 rainDataA = Shader.GetGlobalVector(m_pwRainDataA);
                 if (EnableRain)
                 {
                     Shader.SetGlobalFloat(m_shaderRainIntensity, RainIntensity);
+                    rainDataA.y = RainIntensity;
+                    Shader.SetGlobalVector(m_pwRainDataA, rainDataA);
                 }
                 else
                 {
                     Shader.SetGlobalFloat(m_shaderRainIntensity, 0f);
+                    rainDataA.y = 0f;
+                    Shader.SetGlobalVector(m_pwRainDataA, rainDataA);
                 }
 
 #if CTS_PRESENT
@@ -3054,35 +3071,50 @@ namespace Gaia
         {
             try
             {
+                //New snow settings
+                Vector4 snowDataA = Shader.GetGlobalVector(m_pwSnowDataA);
+                Vector4 snowDataB = Shader.GetGlobalVector(m_pwSnowDataB);
                 if (EnableSnow)
                 {
                     if (SnowCoverAlwaysEnabled)
                     {
                         Shader.SetGlobalFloat(m_globalSnowIntensity, 1f);
+                        snowDataA.y = 1f;
+                        Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     }
                     else
                     {
                         Shader.SetGlobalFloat(m_globalSnowIntensity, SnowIntensity);
+                        snowDataA.y = SnowIntensity;
+                        Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     }
 
                     if (IsSnowing && !IsSnowingFinished)
                     {
                         Shader.SetGlobalFloat(m_globalCoverLayer1FadeStart, m_savedSnowingHeight);
+                        snowDataA.z = m_savedSnowingHeight;
+                        Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     }
                     else if (!IsSnowing && IsSnowingFinished)
                     {
                         Shader.SetGlobalFloat(m_globalCoverLayer1FadeStart, PermanentSnowHeight);
+                        snowDataA.z = PermanentSnowHeight;
+                        Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     }
                     else
                     {
                         Shader.SetGlobalFloat(m_globalCoverLayer1FadeStart, m_savedSnowingHeight);
+                        snowDataA.z = m_savedSnowingHeight;
+                        Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     }
-
                     Shader.SetGlobalFloat(m_globalCoverLayer1FadeDist, SnowFadeHeight);
+                    Shader.SetGlobalVector(m_globalSnowColor, new Vector4(1, 1, 1, 1));
                 }
                 else
                 {
                     Shader.SetGlobalFloat(m_globalSnowIntensity, 0f);
+                    snowDataA.y = 0f;
+                    Shader.SetGlobalVector(m_pwSnowDataA, snowDataA);
                     Shader.SetGlobalFloat(m_globalCoverLayer1FadeStart, 0f);
                     Shader.SetGlobalFloat(m_globalCoverLayer1FadeDist, 0f);
                 }
@@ -3527,6 +3559,10 @@ namespace Gaia
 
                     SetParticlesToWeather(m_rainParticles, m_rainVFX, m_rainWeatherSettings);
                     IsRainingFinished = FinishedWeatherCheck(RainIntensity, RainVolume);
+                    if (IsRainingFinished)
+                    {
+                        UpdateAllSystems(false);
+                    }
                 }
                 else
                 {
@@ -3695,6 +3731,7 @@ namespace Gaia
 
                     if (IsRainingFinished)
                     {
+                        UpdateAllSystems(false);
                         if (m_rainAudioSource.isPlaying)
                         {
                             m_rainAudioSource.Stop();
@@ -3744,7 +3781,7 @@ namespace Gaia
                 }
                 m_snowAudioSource.clip = m_snowWeatherSettings.m_ambientAudio;
 
-                if (!m_snowAudioSource.isPlaying)
+                if (!m_snowAudioSource.isPlaying && m_snowAudioSource.isActiveAndEnabled)
                 {
                     m_snowAudioSource.Play();
                 }
@@ -3760,6 +3797,20 @@ namespace Gaia
                     if (!m_getCurrentSnowValue)
                     {
                         m_currentSnowIntensity = SnowIntensity;
+#if GTS_PRESENT
+                        /*if (ProceduralWorlds.GTS.GTSTerrain.activeTerrain != null)
+                        {
+                            Vector4 snowDataA = Shader.GetGlobalVector(m_pwSnowDataA);
+                            Vector4 snowDataB = Shader.GetGlobalVector(m_pwSnowDataB);
+
+                            m_currentSnowIntensity = snowDataA.y;
+                            if (m_currentSnowIntensity <= 0f)
+                            {
+                                m_currentSnowIntensity = SnowIntensity;
+                            }
+                            CurrentSettings.m_snowHeight = snowDataA.z;
+                        }*/
+#endif
                         m_currentSnowVolume = m_snowAudioSource.volume;
                         m_getCurrentSnowValue = true;
                     }
@@ -3848,6 +3899,10 @@ namespace Gaia
                     }
 
                     IsSnowingFinished = FinishedWeatherCheck(SnowIntensity, SnowVolume);
+                    if (IsSnowingFinished)
+                    {
+                        UpdateAllSystems(false);
+                    }
                 }
                 else
                 {
@@ -3896,6 +3951,20 @@ namespace Gaia
                     if (m_getCurrentSnowValue)
                     {
                         m_currentSnowIntensity = SnowIntensity;
+#if GTS_PRESENT
+                        if (ProceduralWorlds.GTS.GTSTerrain.activeTerrain != null)
+                        {
+                            Vector4 snowDataA = Shader.GetGlobalVector(m_pwSnowDataA);
+                            Vector4 snowDataB = Shader.GetGlobalVector(m_pwSnowDataB);
+
+                            m_currentSnowIntensity = snowDataA.y;
+                            if (m_currentSnowIntensity <= 0f)
+                            {
+                                m_currentSnowIntensity = SnowIntensity;
+                            }
+                            CurrentSettings.m_snowHeight = snowDataA.z;
+                        }
+#endif
                         m_currentSnowVolume = m_snowAudioSource.volume;
                         m_getCurrentSnowValue = false;
                     }
@@ -4006,6 +4075,7 @@ namespace Gaia
 
                     if (IsSnowingFinished)
                     {
+                        UpdateAllSystems(false);
                         if (m_snowAudioSource.isPlaying)
                         {
                             m_snowAudioSource.Stop();
@@ -5374,7 +5444,14 @@ namespace Gaia
             }
             else
             {
-                m_savedSnowingHeight = Mathf.Lerp(CurrentSettings.m_snowHeight, SnowHeight, GetFadeTime());
+                if (SnowCoverAlwaysEnabled)
+                {
+                    m_savedSnowingHeight = Mathf.Lerp(CurrentSettings.m_snowHeight, PermanentSnowHeight, GetFadeTime());
+                }
+                else
+                {
+                    m_savedSnowingHeight = Mathf.Lerp(CurrentSettings.m_snowHeight, SnowHeight, GetFadeTime());
+                }
             }
         }
         /// <summary>
@@ -7073,7 +7150,14 @@ namespace Gaia
                 //Snow
                 if (IsSnowing)
                 {
-                    CurrentSettings.m_snowHeight = SnowHeight;
+                    if (SnowCoverAlwaysEnabled)
+                    {
+                        CurrentSettings.m_snowHeight = PermanentSnowHeight;
+                    }
+                    else
+                    {
+                        CurrentSettings.m_snowHeight = SnowHeight;
+                    }
                 }
                 else
                 {
@@ -7457,7 +7541,7 @@ namespace Gaia
 
                 if (m_sunLight == null)
                 {
-                    m_sunLight = GaiaUtils.GetMainDirectionalLight(false);
+                    m_sunLight = GaiaUtils.GetMainDirectionalLight();
                 }
 
                 if (m_moonLight == null)
@@ -8238,8 +8322,6 @@ namespace Gaia
                         }
                     }
                 }
-
-                Debug.Log(player.gameObject.name);
 
                 m_mainCameras = new Camera[0];
 

@@ -478,14 +478,15 @@ namespace Gaia
         private void Update()
         {
 #if GAIA_PRO_PRESENT
-            if (!Application.isPlaying)
-            {
-                WeatherPresent = CheckWeatherPresent();
-                WeatherSystem = ProceduralWorldsGlobalWeather.Instance;
-            }
+            //if (!Application.isPlaying)
+            //{
+            //    WeatherPresent = CheckWeatherPresent();
+            //    WeatherSystem = ProceduralWorldsGlobalWeather.Instance;
+            //}
 
-            if (WeatherPresent)
+            if (ProceduralWorldsGlobalWeather.Instance)
             {
+                WeatherSystem = ProceduralWorldsGlobalWeather.Instance;
                 if (WeatherSystem.CheckIsNight())
                 {
                     Shader.SetGlobalVector(GaiaShaderID.m_globalLightDirection, -WeatherSystem.m_moonLight.transform.forward);
@@ -516,7 +517,8 @@ namespace Gaia
             }
 #endif
 
-            if (WeatherPresent)
+#if GAIA_PRO_PRESENT
+            if (ProceduralWorldsGlobalWeather.Instance)
             {
                 if (Application.isPlaying)
                 {
@@ -527,12 +529,11 @@ namespace Gaia
                 }
                 else
                 {
-#if GAIA_PRO_PRESENT
+
                     if (WeatherSystem.RunInEditor)
                     {
                         GaiaTimeOfDayValue.m_todMinutes += Time.deltaTime * GaiaTimeOfDayValue.m_todDayTimeScale;
                     }
-#endif
                 }
 
                 if (GaiaTimeOfDayValue.m_todMinutes > 59.1f)
@@ -548,6 +549,7 @@ namespace Gaia
 
                 UpdateGaiaTimeOfDay(false);
             }
+#endif
         }
         private void OnValidate()
         {
@@ -1174,20 +1176,28 @@ namespace Gaia
                 if (loader == null)
                 {
                     loader = playerObj.AddComponent<TerrainLoader>();
+                    loader.LoadMode = LoadMode.RuntimeAlways;
+                    float size = 100f;
+                    if (terrain != null && terrain.terrainData != null)
+                    {
+                        size = terrain.terrainData.size.x * 1.25f * 2f;
+                    }
+                    loader.m_loadingBoundsRegular = new BoundsDouble(playerObj.transform.position, new Vector3(size, size, size));
+                    loader.m_loadingBoundsImpostor = new BoundsDouble(playerObj.transform.position, new Vector3(size * 3f, size * 3f, size * 3f));
                 }
-                loader.LoadMode = LoadMode.RuntimeAlways;
-                float size = terrain.terrainData.size.x * 1.25f * 2f;
-                loader.m_loadingBoundsRegular = new BoundsDouble(playerObj.transform.position, new Vector3(size, size, size));
-                loader.m_loadingBoundsImpostor = new BoundsDouble(playerObj.transform.position, new Vector3(size * 3f, size * 3f, size * 3f));
 #endif
             }
         }
-        public static void FinalizePlayerObjectEditor(GameObject playerObj, GaiaSettings gaiaSettings)
+        public static void FinalizePlayerObjectEditor(GameObject playerObj, GaiaSettings gaiaSettings, bool parentPlayer)
         {
             if (playerObj != null)
             {
-                playerObj.transform.SetParent(GaiaUtils.GetPlayerObject().transform);
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
+                if (!PrefabUtility.IsPartOfAnyPrefab(playerObj) && parentPlayer)
+                {
+                    playerObj.transform.SetParent(GaiaUtils.GetPlayerObject().transform);
+                }
+
                 //Adjust the scene view to see the camera
                 if (SceneView.lastActiveSceneView != null)
                 {
@@ -1196,7 +1206,12 @@ namespace Gaia
                         SceneView.lastActiveSceneView.LookAtDirect(playerObj.transform.position, playerObj.transform.rotation);
                     }
                 }
-                #endif
+#else
+                if (parentPlayer)
+                {
+                    playerObj.transform.SetParent(GaiaUtils.GetPlayerObject().transform);
+                }
+#endif
             }
 
             GaiaSessionManager session = GaiaSessionManager.GetSessionManager();
@@ -1223,22 +1238,20 @@ namespace Gaia
             if (dynamicLoadedTerrains)
             {
 #if GAIA_PRO_PRESENT
-
+                Terrain terrain = TerrainHelper.GetActiveTerrain();
                 TerrainLoader loader = playerObj.GetComponent<TerrainLoader>();
                 if (loader == null)
                 {
                     loader = playerObj.AddComponent<TerrainLoader>();
+                    loader.LoadMode = LoadMode.RuntimeAlways;
+                    float size = 100f;
+                    if (terrain != null && terrain.terrainData != null)
+                    {
+                        size = terrain.terrainData.size.x * 1.25f * 2f;
+                    }
+                    loader.m_loadingBoundsRegular = new BoundsDouble(playerObj.transform.position, new Vector3(size, size, size));
+                    loader.m_loadingBoundsImpostor = new BoundsDouble(playerObj.transform.position, new Vector3(size * 3f, size * 3f, size * 3f));
                 }
-                loader.LoadMode = LoadMode.RuntimeAlways;
-                float tileSize = 512;
-                if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesSize > 0)
-                {
-                    tileSize = TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesSize;
-                }
-                float size = tileSize * 1.25f * 2f;
-                loader.m_loadingBoundsRegular = new BoundsDouble(playerObj.transform.position, new Vector3(size, size, size));
-                loader.m_loadingBoundsImpostor = new BoundsDouble(playerObj.transform.position, new Vector3(size * 3f, size * 3f, size * 3f));
-                loader.m_loadingBoundsCollider = new BoundsDouble(playerObj.transform.position, new Vector3(size, size, size)); 
 #endif
             }
         }

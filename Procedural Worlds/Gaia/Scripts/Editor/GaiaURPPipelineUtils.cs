@@ -179,7 +179,7 @@ namespace Gaia.Pipeline.URP
         /// <param name="updateOpaque"></param>
         public static void UpdateURPPipelineSettings(bool updateDepth, bool updateOpaque)
         {
-            #if UPPipeline
+#if UPPipeline
             UniversalRenderPipelineAsset pipelineAsset = GraphicsSettings.renderPipelineAsset as UniversalRenderPipelineAsset;
             if (pipelineAsset != null)
             {
@@ -200,7 +200,7 @@ namespace Gaia.Pipeline.URP
                 EditorUtility.SetDirty(pipelineAsset);
                 AssetDatabase.SaveAssets();
             }
-            #endif
+#endif
         }
         /// <summary>
         /// Configures camera to LWRP
@@ -320,7 +320,7 @@ namespace Gaia.Pipeline.URP
             }
 
             Light[] lights = Object.FindObjectsOfType<Light>();
-            foreach(Light activeLight in lights)
+            foreach (Light activeLight in lights)
             {
                 if (activeLight.type == LightType.Directional)
                 {
@@ -349,13 +349,20 @@ namespace Gaia.Pipeline.URP
                         profile.m_underwaterHorizonMaterial.shader = Shader.Find(profile.m_universalHorizonObjectShader);
                     }
 
-                    GameObject waterObject = GameObject.Find(gaiaSettings.m_gaiaWaterProfile.m_waterPrefab.name);
-                    if (waterObject != null)
+                    if (gaiaSettings.m_gaiaWaterProfile != null && gaiaSettings.m_gaiaWaterProfile.m_waterPrefab != null)
                     {
-                        if (GaiaGlobal.Instance != null)
+                        GameObject waterObject = GameObject.Find(gaiaSettings.m_gaiaWaterProfile.m_waterPrefab.name);
+                        if (waterObject != null)
                         {
-                            GaiaWater.GetProfile(gaiaSettings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex, GaiaGlobal.Instance.SceneProfile, true, false);
+                            if (GaiaGlobal.Instance != null)
+                            {
+                                GaiaWater.GetProfile(gaiaSettings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex, GaiaGlobal.Instance.SceneProfile, true, false);
+                            }
                         }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Gaia Water Profile not set in the Gaia Settings, will not configure water for URP.");
                     }
                 }
             }
@@ -448,8 +455,8 @@ namespace Gaia.Pipeline.URP
                         cameraData.renderPostProcessing = false;
                     }
                 }
-    #endif
-    #if UNITY_POST_PROCESSING_STACK_V2
+#endif
+#if UNITY_POST_PROCESSING_STACK_V2
                 PostProcessLayer postProcessLayer = GameObject.FindObjectOfType<PostProcessLayer>();
                 if (postProcessLayer != null)
                 {
@@ -461,7 +468,7 @@ namespace Gaia.Pipeline.URP
                 {
                     GameObject.DestroyImmediate(postProcessVolume);
                 }
-    #endif
+#endif
 
                 return volumeObject;
             }
@@ -496,7 +503,7 @@ namespace Gaia.Pipeline.URP
                 }
 
                 GaiaSessionManager session = GaiaSessionManager.GetSessionManager();
-                if (session != null)
+                if (session != null && session.m_session!=null)
                 {
                     string path = GaiaDirectories.GetSceneProfilesFolderPath(session.m_session);
                     if (!string.IsNullOrEmpty(path))
@@ -679,7 +686,7 @@ namespace Gaia.Pipeline.URP
 
                     cameraData.renderPostProcessing = false;
                 }
-    #endif
+#endif
 
                 if (profile.m_underwaterHorizonMaterial != null)
                 {
@@ -729,7 +736,7 @@ namespace Gaia.Pipeline.URP
                 if (GaiaGlobal.Instance != null)
                 {
                     //GaiaUtils.GetRuntimeSceneObject();
-                    if (GaiaGlobal.Instance.SceneProfile != null && GaiaGlobal.Instance.SceneProfile.m_lightingProfiles.Count>0)
+                    if (GaiaGlobal.Instance.SceneProfile != null && GaiaGlobal.Instance.SceneProfile.m_lightingProfiles.Count > 0)
                     {
                         GaiaLighting.GetProfile(GaiaGlobal.Instance.SceneProfile, gaiaSettings.m_pipelineProfile, GaiaConstants.EnvironmentRenderer.BuiltIn);
                     }
@@ -741,7 +748,7 @@ namespace Gaia.Pipeline.URP
                 if (uwe != null)
                 {
 
-                    Transform utoTransform  = uwe.transform.Find(GaiaConstants.underwaterTransitionObjectName);
+                    Transform utoTransform = uwe.transform.Find(GaiaConstants.underwaterTransitionObjectName);
                     if (utoTransform != null)
                     {
                         Object.DestroyImmediate(utoTransform.gameObject);
@@ -816,7 +823,7 @@ namespace Gaia.Pipeline.URP
                 PostProcessVolume[] postProcessVolumes = Object.FindObjectsOfType<PostProcessVolume>();
                 if (postProcessVolumes != null)
                 {
-                    foreach(PostProcessVolume volume in postProcessVolumes)
+                    foreach (PostProcessVolume volume in postProcessVolumes)
                     {
                         //Check it has a profile
                         if (volume.sharedProfile != null)

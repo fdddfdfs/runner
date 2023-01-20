@@ -23,31 +23,7 @@ namespace Gaia
                 // Get editor utils for this
                 m_editorUtils = PWApp.GetEditorUtils(this);
                 m_simpleCameraLayerCulling.Initialize();
-                ApplyToSceneCamera();
-            }
-        }
-
-        private void ApplyToSceneCamera()
-        {
-            if (m_simpleCameraLayerCulling.m_applyToSceneCamera)
-            {
-                foreach (var sceneCamera in SceneView.GetAllSceneCameras())
-                {
-                    sceneCamera.layerCullDistances = m_simpleCameraLayerCulling.m_profile.m_layerDistances;
-                }
-                m_simpleCameraLayerCulling.ApplyToDirectionalLight();
-            }
-            else
-            {
-                float[] layerCulls = new float[32];
-                for (int i = 0; i < layerCulls.Length; i++)
-                {
-                    layerCulls[i] = 0f;
-                }
-                foreach (var sceneCamera in SceneView.GetAllSceneCameras())
-                {
-                    sceneCamera.layerCullDistances = layerCulls;
-                }
+                m_simpleCameraLayerCulling.ApplyToSceneCamera();
             }
         }
 
@@ -115,7 +91,7 @@ namespace Gaia
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(m_simpleCameraLayerCulling.m_profile);
-                ApplyToSceneCamera();
+                m_simpleCameraLayerCulling.ApplyToSceneCamera();
                 m_simpleCameraLayerCulling.ApplyToGameCamera();
                 m_simpleCameraLayerCulling.ResetDirectionalLight();
                 SceneView.RepaintAll();

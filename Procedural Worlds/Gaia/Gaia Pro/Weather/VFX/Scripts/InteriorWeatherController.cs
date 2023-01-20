@@ -5,6 +5,9 @@ using UnityEditor;
 
 namespace Gaia
 {
+    public enum InteriorWeatherControllerMode { Collision, DisableVFX }
+    public enum InteriorWeatherTriggerMode { Trigger, Bounds }
+
     public class InteriorWeatherController : MonoBehaviour
     {
         public CollisionDetectionType TriggerType
@@ -46,9 +49,12 @@ namespace Gaia
 
         public AudioReverbPreset m_interiorAudioRevertPreset = AudioReverbPreset.Room;
         public AudioReverbPreset m_exteriorAudioRevertPreset = AudioReverbPreset.Forest;
-        public bool m_enableWeatherParticleColliders = true;
         public ParticleSystemCollisionQuality m_colliderQuality = ParticleSystemCollisionQuality.High;
         public LayerMask m_collideLayers = 1;
+        public InteriorWeatherControllerMode m_controllerMode = InteriorWeatherControllerMode.DisableVFX;
+        public InteriorWeatherTriggerMode m_triggerMode = InteriorWeatherTriggerMode.Bounds;
+        public string m_playerTag = "Player";
+        public Transform m_playerTransform;
 
         [SerializeField]
         private CollisionDetectionType m_triggerType = CollisionDetectionType.Box;
@@ -56,17 +62,23 @@ namespace Gaia
         private Vector3 m_triggerSize = new Vector3(30f, 30f, 30f);
         [SerializeField]
         private float m_triggerRadius = 30f;
-
-        [SerializeField]
-        private Camera m_playerCamera;
         [SerializeField]
         private AudioReverbFilter m_reverbFilter;
         [SerializeField]
-        private GameObject m_rainParticles;
+        private Camera m_playerCamera;
         [SerializeField]
-        private GameObject m_snowParticles;
-
-
+        private ParticleSystem m_rainParticleSystem;
+        [SerializeField] 
+        private MeshRenderer m_rainParticlesMeshRenderer;
+        [SerializeField]
+        private ParticleSystem m_snowParticleSystem;
+        [SerializeField]
+        private ParticleSystem m_snowParticleSystemExtra;
+        [SerializeField]
+        private ProceduralWorldsGlobalWeather m_weatherSystem;
+        [SerializeField]
+        private Bounds m_triggerBounds;
+        private bool m_triggerStateChanged = false;
         private const string m_createVolumeMenuItem = "GameObject/Procedural Worlds/Gaia/Interior Weather Volume";
 
         #region Unity Functions
@@ -92,88 +104,269 @@ namespace Gaia
                 Gizmos.DrawSphere(Vector3.zero, sphereCollider.radius);
             }
         }
-
         /// <summary>
         /// Load on enable
         /// </summary>
         private void OnEnable()
         {
-            SetupReverbFilter();
+            Setup();
+            UpdateColliderType();
         }
-
         /// <summary>
         /// Sets interior reverb on enter
         /// </summary>
         /// <param name="other"></param>
         private void OnTriggerEnter(Collider other)
         {
-            if (m_playerCamera == null)
+            if (m_triggerMode != InteriorWeatherTriggerMode.Trigger)
             {
-                Debug.LogError("Player was not found");
                 return;
             }
 
-            if (other.tag == m_playerCamera.tag)
+            if (other.CompareTag(m_playerTag))
             {
-                m_reverbFilter.reverbPreset = m_interiorAudioRevertPreset;
-                UpdateParticleColliders(true);
+                UpdateParticleColliders(false);
             }
         }
-
         /// <summary>
         /// Sets exterior reverb on exit
         /// </summary>
         /// <param name="other"></param>
         private void OnTriggerExit(Collider other)
         {
-            if (m_playerCamera == null)
+            if (m_triggerMode != InteriorWeatherTriggerMode.Trigger)
             {
-                Debug.LogError("Player was not found");
                 return;
             }
 
-            if (other.tag == m_playerCamera.tag)
+            if (other.CompareTag(m_playerTag))
             {
-                m_reverbFilter.reverbPreset = m_exteriorAudioRevertPreset;
-                UpdateParticleColliders(false);
+                UpdateParticleColliders(true);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (m_triggerMode == InteriorWeatherTriggerMode.Bounds && m_playerTransform != null)
+            {
+                bool triggerState = m_triggerBounds.Contains(m_playerTransform.position);
+                if (m_triggerStateChanged != triggerState)
+                {
+                    m_triggerStateChanged = triggerState;
+                    if (triggerState)
+                    {
+                        UpdateParticleColliders(false);
+                    }
+                    else
+                    {
+                        UpdateParticleColliders(true);
+                    }
+                }
             }
         }
 
         #endregion
-
         #region Utils
 
         /// <summary>
+        /// Used to update the particles collision conditions
+        /// </summary>
+        /// <param name="enabled"></param>
+        public void UpdateParticleColliders(bool enabled)
+        {
+            if (CheckWeatherSystem())
+            {
+                SetAudioReverbState(enabled);
+                switch (m_controllerMode)
+                {
+                    case InteriorWeatherControllerMode.Collision:
+                    {
+                        if (m_weatherSystem.IsRaining)
+                        {
+                            SetParticleCollisionState(m_rainParticleSystem, enabled, m_rainParticlesMeshRenderer);
+                        }
+                        else if (m_weatherSystem.IsSnowing)
+                        {
+                            SetParticleCollisionState(m_snowParticleSystem, enabled);
+                            SetParticleCollisionState(m_snowParticleSystemExtra, enabled);
+                        }
+                        break;
+                    }
+                    case InteriorWeatherControllerMode.DisableVFX:
+                    {
+                        if (m_weatherSystem.IsRaining)
+                        {
+                            SetParticleVFXState(m_rainParticleSystem, enabled, m_rainParticlesMeshRenderer);
+                        }
+                        else if (m_weatherSystem.IsSnowing)
+                        {
+                            SetParticleVFXState(m_snowParticleSystem, enabled);
+                            SetParticleVFXState(m_snowParticleSystemExtra, enabled);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        /// <summary>
         /// Sets up the player and the audio reverb
         /// </summary>
-        public void SetupReverbFilter()
+        public void Setup()
         {
-            if (m_playerCamera == null)
+            if (CheckWeatherSystem())
             {
-                m_playerCamera = ProceduralWorldsGlobalWeather.GetPlayer().GetComponent<Camera>();
-            }
-
-            if (m_playerCamera != null)
-            {
-                m_reverbFilter = m_playerCamera.gameObject.GetComponent<AudioReverbFilter>();
-                if (m_reverbFilter == null)
+                if (m_playerCamera == null)
                 {
-                    m_reverbFilter = m_playerCamera.gameObject.AddComponent<AudioReverbFilter>();
-                    m_reverbFilter.reverbPreset = AudioReverbPreset.Forest;
+                    Transform player = ProceduralWorldsGlobalWeather.GetPlayer();
+                    if (player != null)
+                    {
+                        m_playerCamera =  player.GetComponent<Camera>();
+                    }
+                }
+
+                if (m_playerCamera != null)
+                {
+                    m_reverbFilter = m_playerCamera.gameObject.GetComponent<AudioReverbFilter>();
+                    if (m_reverbFilter == null)
+                    {
+                        m_reverbFilter = m_playerCamera.gameObject.AddComponent<AudioReverbFilter>();
+                        if (m_reverbFilter != null)
+                        {
+                            m_reverbFilter.reverbPreset = AudioReverbPreset.Forest;
+                        }
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Sets the player transform to 'player' value
+        /// </summary>
+        /// <param name="player"></param>
+        public void SetPlayerTransform(Transform player)
+        {
+            m_playerTransform = player;
+        }
+        /// <summary>
+        /// Checks all the components and return true if the weather system is found
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckWeatherSystem()
+        {
+            if (m_weatherSystem == null)
+            {
+                m_weatherSystem = ProceduralWorldsGlobalWeather.Instance;
+            }
+            if (m_weatherSystem != null)
+            {
+                if (m_rainParticleSystem == null)
+                {
+                    m_rainParticleSystem = m_weatherSystem.m_rainVFX;
+                }
+                if (m_rainParticlesMeshRenderer == null)
+                {
+                    m_rainParticlesMeshRenderer = m_weatherSystem.m_rainParticles;
+                }
+                if (m_snowParticleSystem == null)
+                {
+                    m_snowParticleSystem = m_weatherSystem.m_snowVFX;
+                }
+                if (m_snowParticleSystemExtra == null)
+                {
+                    m_snowParticleSystemExtra = m_weatherSystem.m_snowParticles;
                 }
             }
 
-            if (m_rainParticles == null)
+            return m_weatherSystem != null;
+        }
+        /// <summary>
+        /// Sets the audio reverb state
+        /// </summary>
+        /// <param name="state"></param>
+        private void SetAudioReverbState(bool state)
+        {
+            if (m_reverbFilter != null)
             {
-                m_rainParticles = GameObject.Find("Gaia Rain Particles");
-            }
-
-            if (m_snowParticles == null)
-            {
-                m_snowParticles = GameObject.Find("Gaia Snow Particles");
+                if (m_weatherSystem.IsRaining || m_weatherSystem.IsSnowing)
+                {
+                    if (enabled)
+                    {
+                        m_reverbFilter.reverbPreset = m_exteriorAudioRevertPreset;
+                    }
+                    else
+                    {
+                        m_reverbFilter.reverbPreset = m_interiorAudioRevertPreset;
+                    }
+                }
             }
         }
+        /// <summary>
+        /// Sets the particle vfx state, this will stop the particle system and disable the vfx
+        /// </summary>
+        /// <param name="particleSystem"></param>
+        /// <param name="state"></param>
+        /// <param name="rainMeshRenderer"></param>
+        private void SetParticleVFXState(ParticleSystem particleSystem, bool state, MeshRenderer rainMeshRenderer = null)
+        {
+            if (particleSystem == null)
+            {
+                return;
+            }
 
+            if (state)
+            {
+                particleSystem.gameObject.SetActive(true);
+                particleSystem.Play();
+                if (rainMeshRenderer != null)
+                {
+                    rainMeshRenderer.enabled = true;
+                }
+            }
+            else
+            {
+                particleSystem.gameObject.SetActive(false);
+                particleSystem.Stop();
+                if (rainMeshRenderer != null)
+                {
+                    rainMeshRenderer.enabled = false;
+                }
+            }
+        }
+        /// <summary>
+        /// Sets the particle collision based on the state
+        /// Also disables the rain mesh renderer
+        /// </summary>
+        /// <param name="particleSystem"></param>
+        /// <param name="state"></param>
+        /// <param name="rainMeshRenderer"></param>
+        private void SetParticleCollisionState(ParticleSystem particleSystem, bool state, MeshRenderer rainMeshRenderer = null)
+        {
+            if (particleSystem == null)
+            {
+                return;
+            }
+
+            ParticleSystem.CollisionModule collision = particleSystem.collision;
+            if (state)
+            {
+                collision.enabled = false;
+                collision.type = ParticleSystemCollisionType.World;
+                collision.quality = m_colliderQuality;
+                collision.collidesWith = m_collideLayers;
+                if (rainMeshRenderer != null)
+                {
+                    rainMeshRenderer.enabled = true;
+                }
+            }
+            else
+            {
+                collision.enabled = true;
+                collision.type = ParticleSystemCollisionType.World;
+                if (rainMeshRenderer != null)
+                {
+                    rainMeshRenderer.enabled = false;
+                }
+            }
+        }
         /// <summary>
         /// Updates the collider settings
         /// </summary>
@@ -189,7 +382,6 @@ namespace Gaia
                     break;
             }
         }
-
         /// <summary>
         /// Adds and configures the box collider
         /// </summary>
@@ -216,8 +408,9 @@ namespace Gaia
                     DestroyImmediate(sphereCollider);
                 }
             }
-        }
 
+            m_triggerBounds = new Bounds(transform.position, TriggerSize);
+        }
         /// <summary>
         /// Adds and configures the spherical collider
         /// </summary>
@@ -244,70 +437,11 @@ namespace Gaia
                     DestroyImmediate(boxCollider);
                 }
             }
-        }
 
-        /// <summary>
-        /// Used to update the particles collision conditions
-        /// </summary>
-        /// <param name="enabled"></param>
-        private void UpdateParticleColliders(bool enabled)
-        {
-            if (m_enableWeatherParticleColliders)
-            {
-                if (m_rainParticles == null)
-                {
-                    m_rainParticles = GameObject.Find("Gaia Rain Particles");
-                }
-
-                if (m_snowParticles == null)
-                {
-                    m_snowParticles = GameObject.Find("Gaia Snow Particles");
-                }
-
-                if (m_rainParticles != null)
-                {
-                    ParticleSystem rainSystem = m_rainParticles.GetComponent<ParticleSystem>();
-                    if (rainSystem != null)
-                    {
-                        ParticleSystem.CollisionModule collision = rainSystem.collision;
-                        if (enabled)
-                        {
-                            collision.enabled = true;
-                            collision.type = ParticleSystemCollisionType.World;
-                            collision.quality = m_colliderQuality;
-                            collision.collidesWith = m_collideLayers;
-                        }
-                        else
-                        {
-                            collision.enabled = false;
-                        }
-                    }
-                }
-
-                if (m_snowParticles != null)
-                {
-                    ParticleSystem rainSystem = m_snowParticles.GetComponent<ParticleSystem>();
-                    if (rainSystem != null)
-                    {
-                        ParticleSystem.CollisionModule collision = rainSystem.collision;
-                        if (enabled)
-                        {
-                            collision.enabled = true;
-                            collision.type = ParticleSystemCollisionType.World;
-                            collision.quality = m_colliderQuality;
-                            collision.collidesWith = m_collideLayers;
-                        }
-                        else
-                        {
-                            collision.enabled = false;
-                        }
-                    }
-                }
-            }
+            m_triggerBounds = new Bounds(transform.position, new Vector3(TriggerRadius, TriggerRadius, TriggerRadius));
         }
 
         #endregion
-
         #region Public Static Functions
 
 #if UNITY_EDITOR
@@ -317,11 +451,16 @@ namespace Gaia
         [MenuItem(m_createVolumeMenuItem)]
         public static void CreateInteriorWeatherControllerVolume()
         {
-            GameObject newVolumeObject = new GameObject("New Gaia Interior Weather Volume");
-            newVolumeObject.transform.position = SceneView.lastActiveSceneView.camera.transform.position;
+            GameObject newVolumeObject = new GameObject("New Gaia Interior Weather Volume")
+            {
+                transform =
+                {
+                    position = SceneView.lastActiveSceneView.camera.transform.position
+                }
+            };
 
             InteriorWeatherController interiorController = newVolumeObject.AddComponent<InteriorWeatherController>();
-            interiorController.SetupReverbFilter();
+            interiorController.Setup();
 
             BoxCollider boxCollider = newVolumeObject.AddComponent<BoxCollider>();
             boxCollider.size = new Vector3(30f, 30f, 30f);

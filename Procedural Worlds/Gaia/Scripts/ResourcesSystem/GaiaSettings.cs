@@ -44,6 +44,7 @@ namespace Gaia
         public bool m_unloadTerrainScenes = false;
         [Tooltip("If scenes should be unloaded after creation per default.")]
         public bool m_floatingPointFix = false;
+
         public GaiaConstants.EnvironmentSizePreset m_targeSizePreset = GaiaConstants.EnvironmentSizePreset.Large;
         [Tooltip("The default world creation workflow - either manually with a stamper, or semi-automatic with the world designer.")]
         public GaiaConstants.TerrainCreationWorkflow m_creationWorkflow =  TerrainCreationWorkflow.WorldDesigner;
@@ -84,7 +85,7 @@ namespace Gaia
         [Tooltip("Enables the loading screen system for the current scene. ")]
         public bool m_enableLoadingScreen = true;
         [Tooltip("Do a quick bake to gather the skybox color for better ambient lighting in the scene. ")]
-        public bool m_quickBakeLighting;
+        public bool m_quickBakeLighting = false;
         [Tooltip("The selected Post FX to set up from the Gaia Manager Standard Tab")]
         public GaiaConstants.PostFX m_currentPostFX;
         [Tooltip("The selected Water to set up from the Gaia Manager Standard Tab")]
@@ -278,6 +279,7 @@ namespace Gaia
         public Texture2D m_IconDuplicate;
         public Texture2D m_IconPaste;
         public Texture2D m_IconRemove;
+        public Texture2D m_IconSettings;
         public Texture2D m_IconVisible;
         public Texture2D m_IconVisibleDisabled;
 
@@ -289,6 +291,7 @@ namespace Gaia
         public Texture2D m_IconProDuplicate;
         public Texture2D m_IconProPaste;
         public Texture2D m_IconProRemove;
+        public Texture2D m_IconProSettings;
         public Texture2D m_IconProVisible;
         public Texture2D m_IconProVisibleDisabled;
 
@@ -296,6 +299,12 @@ namespace Gaia
         public int m_biomePresetSelection = int.MinValue;
         [HideInInspector]
         public List<BiomeSpawnerListEntry> m_BiomeSpawnersToCreate = new List<BiomeSpawnerListEntry>();
+
+        //Shader Reimport
+        [HideInInspector]
+        public bool m_forceShaderReimport;
+        [HideInInspector]
+        public bool m_shaderReimportRestartRequired;
 
         public Color GetActionButtonColor()
         {

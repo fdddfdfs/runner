@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2213966688292130941}
   - component: {fileID: 2341780307481401377}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fly
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -60,7 +60,7 @@ GameObject:
   - component: {fileID: 3836325116025800895}
   - component: {fileID: 2543369919351057407}
   - component: {fileID: 7374868394134155488}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: main
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,8 +110,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 3758952881610933197, guid: ae2f9321729a55a42b9999f79f2c3d71, type: 3}
-  - {fileID: 4362962105363994262, guid: ae2f9321729a55a42b9999f79f2c3d71, type: 3}
+  - {fileID: 2100000, guid: df164391d4549ac4684d3d7b2ec58a4f, type: 2}
+  - {fileID: 2100000, guid: 6f2ded987e890fd48abd498ccee0f93d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -144,7 +144,7 @@ GameObject:
   - component: {fileID: 4038063007165017799}
   - component: {fileID: 734206438209112388}
   - component: {fileID: 6446719069017388723}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: blades
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -194,7 +194,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 7195347862740567249, guid: ae2f9321729a55a42b9999f79f2c3d71, type: 3}
+  - {fileID: 2100000, guid: e88dbdb9230f0364eb65862e477de570, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -227,7 +227,7 @@ GameObject:
   - component: {fileID: 6654313402257605751}
   - component: {fileID: 5753417230562956412}
   - component: {fileID: 833176962238151533}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: steering_wheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -277,7 +277,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 7195347862740567249, guid: ae2f9321729a55a42b9999f79f2c3d71, type: 3}
+  - {fileID: 2100000, guid: e88dbdb9230f0364eb65862e477de570, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -310,7 +310,7 @@ GameObject:
   - component: {fileID: 7387430438115372644}
   - component: {fileID: 5832850804708298028}
   - component: {fileID: 4420707493341715297}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: glass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -360,7 +360,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6271897200390792742, guid: ae2f9321729a55a42b9999f79f2c3d71, type: 3}
+  - {fileID: 2100000, guid: 9dd9f377b4e478f45a494ea4bfba6e31, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

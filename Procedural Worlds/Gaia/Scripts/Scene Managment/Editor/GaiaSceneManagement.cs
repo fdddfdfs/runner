@@ -139,9 +139,10 @@ namespace Gaia
                                 if (GaiaGlobal.Instance.SceneProfile.m_lightSystemMode !=
                                     GaiaConstants.GlobalSystemMode.ThirdParty)
                                 {
-                                    GaiaLighting.GetProfile(GaiaGlobal.Instance.SceneProfile,
-                                        settings.m_pipelineProfile,
-                                        settings.m_pipelineProfile.m_activePipelineInstalled);
+                                    GaiaLighting.GetProfile(GaiaGlobal.Instance.SceneProfile, 
+                                        settings.m_pipelineProfile, 
+                                        settings.m_pipelineProfile.m_activePipelineInstalled,
+                                        true);
                                     GaiaGlobal.Instance.SceneProfile.DefaultLightingSet = true;
                                 }
 
@@ -205,7 +206,9 @@ namespace Gaia
                             {
                                 SetSceneProfile(newSceneProfile);
                                 LoadGlobalSettings(GaiaGlobal.Instance.SceneProfile);
-                                GaiaLighting.GetProfile(GaiaGlobal.Instance.SceneProfile, settings.m_pipelineProfile, settings.m_pipelineProfile.m_activePipelineInstalled);
+                                GaiaLighting.GetProfile(GaiaGlobal.Instance.SceneProfile, 
+                                    settings.m_pipelineProfile, 
+                                    settings.m_pipelineProfile.m_activePipelineInstalled, true);
                                 GaiaGlobal.Instance.SceneProfile.DefaultLightingSet = true;
 
                                 Debug.Log("File loaded sucessfully");
@@ -507,12 +510,6 @@ namespace Gaia
                 return null;
             }
 
-            //Only do this if we have 1 terrain
-            //if (DisplayErrorIfNotMinimumTerrainCount(1))
-            //{
-            //    return null;
-            //}
-
             GaiaSceneInfo sceneinfo = GaiaSceneInfo.GetSceneInfo();
             GameObject playerObj = null;
             string playerPrefabName = gaiaSettings.m_currentPlayerPrefabName;
@@ -538,16 +535,16 @@ namespace Gaia
             {
                 if (spawnAtLocation)
                 {
-                    location = RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera);
+                    location = RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera, gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.None);
                 }
                 else
                 {
-                    RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera);
+                    RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera, gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.None);
                 }
             }
             else
             {
-                RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera);
+                RemoveGaiaControllers(playerPrefabName, spawnAtLocation, sceneinfo, customPlayerCamera, gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.None);
             }
 
             bool dynamicLoadedTerrains = GaiaUtils.HasDynamicLoadedTerrains();
@@ -558,7 +555,11 @@ namespace Gaia
                     if (customPlayerObject != null)
                     {
                         GameObject customPlayer = GameObject.Instantiate(customPlayerObject);
-                        SetupPlayer(customPlayer, dynamicLoadedTerrains, gaiaSettings);
+                        SetupPlayer(customPlayer, dynamicLoadedTerrains, gaiaSettings, false);
+                        if (GaiaUtils.CheckIfSceneProfileExists(out SceneProfile sceneProfile))
+                        {
+                            sceneProfile.m_customPlayer = customPlayer;
+                        }
                     }
 
                     if (customPlayerCamera != null)
@@ -568,13 +569,22 @@ namespace Gaia
                         if (cameraComponent != null)
                         {
                             SetupCamera(cameraComponent);
+                            if (GaiaUtils.CheckIfSceneProfileExists(out SceneProfile sceneProfile))
+                            {
+                                sceneProfile.m_customCamera = cameraComponent;
+                            }
                         }
                     }
                 }
                 else
                 {
-                    SetupPlayer(customPlayerObject, dynamicLoadedTerrains, gaiaSettings);
+                    SetupPlayer(customPlayerObject, dynamicLoadedTerrains, gaiaSettings, false);
                     SetupCamera(customPlayerCamera);
+                    if (GaiaUtils.CheckIfSceneProfileExists(out SceneProfile sceneProfile))
+                    {
+                        sceneProfile.m_customPlayer = customPlayerObject;
+                        sceneProfile.m_customCamera = customPlayerCamera;
+                    }
                 }
             }
             else
@@ -594,7 +604,7 @@ namespace Gaia
                     GaiaScenePlayer scenePlayer = GaiaScenePlayer.Instance;
                     if (scenePlayer != null)
                     {
-                        if (scenePlayer.m_gaiaUI == null && useGaiaUIAndPhotoMode && gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.XRController)
+                        if (scenePlayer.m_gaiaUI == null && useGaiaUIAndPhotoMode && gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.XRController && gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.None && gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.Custom)
                         {
                             flyCamControllerUI = PrefabUtility.InstantiatePrefab(gaiaSettings.m_flyCamUI) as GameObject;
                             flyCamControllerUI.name = "Gaia UI";
@@ -605,6 +615,7 @@ namespace Gaia
                             }
 
                             scenePlayer.m_gaiaUI = flyCamControllerUI;
+                            GaiaScenePlayer.AddControllerObject(flyCamControllerUI);
                             if (!Application.isPlaying)
                             {
                                 flyCamControllerUI.SetActive(false);
@@ -619,16 +630,16 @@ namespace Gaia
                 {
                     //Create the player
                     case GaiaConstants.EnvironmentControllerType.FlyingCamera:
-                        playerObj = SetupFlyCam(playerObj, flyCamControllerUI, cameraDistance, gaiaSettings, location, sceneinfo);
+                        playerObj = SetupFlyCam(playerObj, flyCamControllerUI, cameraDistance, gaiaSettings, location, sceneinfo, true);
                         break;
                     case GaiaConstants.EnvironmentControllerType.FirstPerson:
-                        playerObj = SetupFPSController(playerPrefabName, playerObj, location, cameraDistance, gaiaSettings);
+                        playerObj = SetupFPSController(playerPrefabName, playerObj, location, cameraDistance, gaiaSettings, true);
                         break;
                     case GaiaConstants.EnvironmentControllerType.ThirdPerson:
-                        playerObj = SetupThirdPersonController(playerPrefabName, playerObj, mainCam, location, cameraDistance, gaiaSettings, dynamicLoadedTerrains);
+                        playerObj = SetupThirdPersonController(playerPrefabName, playerObj, mainCam, location, cameraDistance, gaiaSettings, dynamicLoadedTerrains, true);
                         break;
                     case GaiaConstants.EnvironmentControllerType.Car:
-                        playerObj = SetupCarController(playerPrefabName, playerObj, mainCam, location, cameraDistance, gaiaSettings, dynamicLoadedTerrains);
+                        playerObj = SetupCarController(playerPrefabName, playerObj, mainCam, location, cameraDistance, gaiaSettings, dynamicLoadedTerrains, true);
                         break;
 #if GAIA_XR
                     case GaiaConstants.EnvironmentControllerType.XRController:
@@ -638,7 +649,7 @@ namespace Gaia
 #endif
                 }
 
-                if (dynamicLoadedTerrains)
+                if (dynamicLoadedTerrains && playerObj !=null)
                 {
 #if GAIA_PRO_PRESENT
                     TerrainLoader loader = playerObj.GetComponent<TerrainLoader>();
@@ -689,7 +700,7 @@ namespace Gaia
                 //Remove simple layer culling script, if any. This is replaced by the player script now
                 SimpleCameraLayerCulling[] allScripts = Resources.FindObjectsOfTypeAll<SimpleCameraLayerCulling>();
 
-                for (int i = allScripts.Count()-1; i >= 0; i--)
+                for (int i = allScripts.Length -1; i >= 0; i--)
                 {
                     GameObject.DestroyImmediate(allScripts[i]);
                 }
@@ -868,46 +879,8 @@ namespace Gaia
         /// <returns></returns>
         private static Vector3 RemoveGaiaControllers(string playerPrefabName, bool spawnAtLocation, GaiaSceneInfo sceneinfo, Camera customPlayerCamera, bool removeCamera = true)
         {
-            Vector3 location = Vector3.zero;
+            Vector3 location = GetLocation(playerPrefabName, spawnAtLocation, sceneinfo, GaiaScenePlayer.RemoveAllControllers(true));
 
-            firstPersonController = GameObject.Find("FPSController");
-            thirdPersonController = GameObject.Find("ThirdPersonController");
-            flyCamController = GameObject.Find("FlyCam");
-            carController = GameObject.Find(GaiaConstants.m_carPlayerPrefabName);
-#if GAIA_XR
-            GameObject XRController = GameObject.Find("XRController");
-#endif
-            if (firstPersonController != null)
-            {
-                // CopyPlayerComponents(firstPersonController);
-                location = GetLocation(playerPrefabName, spawnAtLocation, sceneinfo, firstPersonController);
-                GameObject.DestroyImmediate(firstPersonController);
-            }
-            if (thirdPersonController != null)
-            {
-                //CopyPlayerComponents(thirdPersonController);
-                location = GetLocation(playerPrefabName, spawnAtLocation, sceneinfo, thirdPersonController);
-                GameObject.DestroyImmediate(thirdPersonController);
-            }
-            if (carController != null)
-            {
-                location = GetLocation(playerPrefabName, spawnAtLocation, sceneinfo, flyCamController);
-                GameObject.DestroyImmediate(carController);
-            }
-            if (flyCamController != null)
-            {
-                Camera mainCamera = flyCamController.GetComponent<Camera>();
-                //CopyCameraComponents(mainCamera);
-                location = GetLocation(playerPrefabName, spawnAtLocation, sceneinfo, flyCamController);
-                GameObject.DestroyImmediate(flyCamController);
-            }
-#if GAIA_XR
-            if (XRController != null)
-            {
-                CopyPlayerComponents(XRController);
-                GameObject.DestroyImmediate(XRController);
-            }
-#endif
             if (removeCamera)
             {
                 Camera[] cameras = GameObject.FindObjectsOfType<Camera>();
@@ -923,7 +896,19 @@ namespace Gaia
                                 location.y += 1.5f;
                             }
 
-                            GameObject.DestroyImmediate(camera.gameObject);
+                            if (camera.GetComponent<CustomGaiaController>())
+                            {
+                                GameObject.DestroyImmediate(camera.gameObject);
+                            }
+                            else
+                            {
+                                if (camera.gameObject.name == "Main Camera")
+                                {
+                                    camera.gameObject.SetActive(false);
+                                    Debug.Log(camera.name + " was disabled as it seemed to be Unity's default camera. Please enable it again if required, but please note it might conflict with the Gaia Player you just added.");
+                                }
+                                
+                            }
                         }
                         else
                         {
@@ -937,7 +922,22 @@ namespace Gaia
                             location = camera.transform.position;
                             location.y += 1.5f;
                         }
-                        GameObject.DestroyImmediate(camera.gameObject);
+
+                        if (camera.GetComponent<CustomGaiaController>())
+                        {
+                            GameObject.DestroyImmediate(camera.gameObject);
+                        }
+                        else
+                        {
+                            if (camera.gameObject.name == "Main Camera")
+                            {
+                                camera.gameObject.SetActive(false);
+                                Debug.Log(camera.name + " was disabled as it seemed to be Unity's default camera. Please enable it again if required, but please note it might conflict with the Gaia Player you just added.");
+                            }
+
+                        }
+
+
                     }
                 }
 
@@ -1105,15 +1105,21 @@ namespace Gaia
 
             return true;
         }
-        private static GameObject SetupFlyCam(GameObject playerObj, GameObject flyCamControllerUI, float cameraDistance, GaiaSettings gaiaSettings, Vector3 location, GaiaSceneInfo sceneInfo)
+        private static GameObject SetupFlyCam(GameObject playerObj, GameObject flyCamControllerUI, float cameraDistance, GaiaSettings gaiaSettings, Vector3 location, GaiaSceneInfo sceneInfo, bool parentPlayer)
         {
-            playerObj = new GameObject { name = GaiaConstants.playerFlyCamName, tag = "MainCamera" };
+            playerObj = new GameObject
+            {
+                name = GaiaConstants.playerFlyCamName, 
+                tag = "MainCamera"
+            };
             playerObj.AddComponent<FlareLayer>();
 #if !UNITY_2017_1_OR_NEWER
             playerObj.AddComponent<GUILayer>();
 #endif
             playerObj.AddComponent<AudioListener>();
             playerObj.AddComponent<FreeCamera>();
+            CustomGaiaController customController = playerObj.AddComponent<CustomGaiaController>();
+            customController.m_isPlayer = true;
 
             Camera cameraComponent = playerObj.GetComponent<Camera>();
             cameraComponent.farClipPlane = cameraDistance;
@@ -1149,13 +1155,15 @@ namespace Gaia
 #endif
             playerObj.transform.position = location;
 
-            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings);
+            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings, parentPlayer);
             GaiaGlobal.FinalizeCameraObjectRuntime(cameraComponent, true);
             //PasteCameraComponents(cameraComponent);
 
+            GaiaScenePlayer.AddControllerObject(playerObj);
+
             return playerObj;
         }
-        private static GameObject SetupFPSController(string playerPrefabName, GameObject playerObj, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings)
+        private static GameObject SetupFPSController(string playerPrefabName, GameObject playerObj, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool parentPlayer)
         {
             GameObject playerPrefab = PWCommon5.AssetUtils.GetAssetPrefab(playerPrefabName);
             if (playerPrefab != null)
@@ -1172,6 +1180,13 @@ namespace Gaia
                 Camera cameraComponent = playerObj.GetComponentInChildren<Camera>();
                 if (cameraComponent != null)
                 {
+
+                    CustomGaiaController customGaiaController = cameraComponent.transform.GetComponent<CustomGaiaController>();
+                    if (customGaiaController == null)
+                    {
+                        cameraComponent.gameObject.AddComponent<CustomGaiaController>();
+                    }
+
                     cameraComponent.farClipPlane = cameraDistance;
                     cameraComponent.allowHDR = true;
 
@@ -1188,8 +1203,9 @@ namespace Gaia
                     }
                 }
 
-                SetupPlayer(playerObj, GaiaUtils.HasDynamicLoadedTerrains(), gaiaSettings);
+                SetupPlayer(playerObj, GaiaUtils.HasDynamicLoadedTerrains(), gaiaSettings, parentPlayer);
                 GaiaGlobal.FinalizeCameraObjectRuntime(cameraComponent, true);
+                GaiaScenePlayer.AddControllerObject(playerObj);
                 //PastePlayerComponents(playerObj);
                 //PasteCameraComponents(cameraComponent);
 
@@ -1198,7 +1214,7 @@ namespace Gaia
 
             return null;
         }
-        private static GameObject SetupThirdPersonController(string playerPrefabName, GameObject playerObj, GameObject mainCam, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool dynamicLoadedTerrains)
+        private static GameObject SetupThirdPersonController(string playerPrefabName, GameObject playerObj, GameObject mainCam, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool dynamicLoadedTerrains, bool parentPlayer)
         {
             GameObject playerPrefab = PWCommon5.AssetUtils.GetAssetPrefab(playerPrefabName);
             if (playerPrefab != null)
@@ -1207,13 +1223,21 @@ namespace Gaia
                 playerObj.name = GaiaConstants.playerThirdPersonName;
                 playerObj.tag = "Player";
                 playerObj.transform.position = location;
+                GaiaScenePlayer.AddControllerObject(playerObj);
             }
 
-            mainCam = new GameObject("Main Camera");
-            mainCam.transform.position = new Vector3(location.x - 5f, location.y + 5f, location.z - 5f);
+            mainCam = new GameObject("Main Camera")
+            {
+                transform =
+                {
+                    position = new Vector3(location.x - 5f, location.y + 5f, location.z - 5f)
+                }
+            };
             Camera cameraComponent = mainCam.AddComponent<Camera>();
+            mainCam.AddComponent<CustomGaiaController>();
             cameraComponent.farClipPlane = cameraDistance;
             cameraComponent.allowHDR = true;
+            GaiaScenePlayer.AddControllerObject(mainCam);
 
             var tier1 = EditorGraphicsSettings.GetTierSettings(EditorUserBuildSettings.selectedBuildTargetGroup, GraphicsTier.Tier1);
             var tier2 = EditorGraphicsSettings.GetTierSettings(EditorUserBuildSettings.selectedBuildTargetGroup, GraphicsTier.Tier2);
@@ -1277,14 +1301,14 @@ namespace Gaia
             cameraController.minDistance = 2.5f;
             cameraController.Apply();
 
-            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings);
+            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings, parentPlayer);
             GaiaGlobal.FinalizeCameraObjectRuntime(cameraComponent, true);
             //PastePlayerComponents(playerObj);
             //PasteCameraComponents(cameraComponent);
 
             return playerObj;
         }
-        private static GameObject SetupCarController(string playerPrefabName, GameObject playerObj, GameObject mainCam, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool dynamicLoadedTerrains)
+        private static GameObject SetupCarController(string playerPrefabName, GameObject playerObj, GameObject mainCam, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool dynamicLoadedTerrains, bool parentPlayer)
         {
             GameObject playerPrefab = PWCommon5.AssetUtils.GetAssetPrefab(playerPrefabName);
             if (playerPrefab != null)
@@ -1295,11 +1319,18 @@ namespace Gaia
                 playerObj.transform.eulerAngles = TerrainHelper.GetRotationFromTerrainNormal(TerrainHelper.GetTerrain(location), playerObj);
                 location.y += 0.5f;
                 playerObj.transform.position = location;
+                GaiaScenePlayer.AddControllerObject(playerObj);
             }
 
-            mainCam = new GameObject("Main Camera");
-            mainCam.transform.position = new Vector3(location.x - 5f, location.y + 5f, location.z - 5f);
+            mainCam = new GameObject("Main Camera")
+            {
+                transform =
+                {
+                    position = new Vector3(location.x - 5f, location.y + 5f, location.z - 5f)
+                }
+            };
             Camera cameraComponent = mainCam.AddComponent<Camera>();
+            mainCam.AddComponent<CustomGaiaController>();
             cameraComponent.farClipPlane = cameraDistance;
             cameraComponent.allowHDR = true;
 
@@ -1369,14 +1400,13 @@ namespace Gaia
             }
 #endif
 
-            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings);
+            GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings, parentPlayer);
             GaiaGlobal.FinalizeCameraObjectRuntime(cameraComponent, true);
             //PastePlayerComponents(playerObj);
             //PasteCameraComponents(cameraComponent);
 
             return playerObj;
         }
-
 #if GAIA_XR
         private static GameObject SetupXRController(string playerPrefabName, GameObject playerObj, GameObject mainCam, Vector3 location, float cameraDistance, GaiaSettings gaiaSettings, bool dynamicLoadedTerrains)
         {
@@ -1387,6 +1417,9 @@ namespace Gaia
                 playerObj.name = GaiaConstants.playerXRName;
                 playerObj.tag = "Player";
                 playerObj.transform.position = location;
+                CustomGaiaController customController = playerObj.AddComponent<CustomGaiaController>();
+                customController.m_isPlayer = true;
+                GaiaScenePlayer.AddControllerObject(playerObj);
                 if (playerObj.GetComponent<AudioSource>() != null)
                 {
                     AudioSource theAudioSource = playerObj.GetComponent<AudioSource>();
@@ -1395,6 +1428,11 @@ namespace Gaia
                 Camera cameraComponent = playerObj.GetComponentInChildren<Camera>();
                 if (cameraComponent != null)
                 {
+                    CustomGaiaController customGaiaController = cameraComponent.transform.GetComponent<CustomGaiaController>();
+                    if (customGaiaController == null)
+                    {
+                        cameraComponent.gameObject.AddComponent<CustomGaiaController>();
+                    }
                     cameraComponent.farClipPlane = cameraDistance;
                     cameraComponent.allowHDR = true;
 
@@ -1418,7 +1456,7 @@ namespace Gaia
                 }
 #endif
 
-                GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings);
+                GaiaGlobal.FinalizePlayerObjectEditor(playerObj, gaiaSettings, true);
                 GaiaGlobal.FinalizeCameraObjectRuntime(cameraComponent, true);
                 //Disable Water Reflections in current profile & on exisitng water surfaces
                 //gaiaSettings.m_gaiaWaterProfile.m_enableReflections = false;
@@ -1544,7 +1582,7 @@ namespace Gaia
 
             return location;
         }
-        private static void SetupPlayer(GameObject playerObject, bool dynamicLoadedTerrains, GaiaSettings gaiaSettings)
+        private static void SetupPlayer(GameObject playerObject, bool dynamicLoadedTerrains, GaiaSettings gaiaSettings, bool parentPlayer = true)
         {
             if (playerObject == null)
             {
@@ -1573,7 +1611,7 @@ namespace Gaia
 #endif
             }
 
-            GaiaGlobal.FinalizePlayerObjectEditor(playerObject, gaiaSettings);
+            GaiaGlobal.FinalizePlayerObjectEditor(playerObject, gaiaSettings, parentPlayer);
         }
         private static void SetupCamera(Camera cameraObject)
         {

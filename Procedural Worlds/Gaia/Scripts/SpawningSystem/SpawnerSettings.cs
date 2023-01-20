@@ -287,55 +287,57 @@ namespace Gaia
                 }
             }
 
-            //We need to check the texture prototypes in this spawner against the already created terrain layers for this session
-            //- otherwise the spawner will not know about those in subsequent spawns and might create unneccessary additional layers
-
-            //Get a list of all exisiting Terrain Layers for this session
-            string path = GaiaDirectories.GetTerrainLayerPath();
-#if UNITY_EDITOR
-            AssetDatabase.ImportAsset(path);
-            if (Directory.Exists(path))
+            if (spawner.m_settings.m_spawnerRules.Where(x => x.m_resourceType == SpawnerResourceType.TerrainTexture).Count() > 0)
             {
-                string[] allLayerGuids = AssetDatabase.FindAssets("t:TerrainLayer", new string[1] { path });
-                List<TerrainLayer> existingTerrainLayers = new List<TerrainLayer>();
-                foreach (string guid in allLayerGuids)
-                {
-                    try
-                    {
-                        TerrainLayer layer = (TerrainLayer)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(TerrainLayer));
-                        if (layer != null)
-                        {
-                            existingTerrainLayers.Add(layer);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.Message == "")
-                        { }
-                    }
 
-                }
-                foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules)
+                //We need to check the texture prototypes in this spawner against the already created terrain layers for this session
+                //- otherwise the spawner will not know about those in subsequent spawns and might create unneccessary additional layers
+
+                //Get a list of all exisiting Terrain Layers for this session
+                string path = GaiaDirectories.GetTerrainLayerPath();
+#if UNITY_EDITOR
+                //AssetDatabase.ImportAsset(path);
+                if (Directory.Exists(path))
                 {
-                    if (sr.m_resourceType == SpawnerResourceType.TerrainTexture)
+                    string[] allLayerGuids = AssetDatabase.FindAssets("t:TerrainLayer", new string[1] { path });
+                    List<TerrainLayer> existingTerrainLayers = new List<TerrainLayer>();
+                    foreach (string guid in allLayerGuids)
                     {
-                        ResourceProtoTexture protoTexture = spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx];
-                        //if a terrainLayer with these properties exist we can assume it fits to the given spawn rule
-                        TerrainLayer terrainLayer = existingTerrainLayers.FirstOrDefault(x => x.diffuseTexture == protoTexture.m_texture &&
-                                                            x.normalMapTexture == protoTexture.m_normal &&
-                                                            x.tileOffset == new Vector2(protoTexture.m_offsetX, protoTexture.m_offsetY) &&
-                                                            x.tileSize == new Vector2(protoTexture.m_sizeX, protoTexture.m_sizeY)
-                                                            );
-                        if (terrainLayer != null)
+                        try
                         {
-                            protoTexture.m_LayerGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(terrainLayer));
+                            TerrainLayer layer = (TerrainLayer)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(TerrainLayer));
+                            if (layer != null)
+                            {
+                                existingTerrainLayers.Add(layer);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex.Message == "")
+                            { }
+                        }
+
+                    }
+                    foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules)
+                    {
+                        if (sr.m_resourceType == SpawnerResourceType.TerrainTexture)
+                        {
+                            ResourceProtoTexture protoTexture = spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx];
+                            //if a terrainLayer with these properties exist we can assume it fits to the given spawn rule
+                            TerrainLayer terrainLayer = existingTerrainLayers.FirstOrDefault(x => x.diffuseTexture == protoTexture.m_texture &&
+                                                                x.normalMapTexture == protoTexture.m_normal &&
+                                                                x.tileOffset == new Vector2(protoTexture.m_offsetX, protoTexture.m_offsetY) &&
+                                                                x.tileSize == new Vector2(protoTexture.m_sizeX, protoTexture.m_sizeY)
+                                                                );
+                            if (terrainLayer != null)
+                            {
+                                protoTexture.m_LayerGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(terrainLayer));
+                            }
                         }
                     }
                 }
-            }
 #endif
-
-
+            }
             foreach (SpawnRule rule in spawner.m_settings.m_spawnerRules)
             {
                 rule.m_spawnedInstances = 0;

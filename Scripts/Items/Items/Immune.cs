@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public sealed class Immune : ActivatableItem<Immune>
+public sealed class Immune : ActivatableItem
 {
     private static ThirdPersonController _player;
     

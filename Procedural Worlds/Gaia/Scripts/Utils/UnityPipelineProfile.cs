@@ -14,6 +14,7 @@ namespace Gaia.Pipeline
     {
         public GaiaPackageVersion m_unityVersion;
         public string m_pipelineAssetName;
+        public string m_globalSettingsAssetName;
         public string m_verifiedSRPVersion = "5.13.0";
     }
 

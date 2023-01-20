@@ -26,8 +26,12 @@ using UnityEngine.Rendering;
 using UnityStandardAssets.Characters.FirstPerson;
 using UnityStandardAssets.Characters.ThirdPerson;
 using UnityStandardAssets.Vehicles.Car;
+using Gaia.ShaderUtilities;
+using Gaia.Pipeline;
 #if UNITY_POST_PROCESSING_STACK_V2
 using UnityEngine.Rendering.PostProcessing;
+using System.Security.Cryptography;
+using System.Text;
 #endif
 #if UPPipeline
 using UnityEngine.Rendering.Universal;
@@ -239,6 +243,77 @@ namespace Gaia
         }
 
 
+        /// <summary>
+        /// Helper to load in all collider scenes, call a function on the contained game object, and then unload them again. Helpful to process changes across the entire game world for the collider scenes.
+        /// </summary>
+        /// <param name="colliderObjectAction"></param>
+        /// <param name="dirtyScenes"></param>
+        /// <param name="progressBarText"></param>
+        public static void CallFunctionOnDynamicLoadedColliderScenes(Action<GameObject> colliderObjectAction, bool dirtyScenes, string progressBarText = "")
+        {
+#if UNITY_EDITOR
+            if (string.IsNullOrEmpty(progressBarText))
+            {
+                progressBarText = "Processing Terrain... ";
+            }
+
+            bool oldColliderLoadingState = TerrainLoaderManager.ColliderOnlyLoadingActive;
+
+            GaiaSessionManager gsm = GaiaSessionManager.GetSessionManager();
+
+            if (TerrainLoaderManager.TerrainScenes.Count > 0)
+            {
+                try
+                {
+                    //need to enable collider only loading first to make sure the collider scenes are being loaded in for processing
+                    TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = true;
+                    TerrainLoaderManager.Instance.UnloadAllImpostors();
+                    TerrainLoaderManager.Instance.UnloadAll();
+
+                    List<TerrainScene> allTerrainScenes = TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes.FindAll(x => !string.IsNullOrEmpty(x.m_colliderScenePath));
+
+                    int count = 1;
+                    foreach (TerrainScene terrainScene in allTerrainScenes)
+                    {
+                        if (ProgressBar.Show(ProgressBarPriority.MultiTerrainAction, "Processing Collider Scenes", progressBarText, count, allTerrainScenes.Count, true, true))
+                        {
+                            break;
+                        }
+                        if (terrainScene.m_regularLoadState != LoadState.Loaded)
+                        {
+                            terrainScene.AddRegularReference(gsm.gameObject);
+                        }
+                        Scene scene = EditorSceneManager.GetSceneByPath(terrainScene.m_colliderScenePath);
+                        foreach (GameObject go in scene.GetRootGameObjects())
+                        {
+                            //go can be null if just deleted before this call
+                            if (go == null)
+                            {
+                                continue;
+                            }
+                            colliderObjectAction(go);
+                        }
+                        if (dirtyScenes)
+                        {
+                            EditorSceneManager.MarkSceneDirty(scene);
+                        }
+                        terrainScene.RemoveRegularReference(gsm.gameObject, 0, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("Error while processing multiple dynamic loaded Terrains, Exception: " + ex.Message + "  Stack Trace: " + ex.StackTrace);
+                }
+                finally
+                {
+                    TerrainLoaderManager.Instance.TerrainSceneStorage.m_colliderOnlyLoading = oldColliderLoadingState;
+                    ProgressBar.Clear(ProgressBarPriority.MultiTerrainAction);
+                }
+            }
+            TerrainLoaderManager.Instance.RefreshSceneViewLoadingRange();
+#endif
+        }
+
 
 
         /// <summary>
@@ -258,6 +333,26 @@ namespace Gaia
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Finds ALL game objects in the scene by a certain search string.
+        /// </summary>
+        /// <param name="searchFor">The name of the GO to look for</param>
+        /// <param name="fullNameMatch">Whether the name needs to be a full match or if it is sufficient if the name of the GO just contains "searchFor".</param>
+        /// <returns></returns>
+        public static List<GameObject> FindObjectAll(string searchFor, bool fullNameMatch = true)
+        {
+            GameObject[] allGOs = Resources.FindObjectsOfTypeAll<GameObject>();
+            List<GameObject> returnList = new List<GameObject>();
+            foreach (GameObject go in allGOs)
+            {
+                if (go.name == searchFor || (!fullNameMatch && go.name.Contains(searchFor)))
+                {
+                    returnList.Add(go);
+                }
+            }
+            return returnList;
         }
 
         /// <summary>
@@ -566,6 +661,216 @@ namespace Gaia
             return collectedMaterials;
         }
 
+
+        /// <summary>
+        /// Runs through the material library information in the pipeline settings object and migrates materials to the correct target shader in the respective pipeline
+        /// </summary>
+        /// <param name="materialsToProcess">The materials to process - if left empty, a project wide search will be performed for matching source materials that can be migrated.</param>
+        /// <returns></returns>
+        public static bool ProcessMaterialLibrary(List<Material> materialsToProcess = null)
+        {
+            bool updateChanges = false;
+#if UNITY_EDITOR
+            GaiaSettings gaiaSettings = GetGaiaSettings();
+            var materialLibrary = gaiaSettings.m_pipelineProfile.m_ShaderMappingLibrary;
+            var currentRenderer = gaiaSettings.m_currentRenderer;
+
+
+
+            if (materialLibrary == null)
+            {
+                Debug.LogError("Unable to load the Material Library");
+            }
+            else
+            {
+                //Change all materials in the library to the correct shader each
+                try
+                {
+                    int numberOfEntries = materialLibrary.Length;
+                    int currentEntry = 1;
+
+
+                    Shader builtInShader1 = Shader.Find(PWShaderNameUtility.ShaderName[1]);
+                    Shader builtInShader2 = Shader.Find(PWShaderNameUtility.ShaderName[2]);
+
+                    if (builtInShader1 == null || builtInShader2 == null)
+                    {
+                        Debug.LogWarning($"One of the standard built in shaders ({ShaderIDs.PW_General_Forward.ToString()},{ShaderIDs.PW_General_Deferred.ToString()}) for shader mapping could not be found!");
+                    }
+
+                    Shader[] specialBuiltInShaders = new Shader[3] { null, builtInShader1, builtInShader2 };
+
+                    foreach (ShaderMappingEntry entry in materialLibrary)
+                    {
+                        string targetShaderName = entry.m_builtInShaderName;
+                        string searchShaderName1 = "";
+                        string searchShaderName2 = "";
+                        switch (currentRenderer)
+                        {
+                            case GaiaConstants.EnvironmentRenderer.BuiltIn:
+                                targetShaderName = entry.m_builtInShaderName;
+                                searchShaderName1 = entry.m_URPReplacementShaderName;
+                                searchShaderName2 = entry.m_HDRPReplacementShaderName;
+                                break;
+                            case GaiaConstants.EnvironmentRenderer.Universal:
+                                targetShaderName = entry.m_URPReplacementShaderName;
+                                searchShaderName1 = entry.m_builtInShaderName;
+                                searchShaderName2 = entry.m_HDRPReplacementShaderName;
+                                break;
+                            case GaiaConstants.EnvironmentRenderer.HighDefinition:
+                                targetShaderName = entry.m_HDRPReplacementShaderName;
+                                searchShaderName1 = entry.m_builtInShaderName;
+                                searchShaderName2 = entry.m_URPReplacementShaderName;
+                                break;
+                        }
+                        try
+                        {
+                            EditorUtility.DisplayProgressBar("Processing Shader Mapping", "Shader Mapping Entry " + currentEntry.ToString() + " of " + numberOfEntries.ToString(), (float)currentEntry / (float)numberOfEntries);
+                            Shader targetShader = Shader.Find(targetShaderName);
+                            UnityEngine.Object shaderObject = null;
+
+                            if (targetShader == null)
+                            {
+                                Debug.Log($"The target shader with the name {targetShaderName} from the shader mapping entry {entry.m_builtInShaderName} was not found, this shader will be skipped for the installation.");
+                                continue;
+                            }
+                            else
+                            {
+
+                                switch (currentRenderer)
+                                {
+                                    case GaiaConstants.EnvironmentRenderer.BuiltIn:
+                                        shaderObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GaiaUtils.GetAssetPath(targetShaderName + ".shader"));
+                                        break;
+                                    case GaiaConstants.EnvironmentRenderer.Universal:
+                                        shaderObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GaiaUtils.GetAssetPath(targetShaderName + ".shadergraph"));
+                                        break;
+                                    case GaiaConstants.EnvironmentRenderer.HighDefinition:
+                                        shaderObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(GaiaUtils.GetAssetPath(targetShaderName + ".shadergraph"));
+                                        break;
+                                }
+                            }
+
+                            //Get all the materials that currently use the shaders we want to migrate from
+                            Shader searchShader1 = Shader.Find(searchShaderName1);
+                            Shader searchShader2 = Shader.Find(searchShaderName2);
+
+
+
+                            List<Material> affectedMaterials = null;
+
+                            if (materialsToProcess == null)
+                            {
+                                //if no list of affected materials is passed in, we collect all materials in the entire project according to the shaders we want to migrate from
+                                affectedMaterials = GaiaUtils.FindMaterialsByShader(searchShader1).Concat(GaiaUtils.FindMaterialsByShader(searchShader2)).ToList();
+                            }
+                            else
+                            {
+                                //we got a fixed list with materials, filter the list by the shaders we want to migrate from
+                                affectedMaterials = materialsToProcess.Where(x => x.shader.name == searchShaderName1 || x.shader.name == searchShaderName2).ToList();
+                            }
+
+                            foreach (Material material in affectedMaterials)
+                            {
+                                try
+                                {
+                                    if (material != null)
+                                    {
+
+                                        switch (currentRenderer)
+                                        {
+                                            case GaiaConstants.EnvironmentRenderer.BuiltIn:
+                                                bool mappedToSpecialShaders = false;
+                                                if (material.HasProperty("_PW_ShaderID"))
+                                                {
+                                                    float shaderID = material.GetFloat("_PW_ShaderID");
+                                                    if (shaderID >= 1)
+                                                    {
+                                                        material.shader = specialBuiltInShaders[(int)shaderID];
+                                                        EditorUtility.SetDirty(material);
+                                                        updateChanges = true;
+                                                        mappedToSpecialShaders = true;
+                                                    }
+                                                }
+                                                if (!mappedToSpecialShaders)
+                                                {
+                                                    material.shader = targetShader;
+                                                    EditorUtility.SetDirty(material);
+                                                    updateChanges = true;
+                                                }
+                                                break;
+                                            case GaiaConstants.EnvironmentRenderer.Universal:
+                                                material.shader = targetShader;
+                                                EditorUtility.SetDirty(material);
+                                                updateChanges = true;
+                                                break;
+                                            case GaiaConstants.EnvironmentRenderer.HighDefinition:
+                                                bool isSolid = false;
+                                                if (material.HasProperty("_PW_ShaderMode"))
+                                                {
+                                                    if (material.GetFloat("_PW_ShaderMode") == 0)
+                                                    {
+                                                        isSolid = true;
+                                                    }
+                                                }
+                                                material.shader = targetShader;
+                                                if (isSolid)
+                                                {
+                                                    if (material.HasProperty("_AlphaCutoffEnable"))
+                                                    {
+                                                        material.SetFloat("_AlphaCutoffEnable", 0);
+                                                    }
+                                                }
+                                                EditorUtility.SetDirty(material);
+                                                updateChanges = true;
+
+                                                break;
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (entry != null)
+                                    {
+                                        Debug.LogError("Exception while processing the Shader Mapping, Material: '" + material.name + "'. ##Exception: " + ex.Message + " ##Stack Trace: " + ex.StackTrace);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError("Exception while processing the Shader Mapping, material is null! ##Exception: " + ex.Message + " ##Stack Trace: " + ex.StackTrace);
+                                    }
+                                }
+                            }
+
+                            //Reimport the shader to avoid issues with materials not refreshing properly after the shader was switched out
+                            if (shaderObject != null)
+                            {
+                                AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(shaderObject));
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            if (entry != null)
+                            {
+                                Debug.LogError("Exception while processing the Material Library, entry: '" + entry.m_builtInShaderName + "'. ##Exception: " + ex.Message + " ##Stack Trace: " + ex.StackTrace);
+                            }
+                            else
+                            {
+                                Debug.LogError("Exception while processing the Material Library. Entry is null! ##Exception: " + ex.Message + " ##Stack Trace: " + ex.StackTrace);
+                            }
+                        }
+                        currentEntry++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("Exception while processing the Material Library. ##Exception: " + ex.Message + " ##Stack Trace: " + ex.StackTrace);
+                }
+            }
+#endif
+            return updateChanges;
+        }
+
         /// <summary>
         /// Finalizes the scene, removes stamper and spawners from the scene and creates a finalized version
         /// </summary>
@@ -718,6 +1023,50 @@ namespace Gaia
 
             return material;
         }
+
+
+        public static ProceduralWorlds.Addressables1.PWAddressablesConfig GetOrCreateAddressableConfig()
+        {
+#if UNITY_EDITOR
+            ProceduralWorlds.Addressables1.PWAddressablesConfig returnedObject = GetAsset("AddressableConfig.asset", typeof(ProceduralWorlds.Addressables1.PWAddressablesConfig)) as ProceduralWorlds.Addressables1.PWAddressablesConfig;
+            if (returnedObject == null)
+            {
+                returnedObject = ScriptableObject.CreateInstance<ProceduralWorlds.Addressables1.PWAddressablesConfig>();
+                string path = GaiaDirectories.GetUserSettingsDirectory() + "/AddressableConfig.asset";
+                AssetDatabase.CreateAsset(returnedObject, path);
+                AssetDatabase.ImportAsset(path);
+                returnedObject = (ProceduralWorlds.Addressables1.PWAddressablesConfig)AssetDatabase.LoadAssetAtPath(path, typeof(ProceduralWorlds.Addressables1.PWAddressablesConfig));
+                //Reset back to initial state
+                ResetBiomePresets(true);
+            }
+            return returnedObject;
+#else
+            return null;
+#endif
+        }
+
+
+        public static BuildConfig GetOrCreateBuildConfig()
+        {
+#if UNITY_EDITOR
+            BuildConfig returnedObject = GetAsset("BuildConfig.asset", typeof(BuildConfig)) as BuildConfig;
+            if (returnedObject == null)
+            {
+                returnedObject = ScriptableObject.CreateInstance<BuildConfig>();
+                string path = GaiaDirectories.GetUserSettingsDirectory() + "/BuildConfig.asset";
+                AssetDatabase.CreateAsset(returnedObject, path);
+                AssetDatabase.ImportAsset(path);
+                returnedObject = (BuildConfig)AssetDatabase.LoadAssetAtPath(path, typeof(BuildConfig));
+                //Reset back to initial state
+                ResetBiomePresets(true);
+            }
+            return returnedObject;
+#else
+            return null;
+#endif
+        }
+
+
 
         public static UserFiles GetOrCreateUserFiles()
         {
@@ -980,7 +1329,7 @@ namespace Gaia
                 importer.npotScale = TextureImporterNPOTScale.None;
                 TextureImporterPlatformSettings texImpPlatSet = new TextureImporterPlatformSettings();
                 texImpPlatSet.maxTextureSize = 8192;
-                texImpPlatSet.format = TextureImporterFormat.Automatic;
+                texImpPlatSet.format = TextureImporterFormat.R16;
                 texImpPlatSet.textureCompression = TextureImporterCompression.Uncompressed;
                 importer.SetPlatformTextureSettings(texImpPlatSet);
                 AssetDatabase.ImportAsset(textureFileName);
@@ -1611,6 +1960,17 @@ namespace Gaia
         /// <returns></returns>
         public static Camera GetCamera(bool checkTag = false)
         {
+            //look for cameras Gaia set up itself first, those would be the relevant ones before all others
+            foreach (Camera gaiaCam in Resources.FindObjectsOfTypeAll(typeof(Camera)))
+            {
+                CustomGaiaController customCont= gaiaCam.GetComponent<CustomGaiaController>();
+                if (customCont != null)
+                {
+                    //Found a camera set up by Gaia
+                    return gaiaCam;            
+                }
+            }
+
             Camera camera = Camera.main;
             if (camera != null)
             {
@@ -1675,12 +2035,32 @@ namespace Gaia
 
             return true;
         }
+        /// <summary>
+        /// Checks to see if the scene profile is present. This check can also be used to see if gaia global exists too
+        /// </summary>
+        /// <returns></returns>
+        public static bool CheckIfSceneProfileExists(out SceneProfile sceneProfile)
+        {
+            sceneProfile = null;
+            if (GaiaGlobal.Instance == null)
+            {
+                return false;
+            }
+
+            if (GaiaGlobal.Instance.SceneProfile == null)
+            {
+                return false;
+            }
+
+            sceneProfile = GaiaGlobal.Instance.SceneProfile;
+            return true;
+        }
 
         /// <summary>
         /// Get the main directional light in the scene
         /// </summary>
         /// <returns>Main light or null</returns>
-        public static Light GetMainDirectionalLight(bool create = true)
+        public static Light GetMainDirectionalLight(bool create = true, bool parent = true)
         {
             GameObject lightObject = GameObject.Find("Directional Light");
             Light mainSunLight = null;
@@ -1726,16 +2106,16 @@ namespace Gaia
                     mainSunLight.shadowStrength = 0.8f;
 
 #if HDPipeline
-                //Applies HDRP defaults to the light so it renders correctly in the scene upon creaton
-                if (GetActivePipeline() == EnvironmentRenderer.HighDefinition)
-                {
-                    Gaia.Pipeline.HDRP.GaiaHDRPRuntimeUtils.SetupDefaultHDRPSunLight(lightSettings);
-                }
+                    //Applies HDRP defaults to the light so it renders correctly in the scene upon creaton
+                    if (GetActivePipeline() == EnvironmentRenderer.HighDefinition)
+                    {
+                        Gaia.Pipeline.HDRP.GaiaHDRPRuntimeUtils.SetupDefaultHDRPSunLight(lightSettings);
+                    }
 #endif
                 }
 
                 GameObject parentObject = GameObject.Find("Gaia Lighting");
-                if (parentObject != null)
+                if (parentObject != null && parent)
                 {
                     bool isPartOfPrefab = false;
 #if UNITY_EDITOR
@@ -1915,6 +2295,41 @@ namespace Gaia
                 }
             }
         }
+
+
+        /// <summary>
+        /// Converts tree instances on a terrain to matching game object instances under a parent transform
+        /// </summary>
+        /// <param name="terrain"></param>
+        /// <param name="parentTransform"></param>
+        public static Transform ConvertTreesToGameObjects(Terrain terrain, Transform parentTransform)
+        {
+            if (terrain == null || parentTransform == null)
+            {
+                return null;
+            }
+
+            Transform treeTransform = parentTransform.Find(GaiaConstants.gameObjectTreeContainer);
+
+            if (treeTransform != null)
+            {
+                DestroyImmediate(treeTransform.gameObject);
+            }
+
+            GameObject gameObject = new GameObject(GaiaConstants.gameObjectTreeContainer);
+            gameObject.transform.parent = parentTransform;
+            treeTransform = gameObject.transform;
+
+            foreach (TreeInstance ti in terrain.terrainData.treeInstances)
+            {
+                Vector3 worldSpacePosition = terrain.transform.position;
+                worldSpacePosition += new Vector3(ti.position.x * terrain.terrainData.size.x, ti.position.y * terrain.terrainData.size.y, ti.position.z * terrain.terrainData.size.z);
+                GameObject go = GameObject.Instantiate(terrain.terrainData.treePrototypes[ti.prototypeIndex].prefab, worldSpacePosition, Quaternion.Euler(0, ti.rotation, 0), treeTransform);
+                go.transform.localScale = new Vector3(ti.widthScale, ti.heightScale, ti.widthScale);
+            }
+            return treeTransform;
+        }
+
         /// <summary>
         /// Parents the enviro system objects to Gaia Lighting
         /// </summary>
@@ -2315,6 +2730,8 @@ namespace Gaia
         {
             switch (terrainSize)
             {
+                case 128:
+                    return GaiaConstants.EnvironmentSize.Is128MetersSq;
                 case 256:
                     return GaiaConstants.EnvironmentSize.Is256MetersSq;
                 case 512:
@@ -2739,7 +3156,7 @@ namespace Gaia
                     PWCommon5.Utils.WriteAllBytes(imageName + ".png", pngBytes);
                     break;
                 case GaiaConstants.ImageFileType.Exr:
-                    byte[] exrBytes = ImageConversion.EncodeToEXR(exportTexture, Texture2D.EXRFlags.CompressZIP);
+                    byte[] exrBytes = ImageConversion.EncodeToEXR(exportTexture, Texture2D.EXRFlags.OutputAsFloat);
                     PWCommon5.Utils.WriteAllBytes(imageName + ".exr", exrBytes);
                     break;
             }
@@ -2768,7 +3185,9 @@ namespace Gaia
             //Lose the texture
             DestroyImmediate(exportTexture);
         }
-                /// <summary>
+
+
+        /// <summary>
         /// Compress / encode a multi layer map file to an image
         /// </summary>
         /// <param name="input">Multi layer map in format x,y,layer</param>
@@ -3959,6 +4378,44 @@ namespace Gaia
         #region Adhoc helpers
 
         /// <summary>
+        /// Gets the max spawn range for a spawner tool (spawner / biome controller)
+        /// </summary>
+        /// <param name="currentTerrain"></param>
+        /// <returns></returns>
+        public static float GetMaxSpawnRange(Terrain currentTerrain)
+        {
+            if (currentTerrain != null)
+            {
+                return Mathf.Round((float)8192 / (float)currentTerrain.terrainData.heightmapResolution * currentTerrain.terrainData.size.x / 2f);
+            }
+            else
+            {
+                return 1000;
+            }
+        }
+
+        /// <summary>
+        /// Finds and returns Terrain Mesh Exporter presets
+        /// </summary>
+        /// <param name="searchString"></param>
+        /// <returns></returns>
+        public static ExportTerrainSettings FindTerrainExportPreset(string searchString)
+        {
+            //Find the export collider preset in the user settings
+            var allPresets = GaiaUtils.GetOrCreateUserFiles().m_exportTerrainSettings;
+            for (int i = 0; i < allPresets.Count; i++)
+            {
+                if (allPresets[i].name.Contains(searchString))
+                {
+                    return allPresets[i];
+                }
+            }
+            return null;
+        }
+
+
+
+        /// <summary>
         /// Inverts an animation curve
         /// </summary>
         /// <param name="curve">The curve to invert</param>
@@ -4391,7 +4848,7 @@ namespace Gaia
                     RenderTexture.ReleaseTemporary(rendTex[i]);
                 }
             }
-            GC.Collect();
+            //GC.Collect();
         }
 
         /// <summary>
@@ -4410,6 +4867,13 @@ namespace Gaia
         public static long GetUnixTimestamp()
         {
             return new System.DateTimeOffset(System.DateTime.UtcNow).ToUnixTimeMilliseconds();
+        }
+
+        public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
         }
 
         /// <summary>
@@ -4647,6 +5111,12 @@ namespace Gaia
                 return playerObject.transform;
             }
 
+            playerObject = GameObject.FindWithTag("Player");
+            if (playerObject != null)
+            {
+                return playerObject.transform;
+            }
+
             Camera camera = FindObjectOfType<Camera>();
             if (camera != null)
             {
@@ -4810,6 +5280,43 @@ namespace Gaia
             }
         }
 
+
+        /// <summary>
+        /// Returns true if the correct pipeline defines for the render pipeline asset that is in use in the pipeline settings have been set.
+        /// </summary>
+        /// <returns></returns>
+        public static bool UsesCorrectPipelineDefines()
+        {
+            if (GraphicsSettings.renderPipelineAsset == null)
+            {
+#if HDPipeline || UPPipeline
+                return false;
+#else
+                return true;
+#endif
+            }
+            else
+            {
+                if (GraphicsSettings.renderPipelineAsset.GetType().ToString().Contains("HDRenderPipelineAsset"))
+                {
+#if HDPipeline && !UPPipeline
+                    return true;
+#else
+                    return false;
+#endif
+
+                }
+                else
+                {
+#if UPPipeline && !HDPipeline
+                    return true;
+#else
+                    return false;
+#endif
+                }
+            }
+        }
+
         /// <summary>
         /// Returns true if this scene setup utilizes dynamic terrain loading.
         /// </summary>
@@ -4918,6 +5425,8 @@ namespace Gaia
         {
             switch (size)
             {
+                case GaiaConstants.EnvironmentSize.Is128MetersSq:
+                    return 128;
                 case GaiaConstants.EnvironmentSize.Is256MetersSq:
                     return 256;
                 case GaiaConstants.EnvironmentSize.Is512MetersSq:
@@ -5003,8 +5512,8 @@ namespace Gaia
                 case GaiaConstants.EnvironmentTarget.UltraLight:
                     settings.m_currentDefaults.m_spawnDensity = 0.4f;
                     settings.m_currentDefaults.m_heightmapResolution = 33;
-                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 256, 512);
-                    settings.m_currentDefaults.m_detailResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 128, 512);
+                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 128, 512);
+                    settings.m_currentDefaults.m_detailResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 64, 512);
                     settings.m_currentDefaults.m_controlTextureResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 64, 512);
                     settings.m_currentDefaults.m_baseMapSize = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 8, 64, 512);
                     break;
@@ -5018,25 +5527,55 @@ namespace Gaia
                     break;
                 case GaiaConstants.EnvironmentTarget.Desktop:
                     settings.m_currentDefaults.m_spawnDensity = 0.8f;
-                    settings.m_currentDefaults.m_heightmapResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 256, 4096) + 1;
-                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 256, 2048);
+                    settings.m_currentDefaults.m_heightmapResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 128, 4096) + 1;
+                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 128, 2048);
                     settings.m_currentDefaults.m_detailResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize / 2, 128, 4096);
-                    settings.m_currentDefaults.m_controlTextureResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 256, 2048);
-                    settings.m_currentDefaults.m_baseMapSize = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 256, 2048);
+                    settings.m_currentDefaults.m_controlTextureResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 128, 2048);
+                    settings.m_currentDefaults.m_baseMapSize = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 128, 2048);
                     break;
                 case GaiaConstants.EnvironmentTarget.PowerfulDesktop:
                     settings.m_currentDefaults.m_spawnDensity = 1.0f;
-                    settings.m_currentDefaults.m_heightmapResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 4, 256, 4096) + 1;
-                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 256, 2048);
-                    settings.m_currentDefaults.m_detailResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 256, 4096);
-                    settings.m_currentDefaults.m_controlTextureResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 256, 2048);
-                    settings.m_currentDefaults.m_baseMapSize = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 256, 2048);
+                    settings.m_currentDefaults.m_heightmapResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 4, 128, 4096) + 1;
+                    settings.m_currentDefaults.m_baseMapDist = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 128, 2048);
+                    settings.m_currentDefaults.m_detailResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize, 128, 4096);
+                    settings.m_currentDefaults.m_controlTextureResolution = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 128, 2048);
+                    settings.m_currentDefaults.m_baseMapSize = Mathf.Clamp(settings.m_currentDefaults.m_terrainSize * 2, 128, 2048);
                     break;
                 case GaiaConstants.EnvironmentTarget.Custom:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+
+        /// <summary>
+        /// Scans the full project hierarchy for biome preset assets and returns them in a list.
+        /// </summary>
+        /// <param name="newBiomesOnly">If only new Biomes that are not yet displayed in the Gaia Manager should be returned.</param>
+        /// <returns></returns>
+        public static List<BiomePreset> SearchProjectForBiomePresets(bool newBiomesOnly = true)
+        {
+#if UNITY_EDITOR
+            List<BiomePreset> returnList = new List<BiomePreset>();
+            UserFiles userFiles = GaiaUtils.GetOrCreateUserFiles();
+            string[] biomePresetGUIDs = AssetDatabase.FindAssets("t:BiomePreset");
+
+            for (int i = 0; i < biomePresetGUIDs.Length; i++)
+            {
+                if (biomePresetGUIDs[i] != null)
+                {
+                    BiomePreset sp = (BiomePreset)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(biomePresetGUIDs[i]), typeof(BiomePreset));
+                    if (sp != null && (!userFiles.m_gaiaManagerBiomePresets.Contains(sp) || !newBiomesOnly))
+                    {
+                        returnList.Add(sp);
+                    }
+                }
+            }
+            return returnList;
+#else
+            return null;
+#endif
         }
 
         public static void ResetBiomePresets(bool forceReset=false)
@@ -5113,6 +5652,6 @@ namespace Gaia
 
 
 
-        #endregion
+#endregion
     }
 }

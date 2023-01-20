@@ -243,6 +243,8 @@ namespace Gaia
             if (m_reflectionTexture != null)
             {
                 m_reflectionTexture.Release();
+                DestroyImmediate(m_reflectionTexture);
+                m_reflectionTexture = null;
             }
 
 #if UPPipeline
@@ -268,6 +270,8 @@ namespace Gaia
             if (m_reflectionTexture != null)
             {
                 m_reflectionTexture.Release();
+                DestroyImmediate(m_reflectionTexture);
+                m_reflectionTexture = null;
             }
         }
         /// <summary>

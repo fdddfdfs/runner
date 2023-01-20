@@ -561,6 +561,7 @@ namespace Gaia
                         underwaterEffects.m_constUnderwaterColorFilter = profileValues.m_constUnderwaterColorFilter;
                         underwaterEffects.m_gradientUnderwaterPostExposure = profileValues.m_gradientUnderwaterPostExposure;
                         underwaterEffects.m_gradientUnderwaterColorFilter = profileValues.m_gradientUnderwaterColorFilter;
+                        underwaterEffects.m_supportFog = profile.m_supportUnderwaterFog;
                         if (profile.m_supportUnderwaterFog)
                         {
                             Transform horizonTransform = underwaterEffectsObject.transform.Find(profile.m_underwaterHorizonPrefab.name);
@@ -698,6 +699,7 @@ namespace Gaia
                             underwaterEffects.m_constUnderwaterColorFilter = profileValues.m_constUnderwaterColorFilter;
                             underwaterEffects.m_gradientUnderwaterPostExposure = profileValues.m_gradientUnderwaterPostExposure;
                             underwaterEffects.m_gradientUnderwaterColorFilter = profileValues.m_gradientUnderwaterColorFilter;
+                            underwaterEffects.m_supportFog = profile.m_supportUnderwaterFog;
                         }
                     }
                 }

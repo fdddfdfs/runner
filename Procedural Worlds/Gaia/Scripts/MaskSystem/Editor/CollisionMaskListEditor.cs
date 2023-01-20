@@ -15,7 +15,14 @@ namespace Gaia
     {
         public static float OnElementHeight(int index, CollisionMask[] collisionMasks)
         {
-            return EditorGUIUtility.singleLineHeight ;
+            if (collisionMasks[index].m_type == BakedMaskType.RadiusTree)
+            {
+                return Mathf.CeilToInt((float)CollisionMask.m_allTreeSpawnRuleNames.Length / 32f) * EditorGUIUtility.singleLineHeight;
+            }
+            else
+            {
+                return EditorGUIUtility.singleLineHeight;
+            }
         }
 
         public static CollisionMask[] OnRemoveMaskListEntry(CollisionMask[] oldList, int index)
@@ -108,33 +115,84 @@ namespace Gaia
             {
                 case BakedMaskType.RadiusTree:
                     //Tree dropdown
-                    string oldTreeId = collisionMask.m_treeSpawnRuleGUID;
+                    List<int> oldTreeMaskValues = new List<int>(collisionMask.RadiusTreeMaskValues);
                     fieldRect.x += rect.width * 0.2f;
-                    int selectedGUIDIndex = 0;
-                    if (collisionMask.m_treeSpawnRuleGUID != "")
+                    //using this local variable to prevent unnecessary conversions between mask int values and the stored tree spawn rule GUID list
+                    List<int> currentTreeMaskValue = collisionMask.RadiusTreeMaskValues;
+                    //if (collisionMask.m_selectedTreeSpawnRuleGUIDs != null && collisionMask.m_selectedTreeSpawnRuleGUIDs.Count>0)
+                    //{
+                    //    selectedGUIDIndices = CollisionMask.GetRadiusTreeMaskValue();
+                    //}
+                    if (CollisionMask.m_allTreeSpawnRuleNames != null && CollisionMask.m_allTreeSpawnRuleNames.Length > 0)
                     {
-                        SpawnRule selectedRule = CollisionMask.m_allTreeSpawnRules.FirstOrDefault(x => x.GUID == collisionMask.m_treeSpawnRuleGUID);
-                        if (selectedRule != null)
+                        float originalY = fieldRect.y;
+                        for (int i = 0; i < Mathf.CeilToInt((float)CollisionMask.m_allTreeSpawnRuleNames.Length/32f); i++)
                         {
-                            selectedGUIDIndex = Array.IndexOf(CollisionMask.m_allTreeSpawnRules, selectedRule);
+                            if(currentTreeMaskValue.Count<i+1)
+                            {
+                                currentTreeMaskValue.Add(0);
+                            }
+                            int numberOfNames = Mathf.Min(32, CollisionMask.m_allTreeSpawnRuleNames.Length - (32 * i));
+                            string[] ruleNamesToDisplay = new string[numberOfNames];
+                            for (int k = 0; k < numberOfNames; k++)
+                            {
+                                ruleNamesToDisplay[k] = CollisionMask.m_allTreeSpawnRuleNames[i * 32 + k];
+
+                            }
+                            currentTreeMaskValue[i] = EditorGUI.MaskField(fieldRect, currentTreeMaskValue[i], ruleNamesToDisplay);
+                            fieldRect.y+=EditorGUIUtility.singleLineHeight;
+                        }
+                        fieldRect.y = originalY;
+                    }
+                    else
+                    {
+                        bool currentGUIState = GUI.enabled;
+                        GUI.enabled = false;
+                        EditorGUI.IntPopup(fieldRect, 0, new string[1] { "No Tree Spawn Rules" }, new int[1] { 0});
+                    }
+
+                    bool selectionChanged = false;
+                    if (oldTreeMaskValues.Count != currentTreeMaskValue.Count())
+                    {
+                        selectionChanged = true;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < oldTreeMaskValues.Count; i++)
+                        {
+                            if (oldTreeMaskValues[i] != currentTreeMaskValue[i])
+                            {
+                                selectionChanged = true;
+                                break;
+                            }
                         }
                     }
-                    selectedGUIDIndex = EditorGUI.IntPopup(fieldRect, selectedGUIDIndex, CollisionMask.m_allTreeSpawnRuleNames, CollisionMask.m_allTreeSpawnRuleIndices);
-                    if (selectedGUIDIndex >= 0 && selectedGUIDIndex < CollisionMask.m_allTreeSpawnRules.Length)
+                    
+                    //selectedGUIDIndex = EditorGUI.IntPopup(fieldRect, selectedGUIDIndex, CollisionMask.m_allTreeSpawnRuleNames, CollisionMask.m_allTreeSpawnRuleIndices);
+                    //if (selectedGUIDIndices >= 0 && selectedGUIDIndices < CollisionMask.m_allTreeSpawnRules.Length)
+                    //{
+                    //    collisionMask.m_treeSpawnRuleGUID = CollisionMask.m_allTreeSpawnRules[selectedGUIDIndices].GUID;
+                    //}
+                    if (oldType != collisionMask.m_type || selectionChanged)
                     {
-                        collisionMask.m_treeSpawnRuleGUID = CollisionMask.m_allTreeSpawnRules[selectedGUIDIndex].GUID;
-                    }
-                    if (oldType != collisionMask.m_type || oldTreeId != collisionMask.m_treeSpawnRuleGUID)
-                    {
-                        SpawnRule selectedRule = CollisionMask.m_allTreeSpawnRules.FirstOrDefault(x => x.GUID == collisionMask.m_treeSpawnRuleGUID);
-                        if (selectedRule != null)
+                        //only now we update the actual tree GUID list
+                        collisionMask.RadiusTreeMaskValues = currentTreeMaskValue;
+                        if (collisionMask.m_Radius == 0.0f && collisionMask.m_selectedTreeSpawnRuleGUIDs.Count > 0)
                         {
-                            Spawner spawner = CollisionMask.m_allTreeSpawners.FirstOrDefault(x => x.m_settings.m_spawnerRules.Contains(selectedRule));
-                            if (spawner != null)
+                            SpawnRule selectedRule = CollisionMask.m_allTreeSpawnRules.FirstOrDefault(x => x.GUID == collisionMask.m_selectedTreeSpawnRuleGUIDs[0]);
+                            if (selectedRule != null)
                             {
-                                GameObject treePrefab = spawner.m_settings.m_resources.m_treePrototypes[selectedRule.m_resourceIdx].m_desktopPrefab;
-                                collisionMask.m_Radius = GaiaUtils.GetTreeRadius(treePrefab);
+                                Spawner spawner = CollisionMask.m_allTreeSpawners.FirstOrDefault(x => x.m_settings.m_spawnerRules.Contains(selectedRule));
+                                if (spawner != null)
+                                {
+                                    GameObject treePrefab = spawner.m_settings.m_resources.m_treePrototypes[selectedRule.m_resourceIdx].m_desktopPrefab;
+                                    collisionMask.m_Radius = GaiaUtils.GetTreeRadius(treePrefab);
+                                }
                             }
+                        }
+                        if (selectionChanged)
+                        {
+                            GaiaSessionManager.GetSessionManager().m_bakedMaskCache.BakeAllTreeCollisions(collisionMask, collisionMask.m_Radius);
                         }
                     }
 
@@ -211,7 +269,7 @@ namespace Gaia
                 switch (collisionMask.m_type)
                 {
                     case BakedMaskType.RadiusTree:
-                        GaiaSessionManager.GetSessionManager().m_bakedMaskCache.BakeAllTreeCollisions(collisionMask.m_treeSpawnRuleGUID, collisionMask.m_Radius);
+                        GaiaSessionManager.GetSessionManager().m_bakedMaskCache.BakeAllTreeCollisions(collisionMask, collisionMask.m_Radius);
                         break;
                     case BakedMaskType.RadiusTag:
                         GaiaSessionManager.GetSessionManager().m_bakedMaskCache.BakeAllTagCollisions(collisionMask.m_tag, collisionMask.m_Radius);

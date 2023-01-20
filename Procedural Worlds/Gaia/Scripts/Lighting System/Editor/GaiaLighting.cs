@@ -135,6 +135,12 @@ namespace Gaia
         {
             try
             {
+
+#if GAIA_PRO_PRESENT && HDPipeline && UNITY_2021_2_OR_NEWER
+                ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.RemoveTimeOfDay();
+#endif
+
+
                 SceneProfile sceneProfile = ScriptableObject.CreateInstance<SceneProfile>();
                 GaiaSceneManagement.CopySettingsTo(lightProfile, sceneProfile);
                 m_lightingProfile = sceneProfile;
@@ -767,6 +773,7 @@ namespace Gaia
                             {
                                 PW_VFX_Atmosphere.Instance.SetCloudShaderSettings(profile, GaiaShaderID.m_cloudShaderName, renderPipeline);
                                 GaiaAPI.SetTimeOfDaySunRotation(profile.m_pwSkySunRotation);
+                                EditorUtility.SetDirty(PW_VFX_Atmosphere.Instance);
                             }
                         }
                         else
@@ -996,24 +1003,25 @@ namespace Gaia
 #else
                     if (m_lightingProfile.m_enablePostProcessing)
                     {
-                        if (m_mainCamera == null)
+                        Camera camera = GaiaUtils.GetCamera();
+                        if (camera != null)
                         {
-                            m_mainCamera = GaiaUtils.GetCamera().gameObject;
+                            m_mainCamera = camera.gameObject;
                         }
-
-                        m_processLayer = m_mainCamera.GetComponent<PostProcessLayer>();
-                        if (m_processLayer == null)
+                        
+                        if (m_mainCamera != null)
                         {
-                            m_processLayer = m_mainCamera.AddComponent<PostProcessLayer>();
-                        }
+                            m_processLayer = m_mainCamera.GetComponent<PostProcessLayer>();
+                            if (m_processLayer == null)
+                            {
+                                m_processLayer = m_mainCamera.AddComponent<PostProcessLayer>();
+                            }
 
-                        m_processLayer.volumeLayer = 2;
-                        m_processLayer.finalBlitToCameraTarget = profile.m_directToCamera;
-                        //Sets up antialiasing
-                        ConfigureAntiAliasing(lightProfile, renderPipeline);
+                            m_processLayer.volumeLayer = 2;
+                            m_processLayer.finalBlitToCameraTarget = profile.m_directToCamera;
+                            //Sets up antialiasing
+                            ConfigureAntiAliasing(lightProfile, renderPipeline);
 
-                        if (profile.PostProcessProfileBuiltIn != null)
-                        {
                             if (!setupLayerOnly)
                             {
                                 if (m_processVolume == null)
@@ -1024,11 +1032,14 @@ namespace Gaia
                                 m_processVolume.sharedProfile = profile.PostProcessProfileBuiltIn;
                                 m_processVolume.gameObject.layer = LayerMask.NameToLayer("TransparentFX");
 
-                                if (profile.PostProcessProfileBuiltIn.TryGetSettings(out AutoExposure autoExposure))
+                                if (profile.PostProcessProfileBuiltIn != null)
                                 {
-                                    autoExposure.active = true;
-                                    autoExposure.enabled.value = true;
-                                    autoExposure.keyValue.value = profile.m_postProcessExposure;
+                                    if (profile.PostProcessProfileBuiltIn.TryGetSettings(out AutoExposure autoExposure))
+                                    {
+                                        autoExposure.active = true;
+                                        autoExposure.enabled.value = true;
+                                        autoExposure.keyValue.value = profile.m_postProcessExposure;
+                                    }
                                 }
 
                                 if (m_processVolume != null)
@@ -1050,6 +1061,10 @@ namespace Gaia
 
                             GaiaUtils.CheckPostFXV2ColorFilter(profile, Color.black);
                             GaiaSceneManagement.SetupAutoDepthOfField(lightProfile);
+                        }
+                        else
+                        {
+                            Debug.Log("Post Processing was not setup as no active camera was found in your scene.");
                         }
                     }
                     else
@@ -1506,8 +1521,7 @@ namespace Gaia
                         break;
                 }
 
-                Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-                Lightmapping.BakeAsync();
+                GaiaTask.Instance.AddTask(new BakeLightmapsTask());
             }
         }
         /// <summary>
@@ -1531,8 +1545,7 @@ namespace Gaia
                     break;
             }
 
-            Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-            Lightmapping.BakeAsync();
+            GaiaTask.Instance.AddTask(new BakeLightmapsTask());
         }
         /// <summary>
         /// Bakes auto lightmaps only no Realtime or Baked GI
@@ -1544,20 +1557,14 @@ namespace Gaia
                 RenderSettings.ambientMode = profile.m_ambientMode;
             }
 
-            Lightmapping.bakedGI = false;
-            Lightmapping.realtimeGI = false;
-            Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-            Lightmapping.BakeAsync();
+            GaiaTask.Instance.AddTask(new QuickLightingBakeTask());
         }
         /// <summary>
         /// Bakes auto lightmaps only no Realtime or Baked GI
         /// </summary>
         public static void QuickBakeLighting()
         {
-            Lightmapping.bakedGI = false;
-            Lightmapping.realtimeGI = false;
-            Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-            Lightmapping.BakeAsync();
+            GaiaTask.Instance.AddTask(new QuickLightingBakeTask());
         }
         /// <summary>
         /// Cancels the lightmap baking process
@@ -1616,7 +1623,7 @@ namespace Gaia
         /// Sets the lighting to none state and removes systems
         /// </summary>
         /// <param name="sceneProfile"></param>
-        private static void SetLightingToNoneState(SceneProfile sceneProfile, bool setState = false)
+        public static void SetLightingToNoneState(SceneProfile sceneProfile, bool setState = false)
         {
             RemoveSystems();
             if (setState)
@@ -1909,7 +1916,7 @@ namespace Gaia
         /// <param name="postProcessProfile"></param>
         /// <param name="size"></param>
         /// <param name="blendDistance"></param>
-        public static void PostProcessingBiomeSpawning(string biomeName, PostProcessProfile postProcessProfile, float size, float blendDistance, GaiaConstants.BiomePostProcessingVolumeSpawnMode spawnMode)
+        public static void PostProcessingBiomeSpawning(string biomeName, PostProcessProfile postProcessProfile, float size, float blendDistance, GaiaConstants.BiomePostProcessingVolumeSpawnMode spawnMode, bool isGlobal)
         {
             try
             {
@@ -1943,6 +1950,16 @@ namespace Gaia
                             collider = processVolume.GetComponent<BoxCollider>();
                             postProcessBiome = processVolume.GetComponent<GaiaPostProcessBiome>();
                         }
+
+                        //if a global pp volume is spawned with "replace", we assume the user does not want the default PP profile => deactivate it
+                        if (isGlobal)
+                        {
+                            GameObject defaultVolumeObject = GameObject.Find("Global Post Processing");
+                            if (defaultVolumeObject != null)
+                            {
+                                defaultVolumeObject.SetActive(false);
+                            }
+                        }
                     }
 
 
@@ -1958,7 +1975,7 @@ namespace Gaia
                     {
                         processVolume = ppVolumeObject.AddComponent<PostProcessVolume>();
                         processVolume.priority = 1;
-                        if (m_lightingProfile.m_hideProcessVolume)
+                        if (m_lightingProfile != null && m_lightingProfile.m_hideProcessVolume)
                         {
                             UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(processVolume, false);
                         }
@@ -1991,6 +2008,7 @@ namespace Gaia
                     ppVolumeObject.transform.position = objectTransform.position;
                     processVolume.gameObject.transform.SetParent(m_parentObject.transform);
                     processVolume.blendDistance = blendDistance;
+                    processVolume.isGlobal = isGlobal;
                     collider.size = new Vector3(size, size, size);
 
                     postProcessBiome.m_postProcessProfile = postProcessProfile;

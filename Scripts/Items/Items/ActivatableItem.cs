@@ -2,7 +2,7 @@
 using StarterAssets;
 using UnityEngine;
 
-public abstract class ActivatableItem<T> : Item
+public abstract class ActivatableItem : Item
 {
     private WaitForSeconds _waiter;
     private ActiveItemsUI _activeItemsUI;

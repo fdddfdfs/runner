@@ -49,6 +49,9 @@ namespace Gaia.Pipeline.URP
             }
 
             pipelineAsset.shadowDistance = profileValues.m_shadowDistance;
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(pipelineAsset);
+#endif
         }
         /// <summary>
         /// Gets or creates UP camera data

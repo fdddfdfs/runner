@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Gaia
 {
-    public enum ColorPickerReferenceMode { FogColor, SunColor, SkyboxTintColor, DensityAlbedoColor, UnderwaterFogColor }
+    public enum ColorPickerReferenceMode { FogColor, SunColor, SkyboxTintColor, DensityAlbedoColor, UnderwaterFogColor, AmbientSkyColor, AmbientEquatorColor, AmbientGroundColor }
 
     [System.Serializable]
     public class GrassRenderingProfileData
@@ -37,6 +37,7 @@ namespace Gaia
 
         public bool m_isUsingGaiaLighting = false;
         public int m_selectedGaiaLightingProfile = -1;
+        public string m_lastSceneName;
 
         #endregion
         #region Photo Mode Settings
@@ -45,8 +46,9 @@ namespace Gaia
         public int m_screenshotImageFormat = 2;
         public bool m_loadSavedSettings = true;
         public bool m_revertOnDisabled = true;
-        public bool m_showReticle = true;
-        public bool m_showRuleOfThirds = true;
+        public bool m_showFPS = false;
+        public bool m_showReticle = false;
+        public bool m_showRuleOfThirds = false;
 
         #endregion
         #region Unity Settings
@@ -102,11 +104,17 @@ namespace Gaia
         public float m_skyboxRotation = 0f;
         public float m_skyboxExposure = 1f;
         public Color m_skyboxTint = Color.black;
-        public float m_ambientIntensity = 1f;
         public bool m_sunOverride = false;
         public float m_sunIntensity = 1f;
         public Color m_sunColor = Color.black;
         public float m_sunKelvinValue = 6500f;
+        public float m_ambientIntensity = 1f;
+        public Color m_ambientSkyColor = new Color(0.7027151f, 0.881016f, 1.001631f, 0.4192761f);
+        public Color m_ambientEquatorColor = new Color(0.6302439f, 0.7919513f, 0.85f, 0f);
+        public Color m_ambientGroundColor = new Color(0.5f, 0.4142857f, 0.3321428f, 0f);
+        public float m_globalLightIntensityMultiplier = 1f;
+        public float m_globalFogDensityMultiplier = 1f;
+        public float m_globalShadowDistanceMultiplier = 1f;
 
         #endregion
         #region Water Settings
@@ -132,6 +140,7 @@ namespace Gaia
         public float m_dofAperture = 16f;
         public float m_dofFocalLength = 50f;
         public int m_dofKernelSize = 1;
+        public int m_savedDofFocusMode = 0;
 
         #region HDRP
 
@@ -305,6 +314,7 @@ namespace Gaia
             m_screenshotImageFormat = loadFrom.m_screenshotImageFormat;
             m_loadSavedSettings = loadFrom.m_loadSavedSettings;
             m_revertOnDisabled = loadFrom.m_revertOnDisabled;
+            m_showFPS = loadFrom.m_showFPS;
             m_showReticle = loadFrom.m_showReticle;
             m_showRuleOfThirds = loadFrom.m_showRuleOfThirds;
             //Unity settings
@@ -355,6 +365,9 @@ namespace Gaia
             m_sunIntensity = loadFrom.m_sunIntensity;
             m_sunColor = loadFrom.m_sunColor;
             m_sunKelvinValue = loadFrom.m_sunKelvinValue;
+            m_ambientSkyColor = loadFrom.m_ambientSkyColor;
+            m_ambientEquatorColor = loadFrom.m_ambientEquatorColor;
+            m_ambientGroundColor = loadFrom.m_ambientGroundColor;
             //Density Volume
             m_overrideDensityVolume = loadFrom.m_overrideDensityVolume;
             m_densityVolumeAlbedoColor = loadFrom.m_densityVolumeAlbedoColor;
@@ -390,6 +403,7 @@ namespace Gaia
             m_dofFarBlurEnd = loadFrom.m_dofFarBlurEnd;
             m_postFXExposure = loadFrom.m_postFXExposure;
             m_postFXExposureMode = loadFrom.m_postFXExposureMode;
+            m_savedDofFocusMode = loadFrom.m_savedDofFocusMode;
             //Terrain Settings
             m_terrainDetailDensity = loadFrom.m_terrainDetailDensity;
             m_terrainDetailDistance = loadFrom.m_terrainDetailDistance;
@@ -435,6 +449,7 @@ namespace Gaia
             saveTo.m_screenshotImageFormat = m_screenshotImageFormat;
             saveTo.m_loadSavedSettings = m_loadSavedSettings;
             saveTo.m_revertOnDisabled = m_revertOnDisabled;
+            saveTo.m_showFPS = m_showFPS;
             saveTo.m_showReticle = m_showReticle;
             saveTo.m_showRuleOfThirds = m_showRuleOfThirds;
             //Unity settings
@@ -485,6 +500,9 @@ namespace Gaia
             saveTo.m_sunIntensity = m_sunIntensity;
             saveTo.m_sunColor = m_sunColor;
             saveTo.m_sunKelvinValue = m_sunKelvinValue;
+            saveTo.m_ambientSkyColor = m_ambientSkyColor;
+            saveTo.m_ambientEquatorColor = m_ambientEquatorColor;
+            saveTo.m_ambientGroundColor = m_ambientGroundColor;
             //Density Volume
             saveTo.m_overrideDensityVolume = m_overrideDensityVolume;
             saveTo.m_densityVolumeAlbedoColor = m_densityVolumeAlbedoColor;
@@ -517,6 +535,7 @@ namespace Gaia
             saveTo.m_dofFarBlurStart = m_dofFarBlurStart;
             saveTo.m_dofFarBlurEnd = m_dofFarBlurEnd;
             saveTo.m_postFXExposure = m_postFXExposure;
+            saveTo.m_savedDofFocusMode = m_savedDofFocusMode;
             //Terrain Settings
             saveTo.m_terrainDetailDensity = m_terrainDetailDensity;
             saveTo.m_terrainDetailDistance = m_terrainDetailDistance;
@@ -546,8 +565,9 @@ namespace Gaia
             m_screenshotImageFormat = 2;
             m_loadSavedSettings = true;
             m_revertOnDisabled = true;
-            m_showReticle = true;
-            m_showRuleOfThirds = true;
+            m_showFPS = false;
+            m_showReticle = false;
+            m_showRuleOfThirds = false;
 
             #endregion
             #region Unity Settings
@@ -608,6 +628,9 @@ namespace Gaia
             m_sunIntensity = 1f;
             m_sunColor = Color.black;
             m_sunKelvinValue = 6500f;
+            m_ambientSkyColor = new Color(0.7027151f, 0.881016f, 1.001631f, 0.4192761f);
+            m_ambientEquatorColor = new Color(0.6302439f, 0.7919513f, 0.85f, 0f);
+            m_ambientGroundColor = new Color(0.5f, 0.4142857f, 0.3321428f, 0f);
             //Density Volume
             m_overrideDensityVolume = false;
             m_densityVolumeAlbedoColor = Color.white;
@@ -641,7 +664,7 @@ namespace Gaia
             }
 
             m_postFXExposureMode = 0;
-
+            m_savedDofFocusMode = 0;
             m_dofFocusModeURP = 0;
             m_dofStartBlurURP = 2f;
             m_dofEndBlurURP = 1000f;

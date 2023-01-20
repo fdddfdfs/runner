@@ -26,10 +26,25 @@ namespace Gaia
         private GUIStyle redStyle;
         private GUIStyle greenStyle;
 
+        private GaiaSettings m_gaiaSettings;
+
+        private GaiaSettings GaiaSettings
+        {
+            get
+            {
+                if (m_gaiaSettings == null)
+                {
+                    m_gaiaSettings = GaiaUtils.GetGaiaSettings();
+                }
+                return m_gaiaSettings;
+            }
+        }
+
         public void OnEnable()
         {
             m_terrainLoaderManager = (TerrainLoaderManager)target;
-            #if GAIA_PRO_PRESENT
+            m_terrainLoaderManager.SubscribeToAssemblyReloadEvents();
+#if GAIA_PRO_PRESENT
             m_terrainLoaders = Resources.FindObjectsOfTypeAll<TerrainLoader>();
             #endif
             //m_placeHolders = Resources.FindObjectsOfTypeAll<GaiaTerrainPlaceHolder>();
@@ -45,7 +60,10 @@ namespace Gaia
                 // Get editor utils for this
                 m_editorUtils = PWApp.GetEditorUtils(this);
             }
-
+            if (m_terrainLoaderManager.TerrainSceneStorage == null)
+            {
+                m_terrainLoaderManager.LoadStorageData();
+            }
             m_terrainLoaderManager.LookUpLoadingScreen();
         }
 
@@ -77,6 +95,7 @@ namespace Gaia
                 m_editorUtils = PWApp.GetEditorUtils(this);
             }
             m_editorUtils.Initialize(); // Do not remove this!
+            
             if (GaiaUtils.HasDynamicLoadedTerrains())
             {
                 m_editorUtils.Panel("GeneralSettings", DrawGeneralSettings, true);
@@ -86,11 +105,54 @@ namespace Gaia
             else
             {
                 EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("NoTerrainLoadingMessage"),MessageType.Info);
+                m_editorUtils.Panel("GeneralSettings", DrawReducedGeneralSettings, true);
             }
+            m_editorUtils.Panel("FloatingPointFix", DrawFloatingPointFix, false);
+        }
+
+        private void DrawReducedGeneralSettings(bool helpEnabled)
+        {
+            m_terrainLoaderManager.m_autoTerrainStitching = m_editorUtils.Toggle("AutoTerrainStitching", m_terrainLoaderManager.m_autoTerrainStitching, helpEnabled);
+        }
+
+
+        private void DrawFloatingPointFix(bool helpEnabled)
+        {
+            EditorGUI.BeginChangeCheck();
+            GaiaSettings.m_floatingPointFix = m_editorUtils.Toggle("FloatingPointFixEnabled", GaiaSettings.m_floatingPointFix, helpEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (GaiaSettings.m_floatingPointFix)
+                {
+                    if (EditorUtility.DisplayDialog("Add Floating Point Fix?", "This will activate a fix for floating point imprecisions in your scene. This will add aditional components to your player, and other objects in your scene. Continue?", "OK", "Cancel"))
+                    {
+                       TerrainLoaderManager.FloatingPointFix_Add();
+                    }
+                    else
+                    {
+                        GaiaSettings.m_floatingPointFix = false;
+                    }
+                }
+                else
+                {
+                    if (EditorUtility.DisplayDialog("Remove Floating Point Fix?", "This will remove all floating point fix components in the scene. Continue?", "OK", "Cancel"))
+                    {
+                        TerrainLoaderManager.FloatingPointFix_Remove();
+                    }
+                    else
+                    {
+                        GaiaSettings.m_floatingPointFix = true;
+                    }
+                }
+            }
+
         }
 
         private void DrawGeneralSettings(bool helpEnabled)
         {
+
+            bool originalGUIState = GUI.enabled;
+
             m_terrainLoaderManager.TerrainSceneStorage = (TerrainSceneStorage)m_editorUtils.ObjectField("TerrainSceneStorage", m_terrainLoaderManager.TerrainSceneStorage, typeof(TerrainSceneStorage), false, helpEnabled);
 
             bool oldLoadingEnabled = m_terrainLoaderManager.TerrainSceneStorage.m_terrainLoadingEnabled;
@@ -106,7 +168,17 @@ namespace Gaia
                 EditorUtility.SetDirty(m_terrainLoaderManager.TerrainSceneStorage);
             }
 
-            bool originalGUIState = GUI.enabled;
+#if !PW_ADDRESSABLES
+            GUI.enabled = false;
+#endif
+            m_terrainLoaderManager.TerrainSceneStorage.m_useAddressables = m_editorUtils.Toggle("UseAddressables", m_terrainLoaderManager.TerrainSceneStorage.m_useAddressables, helpEnabled);
+            if (m_terrainLoaderManager.TerrainSceneStorage.m_useAddressables)
+            {
+                EditorGUI.indentLevel++;
+                m_terrainLoaderManager.TerrainSceneStorage.m_preloadAddressablesWithImpostors = m_editorUtils.Toggle("PreloadAddressablesWithImpostors", m_terrainLoaderManager.TerrainSceneStorage.m_preloadAddressablesWithImpostors, helpEnabled);
+                EditorGUI.indentLevel--;
+            }
+            GUI.enabled = originalGUIState;
 
             m_terrainLoaderManager.m_terrainLoadingTresholdMS = m_editorUtils.IntField("LoadingTimeTreshold", m_terrainLoaderManager.m_terrainLoadingTresholdMS, helpEnabled);
             m_terrainLoaderManager.m_trackLoadingProgressTimeOut = m_editorUtils.LongField("LoadingProgressTimeout", m_terrainLoaderManager.m_trackLoadingProgressTimeOut, helpEnabled);

@@ -153,29 +153,42 @@ namespace Gaia
             {
                 return;
             }
+            string oldSessionName = m_manager.m_session.m_name;
             EditorGUI.BeginChangeCheck();
             m_manager.m_session.m_name = m_editorUtils.DelayedTextField("Name", m_manager.m_session.m_name, helpEnabled);
             if (EditorGUI.EndChangeCheck())
             {
-                //Get the old path
-                string oldSessionDataPath = GaiaDirectories.GetSessionSubFolderPath(m_manager.m_session);
-                //Rename the session asset
-                AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(m_manager.m_session), m_manager.m_session.m_name + ".asset");
-                //rename the session data path as well
-                string newSessionDataPath = GaiaDirectories.GetSessionSubFolderPath(m_manager.m_session, false);
-                AssetDatabase.MoveAsset(oldSessionDataPath, newSessionDataPath);
-                //if we have terrain scenes stored in the Terrain Loader, we need to update the paths in there as well
-                foreach (TerrainScene terrainScene in TerrainLoaderManager.TerrainScenes)
+                if (!GaiaUtils.HasDynamicLoadedTerrains() || EditorUtility.DisplayDialog("Allow Terrain unloading for name change?", "Changing the session name while using terrain loading in a scene requires all terrains to be unloaded, to then load them back in again under their new path. Do you allow Gaia to unload all terrains automatically for the renaming process?", "Continue", "Abort"))
                 {
-                    terrainScene.m_scenePath = terrainScene.m_scenePath.Replace(oldSessionDataPath, newSessionDataPath);
-                    terrainScene.m_impostorScenePath = terrainScene.m_impostorScenePath.Replace(oldSessionDataPath, newSessionDataPath);
-                    terrainScene.m_backupScenePath = terrainScene.m_backupScenePath.Replace(oldSessionDataPath, newSessionDataPath);
-                    terrainScene.m_colliderScenePath = terrainScene.m_colliderScenePath.Replace(oldSessionDataPath, newSessionDataPath);
+                    EditorUtility.SetDirty(m_manager.m_session);
+                    AssetDatabase.SaveAssets();
+                    //Get the old path
+                    string oldSessionDataPath = GaiaDirectories.GetSessionSubFolderPath(m_manager.m_session);
+                    //Rename the session asset
+                    AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(m_manager.m_session), m_manager.m_session.m_name + ".asset");
+                    //rename the session data path as well
+                    string newSessionDataPath = GaiaDirectories.GetSessionSubFolderPath(m_manager.m_session, false);
+                    AssetDatabase.MoveAsset(oldSessionDataPath, newSessionDataPath);
+                    //if we have terrain scenes stored in the Terrain Loader, we need to update the paths in there as well
+                    TerrainLoaderManager.Instance.UnloadAll(true);
+                    foreach (TerrainScene terrainScene in TerrainLoaderManager.TerrainScenes)
+                    {
+                        terrainScene.m_scenePath = newSessionDataPath + GaiaDirectories.TERRAIN_SCENES_DIRECTORY + terrainScene.m_scenePath.Substring(terrainScene.m_scenePath.LastIndexOf("/"));
+                        if (!string.IsNullOrEmpty(terrainScene.m_impostorScenePath))
+                            terrainScene.m_impostorScenePath = newSessionDataPath + GaiaDirectories.IMPOSTOR_SCENES_DIRECTORY + terrainScene.m_impostorScenePath.Substring(terrainScene.m_impostorScenePath.LastIndexOf("/"));
+                        if (!string.IsNullOrEmpty(terrainScene.m_backupScenePath))
+                            terrainScene.m_backupScenePath = newSessionDataPath + GaiaDirectories.BACKUP_SCENES_DIRECTORY + terrainScene.m_backupScenePath.Substring(terrainScene.m_backupScenePath.LastIndexOf("/"));
+                        if (!string.IsNullOrEmpty(terrainScene.m_colliderScenePath))
+                            terrainScene.m_colliderScenePath = newSessionDataPath + GaiaDirectories.COLLIDER_SCENES_DIRECTORY + terrainScene.m_colliderScenePath.Substring(terrainScene.m_colliderScenePath.LastIndexOf("/"));
+                    }
+                    TerrainLoaderManager.Instance.SaveStorageData();
+                    AssetDatabase.DeleteAsset(oldSessionDataPath);
+                    AssetDatabase.SaveAssets();
                 }
-                TerrainLoaderManager.Instance.SaveStorageData();
-
-                AssetDatabase.DeleteAsset(oldSessionDataPath);
-                AssetDatabase.SaveAssets();
+                else
+                {
+                    m_manager.m_session.m_name = oldSessionName;
+                }
             }
 
             EditorGUILayout.BeginHorizontal();
@@ -192,15 +205,27 @@ namespace Gaia
                 string textureFileName = GaiaDirectories.GetSessionSubFolderPath(m_manager.m_session) + Path.DirectorySeparatorChar + m_manager.m_session + "_Preview";
                 var originalLODBias = QualitySettings.lodBias;
                 QualitySettings.lodBias = 100;
+
+#if HDPipeline
+                //Switch off all active lights in the scene as they would interfere with the baking for this mode
+                OrthographicBake.LightsOff();
+                OrthographicBake.m_HDLODBiasOverride = 100;
+                OrthographicBake.CreateBakeDirectionalLight(3, Color.white);
+#endif
                 OrthographicBake.BakeTerrain(Terrain.activeTerrain, 2048, 2048, Camera.main.cullingMask, textureFileName);
-                OrthographicBake.RemoveOrthoCam();
+                //OrthographicBake.RemoveOrthoCam();
+#if HDPipeline
+                //Restore original lighting
+                OrthographicBake.LightsOn();
+                OrthographicBake.RemoveBakeDirectionalLight();
+#endif
                 QualitySettings.lodBias = originalLODBias;
                 textureFileName += ".png";
                 AssetDatabase.ImportAsset(textureFileName);
                 var importer = AssetImporter.GetAtPath(textureFileName) as TextureImporter;
                 if (importer != null)
                 {
-                    importer.sRGBTexture = false;
+                    importer.sRGBTexture = true;
                     importer.alphaIsTransparency = false;
                     importer.alphaSource = TextureImporterAlphaSource.None;
                     importer.mipmapEnabled = false;
@@ -276,6 +301,11 @@ namespace Gaia
 
         private void DrawHeightmapBackups(bool helpEnabled)
         {
+            if (m_manager == null || m_manager.m_session == null)
+            {
+                GUILayout.Label("No Session assigned yet.");
+                return;
+            }
             string path = GaiaDirectories.GetBackupHeightmapsPath(false, m_manager.m_session);
             if (Directory.Exists(path))
             {
@@ -351,6 +381,7 @@ namespace Gaia
         {
             if (m_manager.m_session == null)
             {
+                GUILayout.Label("No Session assigned yet.");
                 return;
             }
             if (m_manager.m_session.m_operations.Count > 0)

@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine.Rendering;
 
 namespace Gaia
@@ -36,7 +37,16 @@ namespace Gaia
                 }
             }
 
-            if (updateScripting)
+            if (GaiaProUtils.GaiaMeshDefineCheck())
+            {
+                if (!symbols.Contains("GAIA_MESH_PRESENT"))
+                {
+                    updateScripting = true;
+                    symbols += ";GAIA_MESH_PRESENT";
+                }
+            }
+
+            if (updateScripting && EditorUserBuildSettings.selectedBuildTargetGroup!=BuildTargetGroup.Unknown)
             {
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, symbols);
             }
@@ -95,6 +105,15 @@ namespace Gaia
             isPro = GaiaDirectories.GetGaiaProDirectory();
 
             return isPro;
+        }
+
+        /// <summary>
+        /// Checks if the directory for the mesh simplifier exists
+        /// </summary>
+        /// <returns></returns>
+        public static bool GaiaMeshDefineCheck()
+        {
+            return GaiaDirectories.GetGaiaMeshSimplifierDirectory();
         }
 
         #endregion

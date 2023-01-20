@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+#if GAIA_PRO_PRESENT
+using ProceduralWorlds.HDRPTOD;
+#endif
 #if FLORA_PRESENT
 using ProceduralWorlds.Flora;
 #endif
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityStandardAssets.Characters.ThirdPerson;
 using UnityStandardAssets.Vehicles.Car;
@@ -49,7 +53,9 @@ namespace Gaia
         private bool m_isSettingValues = false;
         private bool m_isUpdatingValues = false;
         private bool m_pwWeatherPresent = false;
+        private bool m_hdrpTimeOfDay = false;
         private bool m_unitySkyboxPresent = false;
+        private bool m_lastTerrainCullingValue = true;
         //Components
         public Camera m_targetCamera = null;
         private bool m_photoModeCameraInstantiated = false;
@@ -129,6 +135,7 @@ namespace Gaia
         private PhotoModeUIHelper m_screenshotImageFormat = null;
         private PhotoModeUIHelper m_loadSavedSettings = null;
         private PhotoModeUIHelper m_resetPhotoModeOnDisable = null;
+        private PhotoModeUIHelper m_showFPS = null;
         private PhotoModeUIHelper m_showReticule = null;
         private PhotoModeUIHelper m_showRuleOfThirds = null;
 
@@ -211,6 +218,16 @@ namespace Gaia
         private PhotoModeUIHelper m_lightingSkyboxHeader = null;
         private PhotoModeUIHelper m_lightingSunHeader = null;
         private PhotoModeUIHelper m_lightingAmbientHeader = null;
+        private PhotoModeUIHelper m_ambientSkyColor = null;
+        private PhotoModeUIHelper m_ambientEquatorColor = null;
+        private PhotoModeUIHelper m_ambientGroundColor = null;
+
+        //HDRP Time Of Day
+#if GAIA_PRO_PRESENT
+        private PhotoModeUIHelper m_hdrpGlobalShadowMultiplier = null;
+        private PhotoModeUIHelper m_hdrpGlobalFogMultiplier = null;
+        private PhotoModeUIHelper m_hdrpGlobalSunMultiplier = null;
+#endif
 
         #endregion
         #region Water Settings
@@ -398,6 +415,9 @@ namespace Gaia
         private void Instantiate()
         {
             m_instance = this;
+#if FLORA_PRESENT
+            m_detailManager = FindObjectOfType<FloraGlobalManager>();
+#endif
             if (UIConfiguration.Instance != null)
             {
                 m_renderPipeline = UIConfiguration.RenderPipeline;
@@ -414,6 +434,12 @@ namespace Gaia
 
             m_fpsNextPeriod = Time.realtimeSinceStartup + m_cMeasurePeriod;
             m_lastPlayerCamera = GaiaUtils.GetCamera();
+            
+            if (GaiaUtils.CheckIfSceneProfileExists(out m_sceneProfile))
+            {
+                m_lastTerrainCullingValue = m_sceneProfile.m_terrainCullingEnabled;
+            }
+
             if (m_lastPlayerCamera != null)
             {
                 if (!m_lastPlayerCamera.name.Contains("FlyCam"))
@@ -473,6 +499,7 @@ namespace Gaia
                         break;
                     }
                 }
+                AssignFloraCamera(m_targetCamera);
             }
 
 #if GAIA_PRO_PRESENT
@@ -491,10 +518,6 @@ namespace Gaia
             m_atmosphere = PW_VFX_Atmosphere.Instance;
 #endif
             m_gaiaUI = UIConfiguration.Instance;
-            if (GaiaUtils.CheckIfSceneProfileExists())
-            {
-                m_sceneProfile = GaiaGlobal.Instance.SceneProfile;
-            }
 
             m_activeTerrain = TerrainHelper.GetActiveTerrain();
 
@@ -508,6 +531,10 @@ namespace Gaia
             SetupSystemMetrics();
             Setup();
 
+            if (m_sceneProfile != null)
+            {
+                m_sceneProfile.m_terrainCullingEnabled = m_lastTerrainCullingValue;
+            }
             PhotoModeButtonManager buttonManager = FindObjectOfType<PhotoModeButtonManager>();
             if (buttonManager != null)
             {
@@ -520,38 +547,62 @@ namespace Gaia
         private void ProcessUpdate()
         {
             // measure average frames per second
-            m_fpsAccumulator++;
-            if (Time.realtimeSinceStartup > m_fpsNextPeriod)
+            if (m_photoModeValues.m_showFPS)
             {
-                m_currentFps = m_fpsAccumulator / m_cMeasurePeriod;
-                //m_currentMs = 1000f / m_currentFps;
-                m_fpsAccumulator = 0f;
-                m_fpsNextPeriod = Time.realtimeSinceStartup + m_cMeasurePeriod;
-                if (m_fpsText != null)
+                m_fpsAccumulator++;
+                if (Time.realtimeSinceStartup > m_fpsNextPeriod)
                 {
-                    if (m_currentFps < 30)
+                    m_currentFps = m_fpsAccumulator / m_cMeasurePeriod;
+                    //m_currentMs = 1000f / m_currentFps;
+                    m_fpsAccumulator = 0f;
+                    m_fpsNextPeriod = Time.realtimeSinceStartup + m_cMeasurePeriod;
+                    if (m_fpsText != null)
                     {
-                        m_fpsText.color = m_30FPSColor;
-                    }
-                    else if (m_currentFps < 60)
-                    {
-                        m_fpsText.color = m_60FPSColor;
-                    }
-                    else if (m_currentFps < 120)
-                    {
-                        m_fpsText.color = m_120FPSColor;
-                    }
-                    else
-                    {
-                        m_fpsText.color = m_maxFPSColor;
-                    }
+                        if (m_currentFps < 30)
+                        {
+                            m_fpsText.color = m_30FPSColor;
+                        }
+                        else if (m_currentFps < 60)
+                        {
+                            m_fpsText.color = m_60FPSColor;
+                        }
+                        else if (m_currentFps < 120)
+                        {
+                            m_fpsText.color = m_120FPSColor;
+                        }
+                        else
+                        {
+                            m_fpsText.color = m_maxFPSColor;
+                        }
 
-                    m_fpsText.text = string.Format(m_cFormat, m_currentFps);
+                        m_fpsText.text = string.Format(m_cFormat, m_currentFps);
+                    }
                 }
             }
 
             //Update the UI
             UpdateUI();
+            GaiaAPI.SaveImportantPhotoModeValues(m_photoModeValues, m_renderPipeline);
+        }
+        /// <summary>
+        /// Assigns the camera for Flora Tiles
+        /// </summary>
+        /// <param name="camera"></param>
+        private void AssignFloraCamera(Camera camera)
+        {
+#if FLORA_PRESENT
+            if (m_detailManager != null)
+            {
+                FloraTerrainTile[] tiles = FindObjectsOfType<FloraTerrainTile>();
+                if (tiles.Length > 0)
+                {
+                    foreach (FloraTerrainTile tile in tiles)
+                    {
+                        tile.DetailCamera = camera;
+                    }
+                }
+            }
+#endif
         }
         /// <summary>
         /// Loads the photo mode camera
@@ -600,6 +651,7 @@ namespace Gaia
                 {
                     if (m_lastPlayerCamera != null)
                     {
+                        AssignFloraCamera(m_lastPlayerCamera);
                         GaiaAPI.SetRuntimePlayerAndCamera(m_lastPlayerController, m_lastPlayerCamera, true);
                     }
                 }
@@ -733,7 +785,7 @@ namespace Gaia
             }
         }
 
-        #endregion
+#endregion
         #region Setup Functions
 
         /// <summary>
@@ -754,6 +806,10 @@ namespace Gaia
 #if GAIA_PRO_PRESENT
             m_weather = ProceduralWorldsGlobalWeather.Instance;
             m_pwWeatherPresent = m_weather != null;
+
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            m_hdrpTimeOfDay = HDRPTimeOfDay.Instance;
+#endif
 #endif
 
             if (m_screenShotter == null)
@@ -811,6 +867,7 @@ namespace Gaia
                     {
                         if (m_photoModeProfile != null)
                         {
+                            bool save = false;
                             if (m_photoModeProfile.m_everBeenSaved)
                             {
                                 if (m_photoModeProfile.LastRenderPipeline == m_renderPipeline)
@@ -820,14 +877,26 @@ namespace Gaia
                                     {
                                         if (values.m_selectedGaiaLightingProfile == m_sceneProfile.m_selectedLightingProfileValuesIndex)
                                         {
-                                            m_photoModeValues.Load(values);
-                                            RefreshAllUI();
+                                            if (values.m_lastSceneName == SceneManager.GetActiveScene().name)
+                                            {
+                                                m_photoModeValues.Load(values);
+                                                RefreshAllUI();
+                                            }
+                                            else
+                                            {
+                                                save = true;
+                                            }
                                         }
                                         else
                                         {
-                                            GaiaAPI.SavePhotoModeValues(m_photoModeValues, m_renderPipeline);
+                                            save = true;
                                         }
                                     }
+                                }
+
+                                if (save)
+                                {
+                                    GaiaAPI.SavePhotoModeValues(m_photoModeValues, m_renderPipeline);
                                 }
                             }
                         }
@@ -958,20 +1027,33 @@ namespace Gaia
                 return;
             }
 
-            GaiaAPI.SavePhotoModeValues(m_photoModeValues, m_renderPipeline);
             if (m_sceneProfile.m_selectedLightingProfileValuesIndex != m_savedLightingProfileIndex)
             {
                 SaveStartValues();
             }
 
 #if GAIA_PRO_PRESENT
-            bool skyIsSet = m_sceneProfile.m_lightingProfiles[m_sceneProfile.m_selectedLightingProfileValuesIndex].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky;
-            if (skyIsSet != m_pwWeatherPresent)
+            if (m_sceneProfile.m_lightSystemMode == GaiaConstants.GlobalSystemMode.Gaia)
             {
-                m_pwWeatherPresent = skyIsSet;
-                m_weather = ProceduralWorldsGlobalWeather.Instance;
-                SetMetricsParent(false, m_transformSettings.m_photoMode);
-                Setup();
+                bool skyIsSet =
+                    m_sceneProfile.m_lightingProfiles[m_sceneProfile.m_selectedLightingProfileValuesIndex]
+                        .m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky;
+                if (skyIsSet != m_pwWeatherPresent && m_renderPipeline != GaiaConstants.EnvironmentRenderer.HighDefinition)
+                {
+                    m_pwWeatherPresent = skyIsSet;
+                    m_weather = ProceduralWorldsGlobalWeather.Instance;
+                    SetMetricsParent(false, m_transformSettings.m_photoMode);
+                    Setup();
+                }
+                else
+                {
+                    if (skyIsSet != m_hdrpTimeOfDay)
+                    {
+                        m_hdrpTimeOfDay = skyIsSet;
+                        SetMetricsParent(false, m_transformSettings.m_photoMode);
+                        Setup();
+                    }
+                }
             }
 
             if (m_pwWeatherPresent)
@@ -993,6 +1075,22 @@ namespace Gaia
                         SetGaiaTime(t);
                     }
                 }
+            }
+            else if (m_hdrpTimeOfDay)
+            {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float autoUpdateValue);
+                if (m_photoModeValues.m_gaiaTimeOfDayEnabled != autoUpdate)
+                {
+                    SetGaiaTimeOfDayEnabled(PhotoModeUtils.ConvertBoolToInt(autoUpdate));
+                }
+                if (m_photoModeValues.m_gaiaTimeScale != autoUpdateValue)
+                {
+                    SetGaiaTimeScale(autoUpdateValue);
+                }
+                SetGaiaTime(HDRPTimeOfDayAPI.GetCurrentTime());
+                m_gaiaTime.SyncHDRPTimeOfDay();
+#endif
             }
 
             if (m_weather != null)
@@ -1025,6 +1123,11 @@ namespace Gaia
                 }
             }
 #endif
+            if (m_gaiaUI.m_loadFromLastSaved)
+            {
+                GaiaAPI.SavePhotoModeValues(m_photoModeValues, m_renderPipeline);
+            }
+
             m_isUpdatingValues = false;
         }
         /// <summary>
@@ -1094,13 +1197,14 @@ namespace Gaia
 
                     m_photoModeValues.m_screenshotImageFormat = (int)m_screenShotter.m_imageFormat;
 
-                    GaiaAPI.GetPhotoModeSettings(out m_gaiaUI.m_loadFromLastSaved, out m_gaiaUI.m_resetOnDisable, out m_gaiaUI.m_showReticule, out m_gaiaUI.m_showRuleOfThirds, out m_gaiaUI.m_enablePhotoMode);
+                    GaiaAPI.GetPhotoModeSettings(out m_photoModeValues.m_loadSavedSettings, out m_photoModeValues.m_revertOnDisabled, out m_photoModeValues.m_showReticle, out m_photoModeValues.m_showRuleOfThirds, out m_gaiaUI.m_enablePhotoMode);
 
                     PhotoModeUtils.CreateTitleHeader(ref m_photoModeHeader, m_transformSettings.m_photoMode, "General Settings");
                     PhotoModeUtils.CreateDropdown(ref m_screenshotResolution, m_transformSettings.m_photoMode, "Screenshot Res.", m_photoModeValues.m_screenshotResolution, SetUnityScreenshotResolution, m_photoModeValues.GetScreenResolutionOptions(), true);
                     PhotoModeUtils.CreateDropdown(ref m_screenshotImageFormat, m_transformSettings.m_photoMode, "Screenshot Format", m_photoModeValues.m_screenshotImageFormat, SetUnityScreenshotImageFormat, m_photoModeValues.GetScreenshotFormatOptions(), true);
-                    PhotoModeUtils.CreateDropdown(ref m_showReticule, m_transformSettings.m_photoMode, "Show Reticule", m_photoModeValues.m_revertOnDisabled, SetPhotoModeShowReticule, m_photoModeValues.GetDefaultToggleOptions(), true);
-                    PhotoModeUtils.CreateDropdown(ref m_showRuleOfThirds, m_transformSettings.m_photoMode, "Show Rule Of Thirds", m_photoModeValues.m_revertOnDisabled, SetPhotoModeShowRuleOfThirds, m_photoModeValues.GetDefaultToggleOptions(), true);
+                    PhotoModeUtils.CreateDropdown(ref m_showFPS, m_transformSettings.m_photoMode, "Show FPS", m_photoModeValues.m_showFPS, SetPhotoModeShowFPS, m_photoModeValues.GetDefaultToggleOptions(), true);
+                    PhotoModeUtils.CreateDropdown(ref m_showReticule, m_transformSettings.m_photoMode, "Show Reticule", m_photoModeValues.m_showReticle, SetPhotoModeShowReticule, m_photoModeValues.GetDefaultToggleOptions(), true);
+                    PhotoModeUtils.CreateDropdown(ref m_showRuleOfThirds, m_transformSettings.m_photoMode, "Show Rule Of Thirds", m_photoModeValues.m_showRuleOfThirds, SetPhotoModeShowRuleOfThirds, m_photoModeValues.GetDefaultToggleOptions(), true);
                     PhotoModeUtils.CreateDropdown(ref m_loadSavedSettings, m_transformSettings.m_photoMode, "Load Last Settings", m_photoModeValues.m_loadSavedSettings, SetPhotoModeLoadSettings, m_photoModeValues.GetDefaultToggleOptions(), true);
                     PhotoModeUtils.CreateDropdown(ref m_resetPhotoModeOnDisable, m_transformSettings.m_photoMode, "Reset When Closed", m_photoModeValues.m_revertOnDisabled, SetPhotoModeRevertOnDisabledSettings, m_photoModeValues.GetDefaultToggleOptions(), true);
                     //SetMetricsParent(true, m_transformSettings.m_photoMode);
@@ -1317,7 +1421,7 @@ namespace Gaia
                     GaiaAPI.GetUnderwaterFogDensity(out m_photoModeValues.m_gaiaUnderwaterFogDensity, out m_photoModeValues.m_gaiaUnderwaterFogDistance);
                     m_photoModeValues.m_gaiaUnderwaterVolume = GaiaAPI.GetUnderwaterVolume();
                     PhotoModeUtils.CreateTitleHeader(ref m_gaiaUnderwaterheader, m_transformSettings.m_water, "Underwater Settings");
-                    PhotoModeUtils.CreateColorField(ref m_gaiaUnderwaterFogColor, m_transformSettings.m_water, "Extra Underwater Fog Color", m_photoModeValues.m_gaiaUnderwaterFogColor, OpenColorPickerUnderwaterFogColor, true);
+                    PhotoModeUtils.CreateColorField(ref m_gaiaUnderwaterFogColor, m_transformSettings.m_water, "Extra Underwater Fog Color", m_photoModeValues.m_gaiaUnderwaterFogColor, false, OpenColorPickerUnderwaterFogColor, true);
                     switch (m_renderPipeline)
                     {
                         case GaiaConstants.EnvironmentRenderer.HighDefinition:
@@ -1639,8 +1743,15 @@ namespace Gaia
                         default:
                         {
                             PhotoModeUtils.CreateDropdown(ref m_terrainDrawInstanced, m_transformSettings.m_terrain, "Draw Instanced", m_photoModeValues.m_drawInstanced, SetTerrainDrawInstanced, m_photoModeValues.GetDefaultToggleOptions(), true);
-                            PhotoModeUtils.CreateSlider(ref m_terrainDetailDensity, m_transformSettings.m_terrain, "Detail Density", m_photoModeValues.m_terrainDetailDensity, m_minAndMaxValues.m_terrainDetailDensity.x, m_minAndMaxValues.m_terrainDetailDensity.y, SetTerrainDetailDensity, SetTerrainDetailDensity, true);
-                            PhotoModeUtils.CreateSlider(ref m_terrainDetailDistance, m_transformSettings.m_terrain, "Detail Distance", m_photoModeValues.m_terrainDetailDistance, m_minAndMaxValues.m_terrainDetailDistance.x, m_minAndMaxValues.m_terrainDetailDistance.y, SetTerrainDetailDistance, SetTerrainDetailDistance, true);
+#if FLORA_PRESENT
+                            if (m_detailManager == null)
+                            {
+#endif
+                                PhotoModeUtils.CreateSlider(ref m_terrainDetailDensity, m_transformSettings.m_terrain, "Detail Density", m_photoModeValues.m_terrainDetailDensity, m_minAndMaxValues.m_terrainDetailDensity.x, m_minAndMaxValues.m_terrainDetailDensity.y, SetTerrainDetailDensity, SetTerrainDetailDensity, true);
+                                PhotoModeUtils.CreateSlider(ref m_terrainDetailDistance, m_transformSettings.m_terrain, "Detail Distance", m_photoModeValues.m_terrainDetailDistance, m_minAndMaxValues.m_terrainDetailDistance.x, m_minAndMaxValues.m_terrainDetailDistance.y, SetTerrainDetailDistance, SetTerrainDetailDistance, true);
+#if FLORA_PRESENT
+                            }
+#endif
                             PhotoModeUtils.CreateSlider(ref m_terrainHeightResolution, m_transformSettings.m_terrain, "Pixel Error", m_photoModeValues.m_terrainPixelError, m_minAndMaxValues.m_terrainPixelError.x, m_minAndMaxValues.m_terrainPixelError.y, SetTerrainHeightResolution, SetTerrainHeightResolution, true);
                             PhotoModeUtils.CreateSlider(ref m_terrainTextureDistance, m_transformSettings.m_terrain, "Base Map Distance", m_photoModeValues.m_terrainBasemapDistance, m_minAndMaxValues.m_terrainBasemapDistance.x, m_minAndMaxValues.m_terrainBasemapDistance.y, SetTerrainTextureDistance, SetTerrainTextureDistance, true);
                             break;
@@ -1661,10 +1772,27 @@ namespace Gaia
                     m_sceneProfile = GaiaGlobal.Instance.SceneProfile;
 
 #if GAIA_PRO_PRESENT
-                    GaiaTimeOfDay tod = m_sceneProfile.m_gaiaTimeOfDay;
-                    m_photoModeValues.m_gaiaTimeOfDayEnabled = tod.m_todEnabled;
-                    m_photoModeValues.m_gaiaTime = tod.m_todHour + (tod.m_todMinutes / 60f);
-                    m_photoModeValues.m_gaiaTimeScale = tod.m_todDayTimeScale;
+                    if (!m_hdrpTimeOfDay)
+                    {
+                        GaiaTimeOfDay tod = m_sceneProfile.m_gaiaTimeOfDay;
+                        m_photoModeValues.m_gaiaTimeOfDayEnabled = tod.m_todEnabled;
+                        m_photoModeValues.m_gaiaTime = tod.m_todHour + (tod.m_todMinutes / 60f);
+                        m_photoModeValues.m_gaiaTimeScale = tod.m_todDayTimeScale;
+                    }
+                    else
+                    {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                        HDRPTimeOfDay hdrpTimeOfDay = HDRPTimeOfDayAPI.GetTimeOfDay();
+                        m_photoModeValues.m_gaiaTimeOfDayEnabled = hdrpTimeOfDay.m_enableTimeOfDaySystem;
+                        m_photoModeValues.m_gaiaTime = hdrpTimeOfDay.TimeOfDay;
+                        m_photoModeValues.m_gaiaTimeScale = hdrpTimeOfDay.m_timeOfDayMultiplier;
+                        m_photoModeValues.m_sunRotation = hdrpTimeOfDay.DirectionY;
+
+                        m_photoModeValues.m_globalLightIntensityMultiplier = HDRPTimeOfDayAPI.GetGlobalSunMultiplier();
+                        m_photoModeValues.m_globalFogDensityMultiplier = HDRPTimeOfDayAPI.GetGlobalFogMultiplier();
+                        m_photoModeValues.m_globalShadowDistanceMultiplier = HDRPTimeOfDayAPI.GetGlobalShadowMultiplier();
+#endif
+                    }
 #endif
                 }
 
@@ -1677,7 +1805,7 @@ namespace Gaia
                 }
                 else
                 {
-                    if (m_mainSunLight != null)
+                    if (m_mainSunLight != null && !m_hdrpTimeOfDay)
                     {
                         m_photoModeValues.m_sunRotation = m_mainSunLight.transform.eulerAngles.y;
                         m_photoModeValues.m_sunPitch = m_mainSunLight.transform.eulerAngles.x;
@@ -1690,7 +1818,7 @@ namespace Gaia
                     m_photoModeValues.m_sunPitch = m_mainSunLight.transform.eulerAngles.x;
                 }
 #endif
-                GaiaAPI.GetFogSettings(out m_photoModeValues.m_fogMode, out m_photoModeValues.m_fogColor, out m_photoModeValues.m_fogDensity, out m_photoModeValues.m_fogStart, out m_photoModeValues.m_fogEnd);
+                GaiaAPI.GetFogSettings(out m_photoModeValues.m_fogMode, out m_photoModeValues.m_fogColor, out m_photoModeValues.m_fogDensity, out m_photoModeValues.m_fogStart, out m_photoModeValues.m_fogEnd, out m_photoModeValues.m_fogOverride);
                 m_photoModeValues.m_ambientIntensity = GaiaAPI.GetAmbientIntensity();
 
                 if (m_pwWeatherPresent && m_renderPipeline != GaiaConstants.EnvironmentRenderer.HighDefinition)
@@ -1704,7 +1832,7 @@ namespace Gaia
                     PhotoModeUtils.CreateSlider(ref m_gaiaTimeScale, m_transformSettings.m_lighting, "Time Scale", m_photoModeValues.m_gaiaTimeScale, m_minAndMaxValues.m_gaiaTimeScale.x, m_minAndMaxValues.m_gaiaTimeScale.y, SetGaiaTimeScale, SetGaiaTimeScale, true);
 
                     PhotoModeUtils.CreateTitleHeader(ref m_lightingFogHeader, m_transformSettings.m_lighting, "Fog Settings");
-                    PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Extra Fog Color", m_photoModeValues.m_fogColor, OpenColorPickerFog, true);
+                    PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Extra Fog Color", m_photoModeValues.m_fogColor, false, OpenColorPickerFog, true);
                     PhotoModeUtils.CreateSlider(ref m_gaiaAdditionalLinearFog, m_transformSettings.m_lighting, "Extra Fog Distance", m_photoModeValues.m_gaiaAdditionalLinearFog, m_minAndMaxValues.m_gaiaAdditionalLinearFog.x, m_minAndMaxValues.m_gaiaAdditionalLinearFog.y, SetAdditionalLinearFog, SetAdditionalLinearFog, true);
                     PhotoModeUtils.CreateSlider(ref m_gaiaAdditionalExponentialFog, m_transformSettings.m_lighting, "Extra Fog Distance", m_photoModeValues.m_gaiaAdditionalExponentialFog, m_minAndMaxValues.m_gaiaAdditionalExponentialFog.x, m_minAndMaxValues.m_gaiaAdditionalExponentialFog.y, SetAdditionalExponentialFog, SetAdditionalExponentialFog, true);
                     if (RenderSettings.fogMode == FogMode.Linear)
@@ -1748,67 +1876,93 @@ namespace Gaia
                         case GaiaConstants.EnvironmentRenderer.HighDefinition:
                         {
 #if HDPipeline
-                            m_unitySkyboxPresent = GaiaAPI.GetUnityHDRISkyboxHDRP(out m_photoModeValues.m_skyboxRotation, out m_photoModeValues.m_skyboxExposure);
-                            GaiaAPI.GetUnityFogHDRP(out m_photoModeValues.m_fogEnd, out m_photoModeValues.m_fogColor);
-                            GaiaAPI.GetHDRPDensityVolume(out m_photoModeValues.m_densityVolumeAlbedoColor, out m_photoModeValues.m_densityVolumeFogDistance, out m_photoModeValues.m_densityVolumeEffectType, out m_photoModeValues.m_densityVolumeTilingResolution);
-
-                            PhotoModeUtils.CreateTitleHeader(ref m_lightingAmbientHeader, m_transformSettings.m_lighting, "Ambient Settings");
-                            PhotoModeUtils.CreateSlider(ref m_gaiaAmbientIntensity, m_transformSettings.m_lighting, "Ambient Intensity", m_photoModeValues.m_ambientIntensity, m_minAndMaxValues.m_ambientIntensity.x, m_minAndMaxValues.m_ambientIntensity.y, SetAmbientIntensity, SetAmbientIntensity, true);
-                            if (m_mainSunLight)
+                            if (m_hdrpTimeOfDay)
                             {
-                                GaiaAPI.GetUnitySunSettings(out m_photoModeValues.m_sunIntensity, out m_photoModeValues.m_sunColor, out m_photoModeValues.m_sunKelvinValue, m_mainSunLight);
-                                PhotoModeUtils.CreateTitleHeader(ref m_lightingSunHeader, m_transformSettings.m_lighting, "Sun Settings");
-                                PhotoModeUtils.CreateDropdown(ref m_gaiaSunOverride, m_transformSettings.m_lighting, "Override Sun", m_photoModeValues.m_sunOverride, SetGaiaSunOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
+#if HDPipeline && UNITY_2021_2_OR_NEWER && GAIA_PRO_PRESENT
+                                PhotoModeUtils.CreateTitleHeader(ref m_lightingGeneralHeader, m_transformSettings.m_lighting, "Time Of Day Settings");
+                                PhotoModeUtils.CreateSlider(ref m_gaiaTime, m_transformSettings.m_lighting, "Current Time", m_photoModeValues.m_gaiaTime, m_minAndMaxValues.m_gaiaTime.x, m_minAndMaxValues.m_gaiaTime.y, SetGaiaTime, SetGaiaTime, true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSunAngle, m_transformSettings.m_lighting, "Sun Rotation", m_photoModeValues.m_sunRotation, m_minAndMaxValues.m_sunRotation.x, m_minAndMaxValues.m_sunRotation.y, SetGaiaSunAngle, SetGaiaSunAngle, true);
-                                PhotoModeUtils.CreateSlider(ref m_gaiaSunPitch, m_transformSettings.m_lighting, "Sun Pitch", m_photoModeValues.m_sunPitch, m_minAndMaxValues.m_sunPitch.x, m_minAndMaxValues.m_sunPitch.y, SetGaiaSunPitch, SetGaiaSunPitch, true);
-                                PhotoModeUtils.CreateSlider(ref m_gaiaSunIntensity, m_transformSettings.m_lighting, "Sun Intensity", m_photoModeValues.m_sunIntensity, m_minAndMaxValues.m_sunIntensityHDRP.x, m_minAndMaxValues.m_sunIntensityHDRP.y, SetGaiaSunIntensity, SetGaiaSunIntensity, true);
-                                PhotoModeUtils.CreateSlider(ref m_gaiaSunKelvin, m_transformSettings.m_lighting, "Sun Color (Kelvin)", m_photoModeValues.m_sunKelvinValue, m_minAndMaxValues.m_sunKelvinValue.x, m_minAndMaxValues.m_sunKelvinValue.y, SetGaiaSunKelvin, SetGaiaSunKelvin, true);
+                                PhotoModeUtils.CreateDropdown(ref m_gaiaTimeOfDayEnabled, m_transformSettings.m_lighting, "Time of Day Enabled", m_photoModeValues.m_gaiaTimeOfDayEnabled, SetGaiaTimeOfDayEnabled, m_photoModeValues.GetDefaultToggleOptions(), true);
+                                PhotoModeUtils.CreateSlider(ref m_gaiaTimeScale, m_transformSettings.m_lighting, "Time Scale", m_photoModeValues.m_gaiaTimeScale, m_minAndMaxValues.m_gaiaTimeScale.x, m_minAndMaxValues.m_gaiaTimeScale.y, SetGaiaTimeScale, SetGaiaTimeScale, true);
+
+                                PhotoModeUtils.CreateTitleHeader(ref m_lightingGeneralHeader, m_transformSettings.m_lighting, "Global Settings");
+                                PhotoModeUtils.CreateSlider(ref m_hdrpGlobalSunMultiplier, m_transformSettings.m_lighting, "Light Intensity Multiplier", m_photoModeValues.m_globalLightIntensityMultiplier, 0.001f, 5f, SetGlobalSunIntensity, SetGlobalSunIntensity, true);
+                                PhotoModeUtils.CreateSlider(ref m_hdrpGlobalFogMultiplier, m_transformSettings.m_lighting, "Fog Density Multiplier", m_photoModeValues.m_globalFogDensityMultiplier, 0.001f, 5f, SetGlobalFogDensity, SetGlobalFogDensity, true);
+                                PhotoModeUtils.CreateSlider(ref m_hdrpGlobalShadowMultiplier, m_transformSettings.m_lighting, "Shadow Distance Multiplier", m_photoModeValues.m_globalShadowDistanceMultiplier, 0.001f, 5f, SetGlobalShadowDistance, SetGlobalShadowDistance, true);
+
+                                if (!m_photoModeValues.m_gaiaTimeOfDayEnabled)
+                                {
+                                    if (m_gaiaTimeScale != null)
+                                    {
+                                        m_gaiaTimeScale.gameObject.SetActive(false);
+                                    }
+                                }
+#endif
                             }
-
-                            //Fog
-                            PhotoModeUtils.CreateTitleHeader(ref m_lightingFogHeader, m_transformSettings.m_lighting, "Fog Settings");
-                            PhotoModeUtils.CreateDropdown(ref m_gaiaFogOverride, m_transformSettings.m_lighting, "Override Fog", m_photoModeValues.m_fogOverride, SetGaiaFogOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
-                            PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Fog Color", m_photoModeValues.m_fogColor, OpenColorPickerFog, true);
-                            PhotoModeUtils.CreateSlider(ref m_gaiaFogEnd, m_transformSettings.m_lighting, "Fog Distance", m_photoModeValues.m_fogEnd, m_minAndMaxValues.m_fogEndHDRP.x, m_minAndMaxValues.m_fogEndHDRP.y, SetGaiaFogEnd, SetGaiaFogEnd, true);
-
-                            //Sky
-                            if (m_unitySkyboxPresent)
+                            else
                             {
-                                PhotoModeUtils.CreateTitleHeader(ref m_lightingSkyboxHeader, m_transformSettings.m_lighting, "Skybox Settings");
-                                PhotoModeUtils.CreateDropdown(ref m_gaiaSkyboxOverride, m_transformSettings.m_lighting, "Override Skybox", m_photoModeValues.m_skyboxOverride, SetGaiaSkyboxOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
-                                PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxRotation, m_transformSettings.m_lighting, "Skybox Rotation", m_photoModeValues.m_skyboxRotation, m_minAndMaxValues.m_skyboxRotation.x, m_minAndMaxValues.m_skyboxRotation.y, SetGaiaSkyboxRotation, SetGaiaSkyboxRotation, true);
-                                PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxExposure, m_transformSettings.m_lighting, "Skybox Exposure", m_photoModeValues.m_skyboxExposure, m_minAndMaxValues.m_skyboxExposureHDRP.x, m_minAndMaxValues.m_skyboxExposureHDRP.y, SetGaiaSkyboxExposure, SetGaiaSkyboxExposure, true);
-                            }
+                                m_unitySkyboxPresent = GaiaAPI.GetUnityHDRISkyboxHDRP(out m_photoModeValues.m_skyboxRotation, out m_photoModeValues.m_skyboxExposure);
+                                GaiaAPI.GetUnityFogHDRP(out m_photoModeValues.m_fogEnd, out m_photoModeValues.m_fogColor);
+                                GaiaAPI.GetHDRPDensityVolume(out m_photoModeValues.m_densityVolumeAlbedoColor, out m_photoModeValues.m_densityVolumeFogDistance, out m_photoModeValues.m_densityVolumeEffectType, out m_photoModeValues.m_densityVolumeTilingResolution, out m_photoModeValues.m_overrideDensityVolume);
 
-                            //Density Volume
-                            PhotoModeUtils.CreateTitleHeader(ref m_densityVolumeHeader, m_transformSettings.m_lighting, "Density Volume Settings");
-                            PhotoModeUtils.CreateDropdown(ref m_overrideDensityVolume, m_transformSettings.m_lighting, "Override Density Volume", m_photoModeValues.m_overrideDensityVolume, SetOverrideDensityVolume, m_photoModeValues.GetDefaultToggleOptions(), true);
-                            PhotoModeUtils.CreateDropdown(ref m_densityVolumeEffectType, m_transformSettings.m_lighting, "Effect Type", m_photoModeValues.m_densityVolumeEffectType, SetDensityVolumeEffectType, m_photoModeValues.GetDensityVolumeEffectTypeOptions(), true);
-                            PhotoModeUtils.CreateDropdown(ref m_densityVolumeTilingResolution, m_transformSettings.m_lighting, "Tiling Resolution", m_photoModeValues.m_densityVolumeTilingResolution, SetDensityVolumeTilingResolution, m_photoModeValues.GetDensityVolumeTilingResolutionOptions(), true);
-                            PhotoModeUtils.CreateColorField(ref m_densityVolumeAlbedoColor, m_transformSettings.m_lighting, "Density Albedo Color", m_photoModeValues.m_densityVolumeAlbedoColor, OpenColorPickerDensityAlbedo, true);
-                            PhotoModeUtils.CreateSlider(ref m_densityVolumeFogDistance, m_transformSettings.m_lighting, "Fog Distance", m_photoModeValues.m_densityVolumeFogDistance, 0.01f, 1500f, SetDensityVolumeFogDistance, SetDensityVolumeFogDistance, true);
+                                PhotoModeUtils.CreateTitleHeader(ref m_lightingAmbientHeader, m_transformSettings.m_lighting, "Ambient Settings");
+                                PhotoModeUtils.CreateSlider(ref m_gaiaAmbientIntensity, m_transformSettings.m_lighting, "Ambient Intensity", m_photoModeValues.m_ambientIntensity, m_minAndMaxValues.m_ambientIntensity.x, m_minAndMaxValues.m_ambientIntensity.y, SetAmbientIntensity, SetAmbientIntensity, true);
+                                if (m_mainSunLight)
+                                {
+                                    GaiaAPI.GetUnitySunSettings(out m_photoModeValues.m_sunIntensity, out m_photoModeValues.m_sunColor, out m_photoModeValues.m_sunKelvinValue, out m_photoModeValues.m_sunOverride, m_mainSunLight);
+                                    PhotoModeUtils.CreateTitleHeader(ref m_lightingSunHeader, m_transformSettings.m_lighting, "Sun Settings");
+                                    PhotoModeUtils.CreateDropdown(ref m_gaiaSunOverride, m_transformSettings.m_lighting, "Override Sun", m_photoModeValues.m_sunOverride, SetGaiaSunOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSunAngle, m_transformSettings.m_lighting, "Sun Rotation", m_photoModeValues.m_sunRotation, m_minAndMaxValues.m_sunRotation.x, m_minAndMaxValues.m_sunRotation.y, SetGaiaSunAngle, SetGaiaSunAngle, true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSunPitch, m_transformSettings.m_lighting, "Sun Pitch", m_photoModeValues.m_sunPitch, m_minAndMaxValues.m_sunPitch.x, m_minAndMaxValues.m_sunPitch.y, SetGaiaSunPitch, SetGaiaSunPitch, true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSunIntensity, m_transformSettings.m_lighting, "Sun Intensity", m_photoModeValues.m_sunIntensity, m_minAndMaxValues.m_sunIntensityHDRP.x, m_minAndMaxValues.m_sunIntensityHDRP.y, SetGaiaSunIntensity, SetGaiaSunIntensity, true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSunKelvin, m_transformSettings.m_lighting, "Sun Color (Kelvin)", m_photoModeValues.m_sunKelvinValue, m_minAndMaxValues.m_sunKelvinValue.x, m_minAndMaxValues.m_sunKelvinValue.y, SetGaiaSunKelvin, SetGaiaSunKelvin, true);
+                                }
 
-                            if (!m_photoModeValues.m_overrideDensityVolume)
-                            {
-                                if (m_densityVolumeAlbedoColor != null)
+                                //Fog
+                                PhotoModeUtils.CreateTitleHeader(ref m_lightingFogHeader, m_transformSettings.m_lighting, "Fog Settings");
+                                PhotoModeUtils.CreateDropdown(ref m_gaiaFogOverride, m_transformSettings.m_lighting, "Override Fog", m_photoModeValues.m_fogOverride, SetGaiaFogOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
+                                PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Fog Color", m_photoModeValues.m_fogColor, false, OpenColorPickerFog, true);
+                                PhotoModeUtils.CreateSlider(ref m_gaiaFogEnd, m_transformSettings.m_lighting, "Fog Distance", m_photoModeValues.m_fogEnd, m_minAndMaxValues.m_fogEndHDRP.x, m_minAndMaxValues.m_fogEndHDRP.y, SetGaiaFogEnd, SetGaiaFogEnd, true);
+
+                                //Sky
+                                if (m_unitySkyboxPresent)
                                 {
-                                    m_densityVolumeAlbedoColor.gameObject.SetActive(false);
+                                    PhotoModeUtils.CreateTitleHeader(ref m_lightingSkyboxHeader, m_transformSettings.m_lighting, "Skybox Settings");
+                                    PhotoModeUtils.CreateDropdown(ref m_gaiaSkyboxOverride, m_transformSettings.m_lighting, "Override Skybox", m_photoModeValues.m_skyboxOverride, SetGaiaSkyboxOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxRotation, m_transformSettings.m_lighting, "Skybox Rotation", m_photoModeValues.m_skyboxRotation, m_minAndMaxValues.m_skyboxRotation.x, m_minAndMaxValues.m_skyboxRotation.y, SetGaiaSkyboxRotation, SetGaiaSkyboxRotation, true);
+                                    PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxExposure, m_transformSettings.m_lighting, "Skybox Exposure", m_photoModeValues.m_skyboxExposure, m_minAndMaxValues.m_skyboxExposureHDRP.x, m_minAndMaxValues.m_skyboxExposureHDRP.y, SetGaiaSkyboxExposure, SetGaiaSkyboxExposure, true);
                                 }
-                                if (m_densityVolumeFogDistance != null)
+
+                                //Density Volume
+                                PhotoModeUtils.CreateTitleHeader(ref m_densityVolumeHeader, m_transformSettings.m_lighting, "Density Volume Settings");
+                                PhotoModeUtils.CreateDropdown(ref m_overrideDensityVolume, m_transformSettings.m_lighting, "Override Density Volume", m_photoModeValues.m_overrideDensityVolume, SetOverrideDensityVolume, m_photoModeValues.GetDefaultToggleOptions(), true);
+                                PhotoModeUtils.CreateDropdown(ref m_densityVolumeEffectType, m_transformSettings.m_lighting, "Effect Type", m_photoModeValues.m_densityVolumeEffectType, SetDensityVolumeEffectType, m_photoModeValues.GetDensityVolumeEffectTypeOptions(), true);
+                                PhotoModeUtils.CreateDropdown(ref m_densityVolumeTilingResolution, m_transformSettings.m_lighting, "Tiling Resolution", m_photoModeValues.m_densityVolumeTilingResolution, SetDensityVolumeTilingResolution, m_photoModeValues.GetDensityVolumeTilingResolutionOptions(), true);
+                                PhotoModeUtils.CreateColorField(ref m_densityVolumeAlbedoColor, m_transformSettings.m_lighting, "Density Albedo Color", m_photoModeValues.m_densityVolumeAlbedoColor, false, OpenColorPickerDensityAlbedo, true);
+                                PhotoModeUtils.CreateSlider(ref m_densityVolumeFogDistance, m_transformSettings.m_lighting, "Fog Distance", m_photoModeValues.m_densityVolumeFogDistance, 0.01f, 1500f, SetDensityVolumeFogDistance, SetDensityVolumeFogDistance, true);
+
+                                if (!m_photoModeValues.m_overrideDensityVolume)
                                 {
-                                    m_densityVolumeFogDistance.gameObject.SetActive(false);
-                                }
-                                if (m_densityVolumeEffectType != null)
-                                {
-                                    m_densityVolumeEffectType.gameObject.SetActive(false);
-                                }
-                                if (m_densityVolumeTilingResolution != null)
-                                {
-                                    m_densityVolumeTilingResolution.gameObject.SetActive(false);
+                                    if (m_densityVolumeAlbedoColor != null)
+                                    {
+                                        m_densityVolumeAlbedoColor.gameObject.SetActive(false);
+                                    }
+                                    if (m_densityVolumeFogDistance != null)
+                                    {
+                                        m_densityVolumeFogDistance.gameObject.SetActive(false);
+                                    }
+                                    if (m_densityVolumeEffectType != null)
+                                    {
+                                        m_densityVolumeEffectType.gameObject.SetActive(false);
+                                    }
+                                    if (m_densityVolumeTilingResolution != null)
+                                    {
+                                        m_densityVolumeTilingResolution.gameObject.SetActive(false);
+                                    }
                                 }
                             }
 #endif
-                            break;
+                                    break;
                         }
                         default:
                         {
@@ -1817,33 +1971,44 @@ namespace Gaia
                                 m_unitySkybox = RenderSettings.skybox;
                             }
 
-                            m_unitySkyboxPresent = GaiaAPI.GetUnityHDRISkybox(out m_photoModeValues.m_skyboxExposure, out m_photoModeValues.m_skyboxRotation, out m_photoModeValues.m_skyboxTint);
+                            m_unitySkyboxPresent = GaiaAPI.GetUnityHDRISkybox(out m_photoModeValues.m_skyboxExposure, out m_photoModeValues.m_skyboxRotation, out m_photoModeValues.m_skyboxTint, out m_photoModeValues.m_skyboxOverride);
                             if (m_photoModeValues.m_skyboxRotation < 0f)
                             {
                                 m_photoModeValues.m_skyboxRotation = Mathf.Abs(m_photoModeValues.m_skyboxRotation);
                             }
 
+                            GaiaAPI.GetAmbientColor(out m_photoModeValues.m_ambientSkyColor, out m_photoModeValues.m_ambientEquatorColor, out m_photoModeValues.m_ambientGroundColor);
+                            PhotoModeUtils.CreateTitleHeader(ref m_lightingAmbientHeader, m_transformSettings.m_lighting, "Ambient Settings");
                             if (RenderSettings.ambientMode == AmbientMode.Skybox)
                             {
-                                PhotoModeUtils.CreateTitleHeader(ref m_lightingAmbientHeader, m_transformSettings.m_lighting, "Ambient Settings");
                                 PhotoModeUtils.CreateSlider(ref m_gaiaAmbientIntensity, m_transformSettings.m_lighting, "Ambient Intensity", m_photoModeValues.m_ambientIntensity, m_minAndMaxValues.m_ambientIntensity.x, m_minAndMaxValues.m_ambientIntensity.y, SetAmbientIntensity, SetAmbientIntensity, true);
+                            }
+                            else if (RenderSettings.ambientMode == AmbientMode.Trilight)
+                            {
+                                PhotoModeUtils.CreateColorField(ref m_ambientSkyColor, m_transformSettings.m_lighting, "Sky Ambient Color", m_photoModeValues.m_ambientSkyColor, true, OpenColorPickerAmbientSkyColor, true);
+                                PhotoModeUtils.CreateColorField(ref m_ambientEquatorColor, m_transformSettings.m_lighting, "Equator Ambient Color", m_photoModeValues.m_ambientEquatorColor, true, OpenColorPickerAmbientEquatorColor, true);
+                                PhotoModeUtils.CreateColorField(ref m_ambientGroundColor, m_transformSettings.m_lighting, "Ground Ambient Color", m_photoModeValues.m_ambientGroundColor, true, OpenColorPickerAmbientGroundColor, true);
+                            }
+                            else
+                            {
+                                PhotoModeUtils.CreateColorField(ref m_ambientSkyColor, m_transformSettings.m_lighting, "Sky Ambient Color", m_photoModeValues.m_ambientSkyColor, true, OpenColorPickerAmbientSkyColor, true);
                             }
 
                             if (m_mainSunLight)
                             {
-                                GaiaAPI.GetUnitySunSettings(out m_photoModeValues.m_sunIntensity, out m_photoModeValues.m_sunColor, out m_photoModeValues.m_sunKelvinValue, m_mainSunLight);
+                                GaiaAPI.GetUnitySunSettings(out m_photoModeValues.m_sunIntensity, out m_photoModeValues.m_sunColor, out m_photoModeValues.m_sunKelvinValue, out m_photoModeValues.m_sunOverride, m_mainSunLight);
                                 PhotoModeUtils.CreateTitleHeader(ref m_lightingSunHeader, m_transformSettings.m_lighting, "Sun Settings");
                                 PhotoModeUtils.CreateDropdown(ref m_gaiaSunOverride, m_transformSettings.m_lighting, "Override Sun", m_photoModeValues.m_sunOverride, SetGaiaSunOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSunAngle, m_transformSettings.m_lighting, "Sun Rotation", m_photoModeValues.m_sunRotation, m_minAndMaxValues.m_sunRotation.x, m_minAndMaxValues.m_sunRotation.y, SetGaiaSunAngle, SetGaiaSunAngle, true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSunPitch, m_transformSettings.m_lighting, "Sun Pitch", m_photoModeValues.m_sunPitch, m_minAndMaxValues.m_sunPitch.x, m_minAndMaxValues.m_sunPitch.y, SetGaiaSunPitch, SetGaiaSunPitch, true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSunIntensity, m_transformSettings.m_lighting, "Sun Intensity", m_photoModeValues.m_sunIntensity, m_minAndMaxValues.m_sunIntensity.x, m_minAndMaxValues.m_sunIntensity.y, SetGaiaSunIntensity, SetGaiaSunIntensity, true);
-                                PhotoModeUtils.CreateColorField(ref m_gaiaSunColor, m_transformSettings.m_lighting, "Sun Color", m_photoModeValues.m_sunColor, OpenColorPickerSunColor, true);
+                                PhotoModeUtils.CreateColorField(ref m_gaiaSunColor, m_transformSettings.m_lighting, "Sun Color", m_photoModeValues.m_sunColor,false, OpenColorPickerSunColor, true);
                             }
 
                             PhotoModeUtils.CreateTitleHeader(ref m_lightingFogHeader, m_transformSettings.m_lighting, "Fog Settings");
                             PhotoModeUtils.CreateDropdown(ref m_gaiaFogOverride, m_transformSettings.m_lighting, "Override Fog", m_photoModeValues.m_fogOverride, SetGaiaFogOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
                             PhotoModeUtils.CreateDropdown(ref m_gaiaFogMode, m_transformSettings.m_lighting, "Fog Mode", (int)m_photoModeValues.m_fogMode, SetGaiaFogMode, m_photoModeValues.GetFogModeOptions(), true);
-                            PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Fog Color", m_photoModeValues.m_fogColor, OpenColorPickerFog, true);
+                            PhotoModeUtils.CreateColorField(ref m_gaiaFogColor, m_transformSettings.m_lighting, "Fog Color", m_photoModeValues.m_fogColor,false, OpenColorPickerFog, true);
                             PhotoModeUtils.CreateSlider(ref m_gaiaFogStart, m_transformSettings.m_lighting, "Fog Start", m_photoModeValues.m_fogStart, m_minAndMaxValues.m_fogStart.x, m_minAndMaxValues.m_fogStart.y, SetGaiaFogStart, SetGaiaFogStart, true);
                             PhotoModeUtils.CreateSlider(ref m_gaiaFogEnd, m_transformSettings.m_lighting, "Fog End", m_photoModeValues.m_fogEnd, m_minAndMaxValues.m_fogEnd.x, m_minAndMaxValues.m_fogEnd.y, SetGaiaFogEnd, SetGaiaFogEnd, true);
                             PhotoModeUtils.CreateSlider(ref m_gaiaFogDensity, m_transformSettings.m_lighting, "Fog Density", m_photoModeValues.m_fogDensity, m_minAndMaxValues.m_fogDensity.x, m_minAndMaxValues.m_fogDensity.y, SetGaiaFogDensity, SetGaiaFogDensity, true);
@@ -1884,13 +2049,13 @@ namespace Gaia
                                 PhotoModeUtils.CreateDropdown(ref m_gaiaSkyboxOverride, m_transformSettings.m_lighting, "Override Skybox", m_photoModeValues.m_skyboxOverride, SetGaiaSkyboxOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxRotation, m_transformSettings.m_lighting, "Skybox Rotation", m_photoModeValues.m_skyboxRotation, m_minAndMaxValues.m_skyboxRotation.x, m_minAndMaxValues.m_skyboxRotation.y, SetGaiaSkyboxRotation, SetGaiaSkyboxRotation, true);
                                 PhotoModeUtils.CreateSlider(ref m_gaiaSkyboxExposure, m_transformSettings.m_lighting, "Skybox Exposure", m_photoModeValues.m_skyboxExposure, m_minAndMaxValues.m_skyboxExposure.x, m_minAndMaxValues.m_skyboxExposure.y, SetGaiaSkyboxExposure, SetGaiaSkyboxExposure, true);
-                                PhotoModeUtils.CreateColorField(ref m_gaiaSkyboxTint, m_transformSettings.m_lighting, "Skybox Tint Color", m_photoModeValues.m_skyboxTint, OpenColorPickerSkyboxTint, true);
+                                PhotoModeUtils.CreateColorField(ref m_gaiaSkyboxTint, m_transformSettings.m_lighting, "Skybox Tint Color", m_photoModeValues.m_skyboxTint, false, OpenColorPickerSkyboxTint, true);
                             }
                             break;
                         }
                     }
 
-                    if (GaiaAPI.GetGaiaWindSettings(out m_photoModeValues.m_gaiaWindSpeed, out m_photoModeValues.m_gaiaWindDirection))
+                    if (GaiaAPI.GetGaiaWindSettings(out m_photoModeValues.m_gaiaWindSpeed, out m_photoModeValues.m_gaiaWindDirection, out m_photoModeValues.m_gaiaWindSettingsOverride))
                     {
                         PhotoModeUtils.CreateTitleHeader(ref m_gaiaWindHeader, m_transformSettings.m_lighting, "Wind Settings");
                         PhotoModeUtils.CreateDropdown(ref m_gaiaWindSettingsOverride, m_transformSettings.m_lighting, "Override Wind", m_photoModeValues.m_gaiaWindSettingsOverride, SetWindOverride, m_photoModeValues.GetDefaultToggleOptions(), true);
@@ -1942,7 +2107,7 @@ namespace Gaia
 
                     if (!m_photoModeValues.m_sunOverride)
                     {
-                        if (m_gaiaSunAngle != null)
+                        if (m_gaiaSunAngle != null && !m_hdrpTimeOfDay)
                         {
                             m_gaiaSunAngle.gameObject.SetActive(false);
                         }
@@ -2024,7 +2189,7 @@ namespace Gaia
                 PhotoModeUtils.CreateDropdown(ref m_gaiaWeatherEnabled, m_transformSettings.m_lighting, "Weather Enabled", m_photoModeValues.m_gaiaWeatherEnabled, SetGaiaWeatherEnabled, m_photoModeValues.GetDefaultToggleOptions(), true);
                 PhotoModeUtils.CreateButton(ref m_gaiaWeatherToggleRain, m_transformSettings.m_lighting, "Rain", "Start Rain", OnToggleRainClicked, true);
                 PhotoModeUtils.CreateButton(ref m_gaiaWeatherToggleSnow, m_transformSettings.m_lighting, "Snow", "Start Snow", OnToggleSnowClicked, true);
-                if (GaiaAPI.GetGaiaWindSettings(out m_photoModeValues.m_gaiaWindSpeed, out m_photoModeValues.m_gaiaWindDirection))
+                if (GaiaAPI.GetGaiaWindSettings(out m_photoModeValues.m_gaiaWindSpeed, out m_photoModeValues.m_gaiaWindDirection, out m_savedPhotoModeValues.m_gaiaWindSettingsOverride))
                 {
                     PhotoModeUtils.CreateTitleHeader(ref m_gaiaWindHeader, m_transformSettings.m_lighting, "Wind Settings");
                     PhotoModeUtils.CreateSlider(ref m_gaiaWindDirection, m_transformSettings.m_lighting, "Wind Direction", m_photoModeValues.m_gaiaWindDirection, m_minAndMaxValues.m_gaiaWindDirection.x, m_minAndMaxValues.m_gaiaWindDirection.y, SetGaiaWindDirection, SetGaiaWindDirection, true);
@@ -2064,7 +2229,6 @@ namespace Gaia
         private void CreateGrassSettingsUI()
         {
 #if FLORA_PRESENT
-            m_detailManager = FindObjectOfType<FloraGlobalManager>();
             if (m_detailManager != null)
             {
                 m_photoModeValues.m_globalGrassDensity = m_detailManager.Settings.ObjectGlobalDensityModifier;
@@ -2193,6 +2357,7 @@ namespace Gaia
                 case GaiaConstants.EnvironmentRenderer.HighDefinition:
                 {
 #if HDPipeline
+                    GaiaAPI.SetAutoFocusDepthOfField(true);
                     GaiaAPI.SetUnityHDRISkyboxHDRP(m_savedPhotoModeValues.m_skyboxRotation, m_savedPhotoModeValues.m_skyboxExposure);
                     GaiaAPI.SetUnityFogHDRP(m_savedPhotoModeValues.m_fogEnd, m_savedPhotoModeValues.m_fogColor);
                     GaiaAPI.SetHDRPCameraSettings(m_savedPhotoModeValues.m_cameraAperture, m_savedPhotoModeValues.m_cameraFocalLength, m_targetCamera);
@@ -2201,8 +2366,18 @@ namespace Gaia
                     GaiaAPI.SetHDRPLODBias(m_savedPhotoModeValues.m_lodBias, m_targetCamera);
                     GaiaAPI.SetHDRPWaterLODBias(m_savedPhotoModeValues.m_gaiaReflectionsLODBias);
                     GaiaAPI.SetHDRPDensityVolume(m_savedPhotoModeValues);
+                    GaiaAPI.SetHDRPAntiAliasingMode(m_savedPhotoModeValues.m_antiAliasing);
+                    GaiaAPI.SetHDRPAmbientIntensity(m_savedPhotoModeValues.m_ambientIntensity);
+                    GaiaAPI.SetHDRPDOFFocusMode(m_savedPhotoModeValues.m_savedDofFocusMode);
 #endif
-                    break;
+#if HDPipeline && UNITY_2021_2_OR_NEWER && GAIA_PRO_PRESENT
+                    HDRPTimeOfDayAPI.SetCurrentTime(m_savedPhotoModeValues.m_gaiaTime, false);
+                    HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(m_savedPhotoModeValues.m_gaiaTimeOfDayEnabled, m_savedPhotoModeValues.m_gaiaTimeScale);
+                    HDRPTimeOfDayAPI.SetGlobalSunMultiplier(m_savedPhotoModeValues.m_globalLightIntensityMultiplier);
+                    HDRPTimeOfDayAPI.SetGlobalFogMultiplier(m_savedPhotoModeValues.m_globalFogDensityMultiplier);
+                    HDRPTimeOfDayAPI.SetGlobalShadowMultiplier(m_savedPhotoModeValues.m_globalShadowDistanceMultiplier);
+#endif
+                        break;
                 }
                 default:
                 {
@@ -2230,14 +2405,32 @@ namespace Gaia
                         //Sky
                         GaiaAPI.SetUnityHDRISkybox(m_savedPhotoModeValues.m_skyboxExposure, m_savedPhotoModeValues.m_skyboxRotation, m_savedPhotoModeValues.m_skyboxTint);
                         //Fog
-                        GaiaAPI.GetFogSettings(out m_savedPhotoModeValues.m_fogMode, out m_savedPhotoModeValues.m_fogColor, out m_savedPhotoModeValues.m_fogDensity, out m_savedPhotoModeValues.m_fogStart, out m_savedPhotoModeValues.m_fogEnd);
+                        GaiaAPI.SetFogSettings(m_savedPhotoModeValues.m_fogMode, m_savedPhotoModeValues.m_fogColor, m_savedPhotoModeValues.m_fogDensity, m_savedPhotoModeValues.m_fogStart, m_savedPhotoModeValues.m_fogEnd);
                     }
-                    //Wind
-                    GaiaAPI.SetGaiaWindSettings(m_savedPhotoModeValues.m_gaiaWindSpeed, m_savedPhotoModeValues.m_gaiaWindDirection);
-                    //Quality Settings
-                    QualitySettings.shadowDistance = m_savedPhotoModeValues.m_shadowDistance;
-                    QualitySettings.shadowResolution = (UnityEngine.ShadowResolution)m_savedPhotoModeValues.m_shadowResolution;
-                    QualitySettings.shadowCascades = m_savedPhotoModeValues.m_shadowCascades;
+                    //Quality Settings/Shadows
+                    if (m_renderPipeline == GaiaConstants.EnvironmentRenderer.Universal)
+                    {
+#if UPPipeline
+                        GaiaAPI.SetURPAntiAliasingMode(m_savedPhotoModeValues.m_antiAliasing);
+                        GaiaAPI.SetURPShadowDistance(m_savedPhotoModeValues.m_shadowDistance);
+                        GaiaAPI.SetURPShadowCasecade(m_savedPhotoModeValues.m_shadowCascades);
+#endif
+                    }
+                    else
+                    {
+#if UNITY_POST_PROCESSING_STACK_V2
+                        if (m_postProcessingLayer != null)
+                        {
+                            m_postProcessingLayer.antialiasingMode = (PostProcessLayer.Antialiasing) m_photoModeValues.m_antiAliasing;
+                        }
+#endif
+                        QualitySettings.shadowDistance = m_savedPhotoModeValues.m_shadowDistance;
+                        QualitySettings.shadowResolution = (UnityEngine.ShadowResolution)m_savedPhotoModeValues.m_shadowResolution;
+                        QualitySettings.shadowCascades = m_savedPhotoModeValues.m_shadowCascades;
+                    }
+
+                    //Ambient
+                    GaiaAPI.SetAmbientColor(m_savedPhotoModeValues.m_ambientSkyColor, m_savedPhotoModeValues.m_ambientEquatorColor, m_savedPhotoModeValues.m_ambientGroundColor);
                     RenderSettings.ambientIntensity = m_savedPhotoModeValues.m_ambientIntensity;
                     QualitySettings.lodBias = m_savedPhotoModeValues.m_lodBias;
                     break;
@@ -2280,11 +2473,13 @@ namespace Gaia
             //Water
             if (m_sceneProfile != null)
             {
-                m_sceneProfile.m_enableReflections = m_savedPhotoModeValues.m_gaiaWaterReflectionEnabled;
                 m_sceneProfile.m_extraWaterRenderDistance = m_savedPhotoModeValues.m_gaiaWaterReflectionDistance;
                 m_sceneProfile.m_reflectionResolution = (GaiaConstants.GaiaProWaterReflectionsQuality)m_savedPhotoModeValues.m_gaiaWaterReflectionResolution;
                 GaiaAPI.SetWaterReflectionExtraDistance(m_savedPhotoModeValues.m_gaiaWaterReflectionDistance);
+                GaiaAPI.SetWaterReflections(m_savedPhotoModeValues.m_gaiaWaterReflectionEnabled);
             }
+            //Wind
+            GaiaAPI.SetGaiaWindSettings(m_savedPhotoModeValues.m_gaiaWindSpeed, m_savedPhotoModeValues.m_gaiaWindDirection);
 
             if (GaiaUnderwaterEffects.Instance != null)
             {
@@ -2292,11 +2487,25 @@ namespace Gaia
                 GaiaAPI.SetUnderwaterFogDensity(m_savedPhotoModeValues.m_gaiaUnderwaterFogDensity, m_savedPhotoModeValues.m_gaiaUnderwaterFogDistance);
                 GaiaAPI.SetUnderwaterVolume(m_savedPhotoModeValues.m_gaiaUnderwaterVolume);
             }
+
+            //Streaming
+#if GAIA_PRO_PRESENT
+            if (m_terrainLoader)
+            {
+                m_terrainLoader.m_loadingBoundsRegular.size = new Vector3Double(m_savedPhotoModeValues.m_gaiaLoadRange * 2f, m_terrainLoader.m_loadingBoundsRegular.size.y, m_savedPhotoModeValues.m_gaiaLoadRange * 2f);
+                m_terrainLoader.m_loadingBoundsImpostor.size = new Vector3Double(m_savedPhotoModeValues.m_gaiaImpostorRange * 2f, m_terrainLoader.m_loadingBoundsImpostor.size.y, m_savedPhotoModeValues.m_gaiaImpostorRange * 2f);
+            }
+#endif
+
             //Quality Settings
             QualitySettings.vSyncCount = m_savedPhotoModeValues.m_vSync;
             Application.targetFrameRate = m_savedPhotoModeValues.m_targetFPS;
             //Sun
-            GaiaAPI.SetSunRotation(m_savedPhotoModeValues.m_sunPitch, m_savedPhotoModeValues.m_sunRotation, m_mainSunLight);
+            if (!m_hdrpTimeOfDay)
+            {
+                GaiaAPI.SetSunRotation(m_savedPhotoModeValues.m_sunPitch, m_savedPhotoModeValues.m_sunRotation, m_mainSunLight);
+            }
+
             GaiaAPI.SetUnitySunSettings(m_savedPhotoModeValues.m_sunIntensity, m_savedPhotoModeValues.m_sunColor, m_savedPhotoModeValues.m_sunKelvinValue, m_mainSunLight);
         }
         /// <summary>
@@ -2365,14 +2574,28 @@ namespace Gaia
                 case GaiaConstants.EnvironmentRenderer.HighDefinition:
                 {
 #if HDPipeline
+                    GaiaAPI.SetAutoFocusDepthOfField(false);
                     GaiaAPI.GetUnityFogHDRP(out m_savedPhotoModeValues.m_fogEnd, out m_savedPhotoModeValues.m_fogColor);
                     GaiaAPI.GetUnityHDRISkyboxHDRP(out m_savedPhotoModeValues.m_skyboxRotation, out m_savedPhotoModeValues.m_skyboxExposure);
                     GaiaAPI.GetHDRPCameraSettings(out m_savedPhotoModeValues.m_cameraAperture, out m_savedPhotoModeValues.m_cameraFocalLength, m_targetCamera);
-                    GaiaAPI.GetHDRPDensityVolume(out m_savedPhotoModeValues.m_densityVolumeAlbedoColor, out m_savedPhotoModeValues.m_densityVolumeFogDistance, out m_savedPhotoModeValues.m_densityVolumeEffectType, out m_savedPhotoModeValues.m_densityVolumeTilingResolution);
+                    GaiaAPI.GetHDRPDensityVolume(out m_savedPhotoModeValues.m_densityVolumeAlbedoColor, out m_savedPhotoModeValues.m_densityVolumeFogDistance, out m_savedPhotoModeValues.m_densityVolumeEffectType, out m_savedPhotoModeValues.m_densityVolumeTilingResolution, out m_savedPhotoModeValues.m_overrideDensityVolume);
                     m_savedPhotoModeValues.m_shadowDistance = GaiaAPI.GetHDRPShadowDistance();
                     m_savedPhotoModeValues.m_shadowCascades = GaiaAPI.GetHDRPShadowCascades();
                     m_savedPhotoModeValues.m_lodBias = GaiaAPI.GetHDRPLODBias(m_targetCamera);
                     m_savedPhotoModeValues.m_gaiaReflectionsLODBias = GaiaAPI.GetHDRPWaterLODBias();
+                    m_savedPhotoModeValues.m_antiAliasing = GaiaAPI.GetHDRPAntiAliasingMode();
+                    m_savedPhotoModeValues.m_ambientIntensity = GaiaAPI.GetHDRPAmbientIntensity();
+                    GaiaAPI.GetSunRotation(out m_savedPhotoModeValues.m_sunPitch, out m_savedPhotoModeValues.m_sunRotation, m_mainSunLight);
+                    m_savedPhotoModeValues.m_savedDofFocusMode = GaiaAPI.GetHDRPDOFFocusMode();
+#endif
+#if HDPipeline && UNITY_2021_2_OR_NEWER && GAIA_PRO_PRESENT
+                    m_savedPhotoModeValues.m_gaiaTime = HDRPTimeOfDayAPI.GetCurrentTime();
+                    HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float autoUpdateValue);
+                    m_savedPhotoModeValues.m_gaiaTimeOfDayEnabled = autoUpdate;
+                    m_savedPhotoModeValues.m_gaiaTimeScale = autoUpdateValue;
+                    m_savedPhotoModeValues.m_globalLightIntensityMultiplier = HDRPTimeOfDayAPI.GetGlobalSunMultiplier();
+                    m_savedPhotoModeValues.m_globalFogDensityMultiplier = HDRPTimeOfDayAPI.GetGlobalFogMultiplier();
+                    m_savedPhotoModeValues.m_globalShadowDistanceMultiplier = HDRPTimeOfDayAPI.GetGlobalShadowMultiplier();
 #endif
                     break;
                 }
@@ -2399,17 +2622,36 @@ namespace Gaia
                     {
                         GaiaAPI.GetSunRotation(out m_savedPhotoModeValues.m_sunPitch, out m_savedPhotoModeValues.m_sunRotation, m_mainSunLight);
                     }
-                    GaiaAPI.GetGaiaWindSettings(out m_savedPhotoModeValues.m_gaiaWindSpeed, out m_photoModeValues.m_gaiaWindDirection);
-                    GaiaAPI.GetUnityHDRISkybox(out m_savedPhotoModeValues.m_skyboxExposure, out m_savedPhotoModeValues.m_skyboxRotation, out m_savedPhotoModeValues.m_skyboxTint);
+
+                    GaiaAPI.GetUnityHDRISkybox(out m_savedPhotoModeValues.m_skyboxExposure, out m_savedPhotoModeValues.m_skyboxRotation, out m_savedPhotoModeValues.m_skyboxTint, out m_savedPhotoModeValues.m_skyboxOverride);
                     //Save fog settings
-                    GaiaAPI.GetFogSettings(out m_savedPhotoModeValues.m_fogMode, out m_savedPhotoModeValues.m_fogColor, out m_savedPhotoModeValues.m_fogDensity, out m_savedPhotoModeValues.m_fogStart, out m_savedPhotoModeValues.m_fogEnd);
+                    GaiaAPI.GetFogSettings(out m_savedPhotoModeValues.m_fogMode, out m_savedPhotoModeValues.m_fogColor, out m_savedPhotoModeValues.m_fogDensity, out m_savedPhotoModeValues.m_fogStart, out m_savedPhotoModeValues.m_fogEnd, out m_savedPhotoModeValues.m_fogOverride);
                     //Quality
-                    m_savedPhotoModeValues.m_shadowDistance = QualitySettings.shadowDistance;
-                    m_savedPhotoModeValues.m_shadowResolution = (int)QualitySettings.shadowResolution;
-                    m_savedPhotoModeValues.m_shadowCascades = QualitySettings.shadowCascades;
+                    if (m_renderPipeline == GaiaConstants.EnvironmentRenderer.Universal)
+                    {
+#if UPPipeline
+                        m_savedPhotoModeValues.m_antiAliasing = GaiaAPI.GetURPAntiAliasingMode();
+                        m_savedPhotoModeValues.m_shadowDistance = GaiaAPI.GetURPShadowDistance();
+                        m_savedPhotoModeValues.m_shadowCascades = GaiaAPI.GetURPShadowCasecade();
+#endif
+                    }
+                    else
+                    {
+#if UNITY_POST_PROCESSING_STACK_V2
+                        if (m_postProcessingLayer != null)
+                        {
+                            m_savedPhotoModeValues.m_antiAliasing = (int)m_postProcessingLayer.antialiasingMode;
+                        }
+#endif
+                        m_savedPhotoModeValues.m_shadowDistance = QualitySettings.shadowDistance;
+                        m_savedPhotoModeValues.m_shadowResolution = (int)QualitySettings.shadowResolution;
+                        m_savedPhotoModeValues.m_shadowCascades = QualitySettings.shadowCascades;
+                    }
+
                     m_savedPhotoModeValues.m_lodBias = QualitySettings.lodBias;
                     //Ambient
                     m_savedPhotoModeValues.m_ambientIntensity = RenderSettings.ambientIntensity;
+                    GaiaAPI.GetAmbientColor(out m_savedPhotoModeValues.m_ambientSkyColor, out m_savedPhotoModeValues.m_ambientEquatorColor, out m_savedPhotoModeValues.m_ambientGroundColor);
                     break;
                 }
             }
@@ -2426,7 +2668,7 @@ namespace Gaia
             //Volume
             m_savedPhotoModeValues.m_globalVolume = AudioListener.volume;
             //Sun
-            GaiaAPI.GetUnitySunSettings(out m_savedPhotoModeValues.m_sunIntensity, out m_savedPhotoModeValues.m_sunColor, out m_savedPhotoModeValues.m_sunKelvinValue, m_mainSunLight);
+            GaiaAPI.GetUnitySunSettings(out m_savedPhotoModeValues.m_sunIntensity, out m_savedPhotoModeValues.m_sunColor, out m_savedPhotoModeValues.m_sunKelvinValue, out m_savedPhotoModeValues.m_sunOverride, m_mainSunLight);
             //Camera
             if (m_targetCamera != null)
             {
@@ -2443,6 +2685,8 @@ namespace Gaia
                 m_savedPhotoModeValues.m_gaiaWaterReflectionDistance = m_sceneProfile.m_extraWaterRenderDistance;
                 m_savedPhotoModeValues.m_gaiaWaterReflectionResolution = (int)m_sceneProfile.m_reflectionResolution;
             }
+            //Wind
+            GaiaAPI.GetGaiaWindSettings(out m_savedPhotoModeValues.m_gaiaWindSpeed, out m_savedPhotoModeValues.m_gaiaWindDirection, out m_savedPhotoModeValues.m_gaiaWindSettingsOverride);
 
             if (GaiaUnderwaterEffects.Instance != null)
             {
@@ -2453,6 +2697,17 @@ namespace Gaia
             //Quality Settings
             m_savedPhotoModeValues.m_vSync = QualitySettings.vSyncCount;
             m_savedPhotoModeValues.m_targetFPS = Application.targetFrameRate;
+
+            //Terrain loading
+#if GAIA_PRO_PRESENT
+            if (m_terrainLoader != null)
+            {
+                Vector3 size = m_terrainLoader.m_loadingBoundsRegular.size;
+                m_savedPhotoModeValues.m_gaiaLoadRange = Mathf.Max(size.x, size.z) * 0.5f;
+                size = m_terrainLoader.m_loadingBoundsImpostor.size;
+                m_savedPhotoModeValues.m_gaiaImpostorRange = Mathf.Max(size.x, size.z) * 0.5f;
+            }
+#endif
 
             //Post FX
             switch (m_renderPipeline)
@@ -2566,11 +2821,10 @@ namespace Gaia
                     break;
                 }
             }
-
         }
 
-        #endregion
-        #region Photo Mode Functions
+#endregion
+        #region Set Photo Mode Functions
 
         public void SetUnityScreenshotResolution(int f)
         {
@@ -2732,6 +2986,32 @@ namespace Gaia
 
             m_isSettingValues = false;
         }
+
+        public void SetPhotoModeShowFPS(int value)
+        {
+            if (m_isSettingValues || m_showFPS == null)
+            {
+                return;
+            }
+
+            m_photoModeValues.m_showFPS = PhotoModeUtils.ConvertIntToBool(value);
+            if (m_photoModeValues.m_showFPS)
+            {
+                m_fpsAccumulator = 0f;
+                m_fpsNextPeriod = Time.realtimeSinceStartup + m_cMeasurePeriod;
+                m_fpsText.enabled = true;
+            }
+            else
+            {
+                m_fpsText.enabled = false;
+            }
+          
+            m_isSettingValues = true;
+            m_showFPS.SetDropdownValue(value);
+
+            m_isSettingValues = false;
+        }
+
         public void SetPhotoModeShowReticule(int value)
         {
             if (m_isSettingValues || m_showReticule == null)
@@ -2775,7 +3055,7 @@ namespace Gaia
             m_isSettingValues = false;
         }
 
-        #endregion
+#endregion
         #region Set Unity Functions
 
         public void SetUnityVolume(float f)
@@ -3191,7 +3471,7 @@ namespace Gaia
             m_isSettingValues = false;
         }
 
-        #endregion
+#endregion
         #region Set Gaia Streaming Functions
 
 #if GAIA_PRO_PRESENT
@@ -3230,8 +3510,7 @@ namespace Gaia
             m_photoModeValues.m_gaiaImpostorRange = f;
             if (!m_isUpdatingValues && m_terrainLoader != null)
             {
-                m_terrainLoader.m_loadingBoundsImpostor.size =
-                    new Vector3Double(f * 2f, m_terrainLoader.m_loadingBoundsImpostor.size.y, f * 2f);
+                m_terrainLoader.m_loadingBoundsImpostor.size = new Vector3Double(f * 2f, m_terrainLoader.m_loadingBoundsImpostor.size.y, f * 2f);
             }
 
             m_isSettingValues = true;
@@ -3248,7 +3527,7 @@ namespace Gaia
         }
 #endif
 
-        #endregion
+#endregion
         #region Set Weather Functions
 
         public void SetGaiaWindDirection(float f)
@@ -3586,10 +3865,85 @@ namespace Gaia
         }
 #endif
 
-        #endregion
+#endregion
         #region Set Gaia Lighting
 
 #if GAIA_PRO_PRESENT
+        public void SetGlobalSunIntensity(float f)
+        {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            if (m_isSettingValues || m_hdrpGlobalSunMultiplier == null)
+            {
+                return;
+            }
+            m_photoModeValues.m_globalLightIntensityMultiplier = f;
+            if (!m_isUpdatingValues)
+            {
+                HDRPTimeOfDayAPI.SetGlobalSunMultiplier(f);
+            }
+            m_isSettingValues = true;
+            PhotoModeUtils.SetSliderValue(m_hdrpGlobalSunMultiplier, f);
+            m_isSettingValues = false;
+#endif
+        }
+        public void SetGlobalSunIntensity(string val)
+        {
+            if (m_isSettingValues)
+            {
+                return;
+            }
+            PhotoModeUtils.GetAndSetFloatValue(val, SetGlobalSunIntensity, new Vector2(0f, 5f), m_hdrpGlobalSunMultiplier);
+        }
+        public void SetGlobalFogDensity(float f)
+        {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            if (m_isSettingValues || m_hdrpGlobalFogMultiplier == null)
+            {
+                return;
+            }
+            m_photoModeValues.m_globalLightIntensityMultiplier = f;
+            if (!m_isUpdatingValues)
+            {
+                HDRPTimeOfDayAPI.SetGlobalFogMultiplier(f);
+            }
+            m_isSettingValues = true;
+            PhotoModeUtils.SetSliderValue(m_hdrpGlobalFogMultiplier, f);
+            m_isSettingValues = false;
+#endif
+        }
+        public void SetGlobalFogDensity(string val)
+        {
+            if (m_isSettingValues)
+            {
+                return;
+            }
+            PhotoModeUtils.GetAndSetFloatValue(val, SetGlobalFogDensity, new Vector2(0f, 5f), m_hdrpGlobalFogMultiplier);
+        }
+        public void SetGlobalShadowDistance(float f)
+        {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+            if (m_isSettingValues || m_hdrpGlobalShadowMultiplier == null)
+            {
+                return;
+            }
+            m_photoModeValues.m_globalLightIntensityMultiplier = f;
+            if (!m_isUpdatingValues)
+            {
+                HDRPTimeOfDayAPI.SetGlobalShadowMultiplier(f);
+            }
+            m_isSettingValues = true;
+            PhotoModeUtils.SetSliderValue(m_hdrpGlobalShadowMultiplier, f);
+            m_isSettingValues = false;
+#endif
+        }
+        public void SetGlobalShadowDistance(string val)
+        {
+            if (m_isSettingValues)
+            {
+                return;
+            }
+            PhotoModeUtils.GetAndSetFloatValue(val, SetGlobalShadowDistance, new Vector2(0f, 5f), m_hdrpGlobalShadowMultiplier);
+        }
         public void SetGaiaTime(float f)
         {
             if (m_isSettingValues || m_gaiaTime == null)
@@ -3597,10 +3951,20 @@ namespace Gaia
                 return;
             }
             m_photoModeValues.m_gaiaTime = f;
-            if (!m_isUpdatingValues && GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+            if (!m_isUpdatingValues)
             {
-                GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todHour = (int)f;
-                GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todMinutes = ((f % 1f) * 60);
+                if (m_hdrpTimeOfDay)
+                {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                    HDRPTimeOfDayAPI.SetCurrentTime(f, false);
+#endif
+                }
+
+                if (GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+                {
+                    GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todHour = (int)f;
+                    GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todMinutes = ((f % 1f) * 60);
+                }
             }
             m_isSettingValues = true;
             PhotoModeUtils.SetSliderValue(m_gaiaTime, f);
@@ -3622,9 +3986,16 @@ namespace Gaia
             }
 
             m_photoModeValues.m_gaiaTimeScale = f;
-            if (!m_isUpdatingValues && GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+            if (!m_isUpdatingValues)
             {
-                GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todDayTimeScale = f;
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float autoUpdateValue);
+                HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(autoUpdate, f);
+#endif
+                if (GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+                {
+                    GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todDayTimeScale = f;
+                }
             }
 
             m_isSettingValues = true;
@@ -3649,18 +4020,36 @@ namespace Gaia
             bool boolValue = PhotoModeUtils.ConvertIntToBool(value);
 
             m_photoModeValues.m_gaiaTimeOfDayEnabled = boolValue;
-            if (!m_isUpdatingValues && GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+            if (!m_isUpdatingValues)
             {
-                GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todEnabled = boolValue;
+                if (m_hdrpTimeOfDay)
+                {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                    HDRPTimeOfDayAPI.GetAutoUpdateMultiplier(out bool autoUpdate, out float autoUpdateValue);
+                    HDRPTimeOfDayAPI.SetAutoUpdateMultiplier(boolValue, autoUpdateValue);
+#endif
+                    if (m_gaiaTimeScale != null)
+                    {
+                        m_gaiaTimeScale.gameObject.SetActive(m_hdrpTimeOfDay && m_photoModeValues.m_gaiaTimeOfDayEnabled);
+                    }
+                }
+                else
+                {
+                    if (m_gaiaTimeScale != null)
+                    {
+                        m_gaiaTimeScale.gameObject.SetActive(m_pwWeatherPresent && m_photoModeValues.m_gaiaTimeOfDayEnabled);
+                    }
+                }
+
+                if (GaiaGlobal.Instance != null && GaiaGlobal.Instance.SceneProfile != null)
+                {
+                    GaiaGlobal.Instance.SceneProfile.m_gaiaTimeOfDay.m_todEnabled = boolValue;
+                }
             }
 
             m_isSettingValues = true;
             m_gaiaTimeOfDayEnabled.SetDropdownValue(value);
             m_isSettingValues = false;
-            if (m_gaiaTimeScale != null)
-            {
-                m_gaiaTimeScale.gameObject.SetActive(m_pwWeatherPresent && m_photoModeValues.m_gaiaTimeOfDayEnabled);
-            }
         }
 #endif
         public void SetGaiaSunAngle(float f)
@@ -3675,13 +4064,22 @@ namespace Gaia
 #if GAIA_PRO_PRESENT
             if (!m_isUpdatingValues)
             {
-                if (!GaiaAPI.SetTimeOfDaySunRotation(f))
+                if (!m_hdrpTimeOfDay)
                 {
-
-                    if (m_mainSunLight != null)
+                    if (!GaiaAPI.SetTimeOfDaySunRotation(f))
                     {
-                        m_mainSunLight.transform.localEulerAngles = new Vector3(m_photoModeValues.m_sunPitch, f, 0f);
+                        if (m_mainSunLight != null)
+                        {
+                            m_mainSunLight.transform.localEulerAngles =
+                                new Vector3(m_photoModeValues.m_sunPitch, f, 0f);
+                        }
                     }
+                }
+                else
+                {
+#if HDPipeline && UNITY_2021_2_OR_NEWER
+                    HDRPTimeOfDayAPI.SetDirection(f);
+#endif
                 }
             }
 #else
@@ -4250,8 +4648,38 @@ namespace Gaia
                 m_gaiaSunColor.SetColorPreviewImage(m_photoModeValues.m_sunColor);
             }
         }
+        public void UpdateAmbientSkyColor()
+        {
+            Color ambientColor = m_photoModeValues.m_ambientSkyColor;
+            ambientColor.a = 1f;
+            GaiaAPI.SetAmbientColor(ambientColor, m_photoModeValues.m_ambientEquatorColor, m_photoModeValues.m_ambientGroundColor);
+            if (m_ambientSkyColor != null)
+            {
+                m_ambientSkyColor.SetColorPreviewImage(ambientColor, true);
+            }
+        }
+        public void UpdateAmbientEquaotrColor()
+        {
+            Color ambientColor = m_photoModeValues.m_ambientEquatorColor;
+            ambientColor.a = 1f;
+            GaiaAPI.SetAmbientColor(m_photoModeValues.m_ambientSkyColor, ambientColor, m_photoModeValues.m_ambientGroundColor);
+            if (m_ambientEquatorColor != null)
+            {
+                m_ambientEquatorColor.SetColorPreviewImage(ambientColor, true);
+            }
+        }
+        public void UpdateAmbientGroundColor()
+        {
+            Color ambientColor = m_photoModeValues.m_ambientGroundColor;
+            ambientColor.a = 1f;
+            GaiaAPI.SetAmbientColor(m_photoModeValues.m_ambientSkyColor, m_photoModeValues.m_ambientEquatorColor, ambientColor);
+            if (m_ambientGroundColor != null)
+            {
+                m_ambientGroundColor.SetColorPreviewImage(ambientColor, true);
+            }
+        }
 
-        #region HDRP
+#region HDRP
 
 #if HDPipeline
         public void SetOverrideDensityVolume(int value)
@@ -4355,7 +4783,7 @@ namespace Gaia
         }
 #endif
 
-        #endregion
+#endregion
 
         private void UpdateFogSettings()
         {
@@ -4425,7 +4853,7 @@ namespace Gaia
 #endif
         }
 
-        #endregion
+#endregion
         #region Set Gaia Water
 
         public void SetGaiaWaterReflectionEnabled(int value)
@@ -4436,7 +4864,7 @@ namespace Gaia
             }
 
             bool boolValue = PhotoModeUtils.ConvertIntToBool(value);
-
+            m_photoModeValues.m_gaiaWaterReflectionEnabled = boolValue;
             m_gaiaWaterReflectionsEnabled.SetDropdownValue(value);
             GaiaAPI.SetWaterReflections(boolValue);
             if (m_gaiaWaterReflectionDistance != null)
@@ -4547,7 +4975,27 @@ namespace Gaia
             {
                 return;
             }
-            PhotoModeUtils.GetAndSetFloatValue(val, SetGaiaUnderwaterFogDistance, m_minAndMaxValues.m_gaiaUnderwaterFogDistance, m_gaiaUnderwaterFogDistance);
+
+            if (m_renderPipeline == GaiaConstants.EnvironmentRenderer.HighDefinition)
+            {
+                PhotoModeUtils.GetAndSetFloatValue(val, SetGaiaUnderwaterFogDistance, m_minAndMaxValues.m_gaiaUnderwaterFogDistance, m_gaiaUnderwaterFogDistance);
+            }
+            else
+            {
+                switch (RenderSettings.fogMode)
+                {
+                    case FogMode.Linear:
+                    {
+                        PhotoModeUtils.GetAndSetFloatValue(val, SetGaiaUnderwaterFogDistance, m_minAndMaxValues.m_gaiaUnderwaterFogDistance, m_gaiaUnderwaterFogDistance);
+                        break;
+                    }
+                    default:
+                    {
+                        PhotoModeUtils.GetAndSetFloatValue(val, SetGaiaUnderwaterFogDistance, m_minAndMaxValues.m_gaiaUnderwaterFogDensity, m_gaiaUnderwaterFogDistance);
+                        break;
+                    }
+                }
+            }
         }
         public void SetGaiaUnderwaterVolume(float f)
         {
@@ -4577,7 +5025,7 @@ namespace Gaia
             }
         }
 
-        #endregion
+#endregion
         #region Set Gaia Post FX
 
         public void SetDOFEnabled(int value)
@@ -4800,7 +5248,6 @@ namespace Gaia
                     {
                         m_gaiaPostFXDOFAutoFocus.SetDropdownValue(value);
                         m_photoModeValues.m_autoDOFFocus = boolValue;
-                        GaiaAPI.SetAutoFocusDepthOfField(boolValue);
                         GaiaAPI.SetDepthOfFieldSettingsHDRP(m_photoModeValues);
 
                         if (m_gaiaPostFXDOFFocusDistance != null)
@@ -5129,7 +5576,7 @@ namespace Gaia
             }
         }
 
-        #region URP
+#region URP
 
         private void SetURPUIModeSetup()
         {
@@ -5536,8 +5983,8 @@ namespace Gaia
 #endif
         }
 
-        #endregion
-        #region HDRP
+#endregion
+#region HDRP
 
 #if HDPipeline
         public void SetDOFModeHDRP(int f)
@@ -5892,11 +6339,11 @@ namespace Gaia
             }
         }
 
-        #endif
+#endif
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
         #region Set Grass System
 
 #if FLORA_PRESENT
@@ -5998,7 +6445,7 @@ namespace Gaia
         }
 #endif
 
-        #endregion
+#endregion
         #region Terrain Functions
 
         public void SetTerrainDetailDensity(float f)
@@ -6099,7 +6546,7 @@ namespace Gaia
             m_isSettingValues = false;
         }
 
-        #endregion
+#endregion
         #region UI Helper Functions
 
         /// <summary>
@@ -6114,6 +6561,7 @@ namespace Gaia
                 SetUnityScreenshotImageFormat(m_photoModeValues.m_screenshotImageFormat);
                 SetPhotoModeLoadSettings(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_loadSavedSettings));
                 SetPhotoModeRevertOnDisabledSettings(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_revertOnDisabled));
+                SetPhotoModeShowFPS(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_showFPS));
                 SetPhotoModeShowReticule(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_showReticle));
                 SetPhotoModeShowRuleOfThirds(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_showRuleOfThirds));
             }
@@ -6144,7 +6592,7 @@ namespace Gaia
                 {
                     case GaiaConstants.EnvironmentRenderer.HighDefinition:
                     {
-
+                        SetGaiaUnderwaterFogDistance(m_photoModeValues.m_gaiaUnderwaterFogDistance);
                         break;
                     }
                     default:
@@ -6165,7 +6613,6 @@ namespace Gaia
                         break;
                     }
                 }
-
                 UpdateUnderwaterFogColor();
 
             }
@@ -6239,10 +6686,10 @@ namespace Gaia
 #if FLORA_PRESENT
                     if (m_detailManager != null)
                     {
-                        // SetGlobalGrassDensity(m_photoModeValues.m_globalGrassDensity);
-                        // SetGlobalGrassDistance(m_photoModeValues.m_globalGrassDistance);
-                        // SetGlobalCameraCellDistance(m_photoModeValues.m_cameraCellDistance);
-                        // SetGlobalCameraCellSubdivision(m_photoModeValues.m_cameraCellSubdivision);
+                        //SetGlobalGrassDensity(m_photoModeValues.m_globalGrassDensity);
+                        //SetGlobalGrassDistance(m_photoModeValues.m_globalGrassDistance);
+                        //SetGlobalCameraCellDistance(m_photoModeValues.m_cameraCellDistance);
+                        //SetGlobalCameraCellSubdivision(m_photoModeValues.m_cameraCellSubdivision);
                     }
 #endif
                 }
@@ -6269,9 +6716,22 @@ namespace Gaia
                         SetGaiaSunPitch(m_photoModeValues.m_sunPitch);
                         SetGaiaSunIntensity(m_photoModeValues.m_sunIntensity);
                         UpdateSunColor();
-                        SetGaiaSunOverride(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_sunOverride));
+                        if (!m_hdrpTimeOfDay)
+                        {
+                            SetGaiaSunOverride(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_sunOverride));
+                        }
                     }
-
+#if GAIA_PRO_PRESENT
+                    if (m_hdrpTimeOfDay)
+                    {
+                        SetGaiaTime(m_photoModeValues.m_gaiaTime);
+                        SetGaiaTimeOfDayEnabled(PhotoModeUtils.ConvertBoolToInt(m_photoModeValues.m_gaiaTimeOfDayEnabled));
+                        SetGaiaTimeScale(m_photoModeValues.m_gaiaTimeScale);
+                    }
+#endif
+                    UpdateAmbientSkyColor();
+                    UpdateAmbientEquaotrColor();
+                    UpdateAmbientGroundColor();
                     SetAmbientIntensity(m_photoModeValues.m_ambientIntensity);
                     if (m_unitySkyboxPresent)
                     {
@@ -6297,7 +6757,11 @@ namespace Gaia
                     }
 
                     SetGaiaFogMode((int)m_photoModeValues.m_fogMode);
-                    SetNewColorPickerRefs(m_photoModeValues.m_fogColor, m_gaiaFogColor.m_colorPreviewButton, false);
+                    if (m_gaiaFogColor != null)
+                    {
+                        SetNewColorPickerRefs(m_photoModeValues.m_fogColor, m_gaiaFogColor.m_colorPreviewButton, false);
+                    }
+
                     SetGaiaFogStart(m_photoModeValues.m_fogStart);
                     SetGaiaFogEnd(m_photoModeValues.m_fogEnd);
                     SetGaiaFogDensity(m_photoModeValues.m_fogDensity);
@@ -6352,7 +6816,7 @@ namespace Gaia
             }
         }
 
-        #endregion
+#endregion
         #region Color Picker Functions
 
         public void OpenColorPickerFog()
@@ -6377,23 +6841,35 @@ namespace Gaia
         {
             OpenColorPicker(m_gaiaUnderwaterFogColor, m_photoModeValues.m_gaiaUnderwaterFogColor, ColorPickerReferenceMode.UnderwaterFogColor, UpdateUnderwaterFogColor);
         }
+        public void OpenColorPickerAmbientSkyColor()
+        {
+            OpenColorPicker(m_ambientSkyColor, m_photoModeValues.m_ambientSkyColor, ColorPickerReferenceMode.AmbientSkyColor, UpdateAmbientSkyColor, true);
+        }
+        public void OpenColorPickerAmbientEquatorColor()
+        {
+            OpenColorPicker(m_ambientEquatorColor, m_photoModeValues.m_ambientEquatorColor, ColorPickerReferenceMode.AmbientEquatorColor, UpdateAmbientEquaotrColor, true);
+        }
+        public void OpenColorPickerAmbientGroundColor()
+        {
+            OpenColorPicker(m_ambientGroundColor, m_photoModeValues.m_ambientGroundColor, ColorPickerReferenceMode.AmbientGroundColor, UpdateAmbientGroundColor, true);
+        }
         public void SetFogColor()
         {
             UpdateFogSettings();
         }
-        public void SetNewColorPickerRefs(Color color, Button currentColorImage, bool colorPickerEnabled)
+        public void SetNewColorPickerRefs(Color color, Button currentColorImage, bool colorPickerEnabled, bool applyHDR = false)
         {
-            m_colorPicker.RefColor(ref color, ref currentColorImage);
+            m_colorPicker.RefColor(ref color, ref currentColorImage, applyHDR);
             m_updateColorPickerRef = colorPickerEnabled;
         }
-        private void OpenColorPicker(PhotoModeUIHelper runtimeUI, Color colorValue, ColorPickerReferenceMode mode, UnityAction onChanged)
+        private void OpenColorPicker(PhotoModeUIHelper runtimeUI, Color colorValue, ColorPickerReferenceMode mode, UnityAction onChanged, bool hdr = false)
         {
             if (runtimeUI != null && m_colorPicker != null)
             {
-                runtimeUI.SetColorPreviewImage(colorValue);
+                runtimeUI.SetColorPreviewImage(colorValue, hdr);
                 SetColorPickerVisable(true);
+                m_colorPicker.SetColorValue(colorValue, hdr);
                 SetNewColorPickerRefs(colorValue, runtimeUI.m_colorPreviewButton, true);
-                m_colorPicker.SetColorValue(colorValue);
                 m_colorPicker.SetLastColorValue(colorValue);
                 m_colorPicker.SetCurrentFocusedName(runtimeUI.name);
                 m_colorPicker.Refresh();
@@ -6431,37 +6907,52 @@ namespace Gaia
                 {
                     case ColorPickerReferenceMode.FogColor:
                     {
-                        m_colorPicker.RefColor(ref m_photoModeValues.m_fogColor, ref m_gaiaFogColor.m_colorPreviewButton);
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_fogColor, ref m_gaiaFogColor.m_colorPreviewButton, true);
                         break;
                     }
                     case ColorPickerReferenceMode.SunColor:
                     {
-                        m_colorPicker.RefColor(ref m_photoModeValues.m_sunColor, ref m_gaiaSunColor.m_colorPreviewButton);
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_sunColor, ref m_gaiaSunColor.m_colorPreviewButton, true);
                         break;
                     }
                     case ColorPickerReferenceMode.SkyboxTintColor:
                     {
-                        m_colorPicker.RefColor(ref m_photoModeValues.m_skyboxTint, ref m_gaiaSkyboxTint.m_colorPreviewButton);
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_skyboxTint, ref m_gaiaSkyboxTint.m_colorPreviewButton, true);
                         break;
                     }
                     case ColorPickerReferenceMode.DensityAlbedoColor:
                     {
 #if HDPipeline
-                        m_colorPicker.RefColor(ref m_photoModeValues.m_densityVolumeAlbedoColor, ref m_densityVolumeAlbedoColor.m_colorPreviewButton);
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_densityVolumeAlbedoColor, ref m_densityVolumeAlbedoColor.m_colorPreviewButton, true);
 #endif
                         break;
                     }
                     case ColorPickerReferenceMode.UnderwaterFogColor:
                     {
-                        m_colorPicker.RefColor(ref m_photoModeValues.m_gaiaUnderwaterFogColor, ref m_gaiaUnderwaterFogColor.m_colorPreviewButton);
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_gaiaUnderwaterFogColor, ref m_gaiaUnderwaterFogColor.m_colorPreviewButton, true);
+                        break;
+                    }
+                    case ColorPickerReferenceMode.AmbientSkyColor:
+                    {
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_ambientSkyColor, ref m_ambientSkyColor.m_colorPreviewButton, true);
+                        break;
+                    }
+                    case ColorPickerReferenceMode.AmbientEquatorColor:
+                    {
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_ambientEquatorColor, ref m_ambientEquatorColor.m_colorPreviewButton, true);
+                        break;
+                    }
+                    case ColorPickerReferenceMode.AmbientGroundColor:
+                    {
+                        m_colorPicker.RefColor(ref m_photoModeValues.m_ambientGroundColor, ref m_ambientGroundColor.m_colorPreviewButton, true);
                         break;
                     }
                 }
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

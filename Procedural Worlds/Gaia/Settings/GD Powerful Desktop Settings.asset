@@ -37,5 +37,5 @@ MonoBehaviour:
   m_heightmapResolution: 4097
   m_detailResolution: 1024
   m_detailResolutionPerPatch: 16
-  m_controlTextureResolution: 2048
+  m_controlTextureResolution: 4096
   m_baseMapSize: 2048

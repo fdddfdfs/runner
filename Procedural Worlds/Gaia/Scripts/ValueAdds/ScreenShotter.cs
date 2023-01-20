@@ -162,6 +162,10 @@ namespace Gaia
                     m_targetWidth = Screen.width;
                     m_targetHeight = Screen.height;
                 }
+                else
+                {
+                    UpdateScreenshotResolution(m_screenshotResolution);
+                }
 
                 m_refreshAssetDB = true;
                 RenderTexture rt;
@@ -189,7 +193,21 @@ namespace Gaia
                 {
                     m_mainCamera.allowHDR = true;
                 }
-                m_mainCamera.Render();
+
+                if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.BuiltIn)
+                {
+                    m_mainCamera.Render();
+                }
+                else
+                {
+                    //Insure everything renders correctly
+                    m_mainCamera.Render();
+                    m_mainCamera.Render();
+                    m_mainCamera.Render();
+                    m_mainCamera.Render();
+                    m_mainCamera.Render();
+                }
+
                 m_mainCamera.allowHDR = allowHDR;
                 RenderTexture.active = rt;
                 screenShot.ReadPixels(new Rect(0, 0, m_targetWidth, m_targetHeight), 0, 0);

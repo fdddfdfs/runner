@@ -62,6 +62,7 @@ namespace Gaia
 
         private void OnEnable()
         {
+            SceneView.duringSceneGui += DuringSceneGUI;
             m_biomeController = (BiomeController)target;
             m_biomeController.m_oldName = m_biomeController.transform.name;
             m_normalBGColor = GUI.backgroundColor;
@@ -114,6 +115,7 @@ namespace Gaia
 
         private void OnDisable()
         {
+            SceneView.duringSceneGui -= DuringSceneGUI;
             GaiaLighting.SetPostProcessingStatus(true);
 #if GAIA_PRO_PRESENT
             m_biomeController.TerrainLoader.m_isSelected = false;
@@ -138,13 +140,14 @@ namespace Gaia
 
         private void OnReorderAutoSpawnerList(ReorderableList list)
         {
-            //Do nothing, changing the order does not immediately affect anything in the stamper
+            EditorUtility.SetDirty(m_biomeController);
         }
 
         private void OnRemoveAutosSpawnerListEntry(ReorderableList list)
         {
             m_biomeController.m_autoSpawners = StamperAutoSpawnerListEditor.OnRemoveListEntry(m_biomeController.m_autoSpawners, m_autoSpawnerReorderable.index);
             list.list = m_biomeController.m_autoSpawners;
+            EditorUtility.SetDirty(m_biomeController);
         }
 
         private void OnAddAutoSpawnerListEntry(ReorderableList list)
@@ -152,6 +155,7 @@ namespace Gaia
             m_biomeController.m_autoSpawners = StamperAutoSpawnerListEditor.OnAddListEntry(m_biomeController.m_autoSpawners);
             list.list = m_biomeController.m_autoSpawners;
             m_biomeController.m_changesMadeSinceLastSave = true;
+            EditorUtility.SetDirty(m_biomeController);
         }
 
         private void DrawAutoSpawnerListHeader(Rect rect)
@@ -161,7 +165,7 @@ namespace Gaia
 
         private void DrawAutoSpawnerListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
-            StamperAutoSpawnerListEditor.DrawListElement(rect, m_biomeController.m_autoSpawners[index], ref m_biomeController.m_changesMadeSinceLastSave);
+            StamperAutoSpawnerListEditor.DrawListElement(rect, m_biomeController.m_autoSpawners[index], m_biomeController, ref m_biomeController.m_changesMadeSinceLastSave);
         }
 
         private void DrawClearControls(bool helpEnabled)
@@ -201,6 +205,10 @@ namespace Gaia
 
                 foreach (AutoSpawner autoSpawner in m_biomeController.m_autoSpawners)
                 {
+                    if (autoSpawner == null || autoSpawner.spawner == null)
+                    {
+                        continue;
+                    }
                     foreach (SpawnRule sr in autoSpawner.spawner.m_settings.m_spawnerRules)
                     {
                         int resourceIDPlusOffset = 0;
@@ -589,6 +597,15 @@ namespace Gaia
                         }
                     }
 
+                    if (!GaiaUtils.UsesCorrectPipelineDefines())
+                    {
+                        if (!EditorUtility.DisplayDialog("Wrong Render Pipeline Configured", "This project does use a different render pipeline asset in the graphics settings than what Gaia is configured for. This can lead to wrong spawn results. Please open the Gaia Manager and configure Gaia for the correct render pipeline that you are using.", "Continue Anyways", "Cancel"))
+                        {
+                            GUIUtility.ExitGUI();
+                            return;
+                        }
+                    }
+
                     m_biomeController.m_autoSpawnRequested = true;
                     if (m_gaiaSettings.m_spawnerAutoHidePreviewMilliseconds > 0)
                     {
@@ -649,6 +666,7 @@ namespace Gaia
 #else
             m_biomeController.m_postProcessProfile = (PostProcessProfile)m_editorUtils.ObjectField("PostProcessingProfile", m_biomeController.m_postProcessProfile, typeof(PostProcessProfile), false, helpEnabled);
             m_biomeController.m_settings.m_postProcessBlenddDistance = m_editorUtils.Slider("PostProcessingBlendDistance", m_biomeController.m_settings.m_postProcessBlenddDistance, 0f, 500f, helpEnabled);
+            m_biomeController.m_ppVIsGlobal = m_editorUtils.Toggle("PostProcessingIsGlobal", m_biomeController.m_ppVIsGlobal, helpEnabled);
             m_biomeController.m_ppVSpawnMode = (GaiaConstants.BiomePostProcessingVolumeSpawnMode)m_editorUtils.EnumPopup("PostProcessingSpawnMode", m_biomeController.m_ppVSpawnMode, helpEnabled);
             if (m_biomeController.m_postProcessProfile == null)
             {
@@ -659,7 +677,7 @@ namespace Gaia
                 //Spawn Biome PP profile in local mode only - no good results if multiple biomes spawn in world spawn mode and stack multiple PP profiles on top of each other across the entire world...
                 if (m_biomeController.m_postProcessProfile != null)
                 {
-                    GaiaLighting.PostProcessingBiomeSpawning(m_biomeController.name, m_biomeController.m_postProcessProfile, m_biomeController.m_settings.m_range * 2f, m_biomeController.m_settings.m_postProcessBlenddDistance, m_biomeController.m_ppVSpawnMode);
+                    GaiaLighting.PostProcessingBiomeSpawning(m_biomeController.name, m_biomeController.m_postProcessProfile, m_biomeController.m_settings.m_range * 2f, m_biomeController.m_settings.m_postProcessBlenddDistance, m_biomeController.m_ppVSpawnMode, m_biomeController.m_ppVIsGlobal);
                 }
             }
             GUI.enabled = true;
@@ -875,37 +893,17 @@ namespace Gaia
                         {
                             spawnerSettingsSaveFilePath = GaiaDirectories.GetUserBiomeDirectory(m_biomeController.name) + "/" + autoSpawner.spawner.name + ".asset";
                         }
-                        if (File.Exists(spawnerSettingsSaveFilePath))
-                        {
-                            AssetDatabase.DeleteAsset(spawnerSettingsSaveFilePath);
-                        }
-                        AssetDatabase.CreateAsset(autoSpawner.spawner.m_settings, spawnerSettingsSaveFilePath);
-                        AssetDatabase.ImportAsset(spawnerSettingsSaveFilePath);
-                        AssetDatabase.SetLabels(autoSpawner.spawner.m_settings, new string[1] { GaiaConstants.gaiaManagerSpawnerLabel });
-                        //Was saving the spawner settings under this path successful?
-                        SpawnerSettings spawnerSettings = (SpawnerSettings)AssetDatabase.LoadAssetAtPath(spawnerSettingsSaveFilePath, typeof(SpawnerSettings));
-                        spawnerSettings.m_lastGUIDSaved = AssetDatabase.AssetPathToGUID(spawnerSettingsSaveFilePath);
-                        if (userFiles.m_autoAddNewFiles)
-                        {
-                            if (!userFiles.m_gaiaManagerSpawnerSettings.Contains(spawnerSettings))
-                            {
-                                userFiles.m_gaiaManagerSpawnerSettings.Add(spawnerSettings);
-                                userFilesChanged = true;
-                            }
-                        }
 
+                        SpawnerSettings spawnerSettings = autoSpawner.spawner.SaveSettings(spawnerSettingsSaveFilePath);
 
-                        if (spawnerSettings == null)
+                        if (spawnerSettings != null)
                         {
-                            Debug.LogError("Error while saving the biome preset: The spawner settings for the spawner '" + autoSpawner.spawner.name + "' could not be created / found. Try to save the settings for this spawner manually before saving the biome preset.");
-                            errors = true;
+                            BiomeSpawnerListEntry newEntry = new BiomeSpawnerListEntry() { m_isActiveInBiome = autoSpawner.isActive, m_autoAssignPrototypes = true, m_spawnerSettings = spawnerSettings };
+                            biomePreset.m_spawnerPresetList.Add(newEntry);
                         }
                         else
                         {
-                            //Re-load the spawner settings to dissociate the spawner settings with the file we just saved
-                            //otherwise the users will edit the scriptable object directly when altering the spawner in the scene.
-                            autoSpawner.spawner.LoadSettings(spawnerSettings);
-                            biomePreset.m_spawnerPresetList.Add(new BiomeSpawnerListEntry() { m_isActiveInBiome = autoSpawner.isActive, m_autoAssignPrototypes = true, m_spawnerSettings = spawnerSettings });
+                            Debug.LogError("Error while saving the biome preset: The spawner settings for the spawner '" + autoSpawner.spawner.name + "' could not be saved correctly. Try to save the settings for this spawner manually before saving the biome preset.");
                         }
                     }
 
@@ -913,8 +911,14 @@ namespace Gaia
                     biomePreset.postProcessProfile = m_biomeController.m_postProcessProfile;
 #endif
 
+
+
                     AssetDatabase.CreateAsset(biomePreset, saveFilePath);
                     AssetDatabase.ImportAsset(saveFilePath);
+                    BiomeControllerSettings biomeControllerSettings = Instantiate(m_biomeController.m_settings);
+                    AssetDatabase.AddObjectToAsset(biomeControllerSettings, saveFilePath);
+                    biomePreset.m_biomeControllerSettings = biomeControllerSettings;
+                    EditorUtility.SetDirty(biomePreset);
 
                     //Check if save was successful
                     BiomePreset biomePresetToLoad = (BiomePreset)AssetDatabase.LoadAssetAtPath(saveFilePath, typeof(BiomePreset));
@@ -1045,7 +1049,7 @@ namespace Gaia
             }
 
             float oldRange = m_biomeController.m_settings.m_range;
-            m_biomeController.m_settings.m_range = m_editorUtils.Slider("Range", m_biomeController.m_settings.m_range, 1, 8192, helpEnabled);
+            m_biomeController.m_settings.m_range = m_editorUtils.Slider("Range", m_biomeController.m_settings.m_range, 1, m_biomeController.GetMaxSpawnRange(), helpEnabled);
 
             if (oldRange != m_biomeController.m_settings.m_range)
             {
@@ -1183,7 +1187,7 @@ namespace Gaia
             GUILayout.EndHorizontal();
         }
 
-        private void OnSceneGUI()
+        private void DuringSceneGUI(SceneView obj)
         {
             // dont render preview if this isnt a repaint. losing performance if we do
             if (Event.current.type != EventType.Repaint)

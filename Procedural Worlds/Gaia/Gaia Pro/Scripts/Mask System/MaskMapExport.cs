@@ -652,6 +652,7 @@ namespace Gaia
             }
 
             path = ImageProcessing.WriteRenderTexture(path, textureToWrite, m_settings.m_exportFileType, TextureFormat.RGBAFloat, m_settings.m_exportJpgQuality);
+            
 #if UNITY_EDITOR
           
             AssetDatabase.ImportAsset(path);
@@ -662,6 +663,18 @@ namespace Gaia
                 if (importer != null)
                 {
                     importer.isReadable = m_settings.m_readWriteEnabled;
+                    importer.alphaSource = TextureImporterAlphaSource.None;
+                    importer.alphaIsTransparency = false;
+                    importer.sRGBTexture = false;
+                    importer.maxTextureSize = 8192;
+                    importer.wrapMode = TextureWrapMode.Clamp;
+                    importer.mipmapEnabled = false;
+                    importer.npotScale = TextureImporterNPOTScale.None;
+                    TextureImporterPlatformSettings texImpPlatSet = new TextureImporterPlatformSettings();
+                    texImpPlatSet.maxTextureSize = 8192;
+                    texImpPlatSet.format = TextureImporterFormat.RGB16;
+                    texImpPlatSet.textureCompression = TextureImporterCompression.Uncompressed;
+                    importer.SetPlatformTextureSettings(texImpPlatSet);
                 }
 
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);

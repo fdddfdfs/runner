@@ -29,6 +29,7 @@ namespace Gaia
         [SerializeField] private static GaiaScenePlayer m_instance;
 
         public GameObject m_gaiaUI;
+        public List<GameObject> m_gaiaCreatedControllers = new List<GameObject>();
 
         private Camera m_camera;
         private Bounds m_worldSpaceBounds = new Bounds();
@@ -53,9 +54,12 @@ namespace Gaia
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene scene = SceneManager.GetSceneAt(i);
-                foreach (GameObject go in scene.GetRootGameObjects())
+                if (scene.isLoaded)
                 {
-                    AddTerrainMeshRenderer(go, tempMeshRenderers);
+                    foreach (GameObject go in scene.GetRootGameObjects())
+                    {
+                        AddTerrainMeshRenderer(go, tempMeshRenderers);
+                    }
                 }
             }
             m_allTerrainMeshRenderers = tempMeshRenderers.ToArray();
@@ -176,6 +180,85 @@ namespace Gaia
             }
             
             GaiaAPI.RefreshCameraCulling();
+        }
+
+        /// <summary>
+        /// Adds a controller to the stored data
+        /// </summary>
+        /// <param name="controllerObject"></param>
+        public static void AddControllerObject(GameObject controllerObject)
+        {
+            GaiaScenePlayer gaiaPlayer = Instance;
+            if (gaiaPlayer != null)
+            {
+                if (controllerObject != null)
+                {
+                    gaiaPlayer.m_gaiaCreatedControllers.Add(controllerObject);
+                }
+            }
+        }
+        /// <summary>
+        /// Removes all the controllers
+        /// Returns the player controller
+        /// </summary>
+        /// <param name="checkForCustomControllerComponent"></param>
+        public static GameObject RemoveAllControllers(bool checkForCustomControllerComponent)
+        {
+            GameObject playerObject = null;
+            GaiaScenePlayer gaiaPlayer = Instance;
+            if (gaiaPlayer != null)
+            {
+                if (gaiaPlayer.m_gaiaCreatedControllers.Count == 0)
+                {
+                    Transform[] otherTransforms = gaiaPlayer.GetComponentsInChildren<Transform>();
+                    if (otherTransforms.Length > 0)
+                    {
+                        foreach (Transform otherTransform in otherTransforms)
+                        {
+                            if (otherTransform != gaiaPlayer.transform)
+                            {
+                                AddControllerObject(otherTransform.gameObject);
+                            }
+                        }
+                    }
+                }
+
+                if (gaiaPlayer.m_gaiaCreatedControllers.Count > 0)
+                {
+                    foreach (GameObject controller in gaiaPlayer.m_gaiaCreatedControllers)
+                    {
+                        if (controller != null)
+                        {
+                            if (checkForCustomControllerComponent)
+                            {
+                                CustomGaiaController customController = controller.GetComponent<CustomGaiaController>();
+                                if (customController != null)
+                                {
+                                    if (customController.m_isPlayer)
+                                    {
+                                        playerObject = controller;
+                                    }
+                                }
+
+                                DestroyImmediate(controller);
+                            }
+                            else
+                            {
+                                if (!controller.TryGetComponent(out Camera camera))
+                                {
+                                    playerObject = controller;
+                                }
+
+                                DestroyImmediate(controller);
+                            }
+                        }
+                    }
+                }
+
+                gaiaPlayer.m_gaiaCreatedControllers.Clear();
+            }
+
+            return playerObject;
         }
 
         private void AddTerrainMeshRenderer(GameObject go, List<MeshRenderer> meshRenderers)

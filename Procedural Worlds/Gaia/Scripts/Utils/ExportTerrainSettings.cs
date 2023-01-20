@@ -2,6 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if GAIA_MESH_PRESENT
+using UnityMeshSimplifierGaia;
+#endif
 
 namespace Gaia
 {
@@ -10,6 +13,7 @@ namespace Gaia
     public enum ConversionAction { MeshTerrain, ColliderOnly, OBJFileExport }
     public enum LODSettingsMode { Impostor, LowPoly, Custom }
     public enum SaveFormat { Triangles, Quads }
+    public enum TerrainColliderType { MeshCollider, TerrainCollider }
     public enum SaveResolution { Full = 0, Half, Quarter, Eighth, Sixteenth }
     public enum NormalEdgeMode { Smooth, Sharp }
     public enum TextureExportMethod { OrthographicBake, BaseMapExport }
@@ -24,6 +28,23 @@ namespace Gaia
     public class ExportTerrainLODSettings
     {
         public SaveResolution m_saveResolution = SaveResolution.Half;
+        public float m_simplifyQuality = 1.0f;
+#if GAIA_MESH_PRESENT
+        public UnityMeshSimplifierGaia.SimplificationOptions m_simplificationOptions = new UnityMeshSimplifierGaia.SimplificationOptions()
+        {
+            PreserveBorderEdges = true,
+            PreserveUVSeamEdges = false,
+            PreserveUVFoldoverEdges = false,
+            PreserveSurfaceCurvature = false,
+            EnableSmartLink = true,
+            VertexLinkDistance = 0.0001f,
+            MaxIterationCount = 100,
+            Agressiveness = 7,
+            ManualUVComponentCount = false,
+            UVComponentCount = 2
+        };
+#endif
+
         public NormalEdgeMode m_normalEdgeMode = NormalEdgeMode.Smooth;
         public LODSettingsMode m_LODSettingsMode = LODSettingsMode.Impostor;
         public bool m_settingsFoldedOut = false;
@@ -42,29 +63,44 @@ namespace Gaia
         public string namePrefix;
         public bool m_captureBaseMapTextures = false;
         public float m_LODGroupScreenRelativeTransitionHeight = 0.8f;
+        public bool m_customSimplifySettingsFoldedOut;
 
         public bool CompareTo(ExportTerrainLODSettings compareToLOD)
         {
             if (m_saveResolution != compareToLOD.m_saveResolution ||
-        m_normalEdgeMode != compareToLOD.m_normalEdgeMode ||
-        m_LODSettingsMode != compareToLOD.m_LODSettingsMode ||
-        m_exportTextures != compareToLOD.m_exportTextures ||
-        m_exportNormalMaps != compareToLOD.m_exportNormalMaps ||
-        m_exportSplatmaps != compareToLOD.m_exportSplatmaps ||
-        m_createMaterials != compareToLOD.m_createMaterials ||
-        m_materialShader != compareToLOD.m_materialShader ||
-        m_bakeVertexColors != compareToLOD.m_bakeVertexColors ||
-        m_VertexColorSmoothing != compareToLOD.m_VertexColorSmoothing ||
-        m_bakeLayerMask != compareToLOD.m_bakeLayerMask ||
-        m_textureExportMethod != compareToLOD.m_textureExportMethod ||
-        m_addAlphaChannel != compareToLOD.m_addAlphaChannel ||
-        m_textureExportResolution != compareToLOD.m_textureExportResolution ||
-        m_bakeLighting != compareToLOD.m_bakeLighting ||
-        m_captureBaseMapTextures != compareToLOD.m_captureBaseMapTextures)
+            m_normalEdgeMode != compareToLOD.m_normalEdgeMode ||
+            m_LODSettingsMode != compareToLOD.m_LODSettingsMode ||
+            m_exportTextures != compareToLOD.m_exportTextures ||
+            m_exportNormalMaps != compareToLOD.m_exportNormalMaps ||
+            m_exportSplatmaps != compareToLOD.m_exportSplatmaps ||
+            m_createMaterials != compareToLOD.m_createMaterials ||
+            m_materialShader != compareToLOD.m_materialShader ||
+            m_bakeVertexColors != compareToLOD.m_bakeVertexColors ||
+            m_VertexColorSmoothing != compareToLOD.m_VertexColorSmoothing ||
+            m_bakeLayerMask != compareToLOD.m_bakeLayerMask ||
+            m_textureExportMethod != compareToLOD.m_textureExportMethod ||
+            m_addAlphaChannel != compareToLOD.m_addAlphaChannel ||
+            m_textureExportResolution != compareToLOD.m_textureExportResolution ||
+            m_bakeLighting != compareToLOD.m_bakeLighting ||
+            m_captureBaseMapTextures != compareToLOD.m_captureBaseMapTextures ||
+            m_simplifyQuality != compareToLOD.m_simplifyQuality
+#if GAIA_MESH_PRESENT
+            ||
+            m_simplificationOptions.PreserveBorderEdges != compareToLOD.m_simplificationOptions.PreserveBorderEdges ||
+            m_simplificationOptions.PreserveUVSeamEdges != compareToLOD.m_simplificationOptions.PreserveUVSeamEdges ||
+            m_simplificationOptions.PreserveUVFoldoverEdges!= compareToLOD.m_simplificationOptions.PreserveUVFoldoverEdges ||
+            m_simplificationOptions.PreserveSurfaceCurvature!= compareToLOD.m_simplificationOptions.PreserveSurfaceCurvature ||
+            m_simplificationOptions.EnableSmartLink != compareToLOD.m_simplificationOptions.EnableSmartLink ||
+            m_simplificationOptions.VertexLinkDistance != compareToLOD.m_simplificationOptions.VertexLinkDistance ||
+            m_simplificationOptions.MaxIterationCount != compareToLOD.m_simplificationOptions.MaxIterationCount ||
+            m_simplificationOptions.Agressiveness!= compareToLOD.m_simplificationOptions.Agressiveness ||
+            m_simplificationOptions.ManualUVComponentCount!= compareToLOD.m_simplificationOptions.ManualUVComponentCount ||
+            m_simplificationOptions.UVComponentCount != compareToLOD.m_simplificationOptions.UVComponentCount
+#endif
+            )
             {
                 return false;
             }
-
             return true;
         }
     }
@@ -76,13 +112,15 @@ namespace Gaia
         //public bool m_deactivateOriginalTerrains = true;
         public SourceTerrainTreatment m_sourceTerrainTreatment = SourceTerrainTreatment.Deactivate;
         public SaveFormat m_saveFormat = SaveFormat.Triangles;
-        public bool m_addMeshCollider = true;
+        public bool m_addTerrainCollider = true;
+        public TerrainColliderType m_terrainColliderType = TerrainColliderType.TerrainCollider;
         public bool m_addMeshColliderImpostor = true;
         public ExportSelection m_exportSelection = ExportSelection.AllTerrains;
         public Texture2D m_terrainExportMask;
         public Gaia.GaiaConstants.ImageChannel m_terrainExportMaskChannel = GaiaConstants.ImageChannel.R;
         public bool m_terrainExportInvertMask = false;
         public bool m_copyGaiaGameObjects = true;
+        public bool m_convertTreesToGameObjects = true;
         public bool m_copyGaiaGameObjectsImpostor = false;
         public bool m_convertSourceTerrains = false;
         public ConversionAction m_convertSourceTerrainsAction = ConversionAction.MeshTerrain;
@@ -101,11 +139,29 @@ namespace Gaia
         public int m_presetIndex = -99;
         public string m_lastUsedPresetName = "";
         public Mesh m_colliderTreeReplacement = null;
+        public double m_impostorRange = 0;
+        public float m_colliderSimplifyQuality = 1.0f;
+        public bool m_customSimplificationSettingsFoldedOut;
+#if GAIA_MESH_PRESENT
+        public UnityMeshSimplifierGaia.SimplificationOptions m_colliderSimplificationOptions = new UnityMeshSimplifierGaia.SimplificationOptions()
+        {
+            PreserveBorderEdges = true,
+            PreserveUVSeamEdges = false,
+            PreserveUVFoldoverEdges = false,
+            PreserveSurfaceCurvature = false,
+            EnableSmartLink = true,
+            VertexLinkDistance = 0.0001f,
+            MaxIterationCount = 100,
+            Agressiveness = 7,
+            ManualUVComponentCount = false,
+            UVComponentCount = 2
+        };
+#endif
 
         public bool CompareTo(ExportTerrainSettings compareSettings)
         {
             if (m_saveFormat != compareSettings.m_saveFormat ||
-            m_addMeshCollider != compareSettings.m_addMeshCollider ||
+            m_addTerrainCollider != compareSettings.m_addTerrainCollider ||
             m_addMeshColliderImpostor != compareSettings.m_addMeshColliderImpostor ||
             m_terrainExportMask != compareSettings.m_terrainExportMask ||
             m_terrainExportMaskChannel != compareSettings.m_terrainExportMaskChannel ||
@@ -116,6 +172,7 @@ namespace Gaia
             m_colliderExportAddTreeColliders != compareSettings.m_colliderExportAddTreeColliders ||
             m_colliderExportAddGameObjectColliders != compareSettings.m_colliderExportAddGameObjectColliders ||
             m_copyGaiaGameObjects != compareSettings.m_copyGaiaGameObjects ||
+            m_convertTreesToGameObjects != compareSettings.m_convertTreesToGameObjects ||
             m_copyGaiaGameObjectsImpostor != compareSettings.m_copyGaiaGameObjectsImpostor ||
             m_convertSourceTerrains != compareSettings.m_convertSourceTerrains ||
             m_createImpostorScenes != compareSettings.m_createImpostorScenes)
@@ -208,7 +265,7 @@ namespace Gaia
             lodSettings.m_materialShader = ExportedTerrainShader.VertexColor;
         }
 
-        #region Serialization
+#region Serialization
 
         public void OnBeforeSerialize()
         {
@@ -217,7 +274,7 @@ namespace Gaia
         public void OnAfterDeserialize()
         {
         }
-        #endregion
+#endregion
 
         
     }

@@ -7,10 +7,13 @@ using UnityEngine;
 namespace Gaia
 {
 
+    public enum SortBiomesBy { Name, OrderNumber }
+
     public class UserFiles : ScriptableObject
     {
         public bool m_autoAddNewFiles = true;
         public bool m_updateFilesWithGaiaUpdate = true;
+        public SortBiomesBy m_sortBiomesBy = SortBiomesBy.Name;
         public List<BiomePreset> m_gaiaManagerBiomePresets = new List<BiomePreset>();
         public List<SpawnerSettings> m_gaiaManagerSpawnerSettings = new List<SpawnerSettings>();
         public List<ExportTerrainSettings> m_exportTerrainSettings = new List<ExportTerrainSettings>();

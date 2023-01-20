@@ -87,23 +87,19 @@ namespace Gaia.Pipeline.HDRP
                 }
                 else
                 {
-#if !GAIA_EXPERIMENTAL
+#if GAIA_PRO_PRESENT && UNITY_2021_2_OR_NEWER
                     if (profile.m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
                     {
-                        for (int i = 0; i < lightingProfile.m_lightingProfiles.Count; i++)
-                        {
-                            if (lightingProfile.m_lightingProfiles[i].m_typeOfLighting.Contains("Default"))
-                            {
-                                EditorUtility.DisplayDialog("Not Yet Supported", GaiaConstants.HDRPPWSkyExperimental, "Ok");
-                                lightingProfile.m_selectedLightingProfileValuesIndex = i;
-                                profile = lightingProfile.m_lightingProfiles[i];
-                                Debug.Log("HDRP PW Sky is not yet available. The profile has been defaulted and set to 'Default Lighting Profile' you can changes this on Gaia Lighting in Gaia Runtime Tools");
-                                break;
-                            }
-                        }
+                        ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.CreateTimeOfDay(GaiaUtils.GetRuntimeSceneObject());
+                        MarkSceneDirty(false);
+                        return;
+                    }
+                    else
+                    {
+                        ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.RemoveTimeOfDay();
+                        MarkSceneDirty(false);
                     }
 #endif
-
                     SetHDRPEnvironmentVolume(sceneProfile, pipelineProfile, profile);
                     if (sceneProfile.m_highDefinitionLightingProfile == null)
                     {
@@ -152,6 +148,7 @@ namespace Gaia.Pipeline.HDRP
                     if (profile.m_useDensityVolumeSystem)
                     {
                         HDRPDensityVolumeController.CreateGaiaHDRPDensityVolume();
+                        HDRPDensityVolumeController.ApplyChanges(profile);
                     }
                     else
                     {
@@ -176,9 +173,28 @@ namespace Gaia.Pipeline.HDRP
         /// <param name="profile"></param>
         public static void SetPipelineAsset(UnityPipelineProfile profile)
         {
-            if (GraphicsSettings.renderPipelineAsset == null || EditorUtility.DisplayDialog("Use Gaia Render Pipeline Asset?", "HDRP requires a render pipeline asset to be set up in the Project Graphics Settings. It looks like you already have a render pipeline asset in place. You can either use Gaias render pipeline asset with preconfigured settings (Recommended) or keep the already existing pipeline asset in place.", "Use Gaias RP Asset", "Keep existing RP Asset"))
-            {
 
+            bool qualityLevelRenderPipelineAssetExists = false;
+            try
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    if (QualitySettings.GetRenderPipelineAssetAt(i) != null)
+                    {
+                        qualityLevelRenderPipelineAssetExists = true;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message != "")
+                {
+                }
+            }
+
+            if ((GraphicsSettings.renderPipelineAsset == null && qualityLevelRenderPipelineAssetExists == false) || EditorUtility.DisplayDialog("Use Gaias Render Pipeline Asset configuration?", "HDRP requires a render pipeline asset to be set up in the Project Graphics / Quality Settings. It looks like you already have render pipeline assets in place in your project. You can either let Gaia adjust the render pipeline asset with preconfigured settings (Recommended) or keep the existing render pipeline asset configuration in place.", "Use Gaias Configuration", "Keep existing Configuration"))
+            {
                 try
                 {
                     GaiaPackageVersion unityVersion = GaiaManagerEditor.GetPackageVersion();
@@ -194,6 +210,28 @@ namespace Gaia.Pipeline.HDRP
                         pipelineAssetName = profile.m_highDefinitionPipelineProfiles.Last().m_pipelineAssetName;
                     }
                     GraphicsSettings.renderPipelineAsset = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(GaiaUtils.GetAssetPath(pipelineAssetName + GaiaConstants.gaiaFileFormatAsset));
+
+                    int originalQualitySettingsLevel = QualitySettings.GetQualityLevel();
+                    try
+                    {
+                        for (int i = 0; i < 100; i++)
+                        {
+                            //no better way to handle this? It seems that the rp asset is only accesible via the current quality level
+                            if (QualitySettings.GetRenderPipelineAssetAt(i) != null)
+                            {
+                                QualitySettings.SetQualityLevel(i);
+                                QualitySettings.renderPipeline = null;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message != "")
+                        {
+                        }
+                    }
+                    QualitySettings.SetQualityLevel(originalQualitySettingsLevel);
+
                     profile.m_pipelineSwitchUpdates = true;
                 }
                 catch (Exception e)
@@ -402,10 +440,12 @@ namespace Gaia.Pipeline.HDRP
                     yield return null;
                 }
 
+
                 EditorUtility.DisplayProgressBar("Installing HighDefinition", "Updating scene to HighDefinition", 0.75f);
                 m_waitTimer2 -= Time.deltaTime;
                 if (m_waitTimer2 < 0)
                 {
+                    SetGlobalSettingsAsset(profile);
                     ConfigureSceneToHDRP(profile);
                     SetDefaultHDRPLighting(profile);
                     profile.m_pipelineSwitchUpdates = false;
@@ -418,6 +458,73 @@ namespace Gaia.Pipeline.HDRP
                 }
             }
         }
+
+        private static void SetGlobalSettingsAsset(UnityPipelineProfile profile)
+        {
+            //Added in 2021.2 - add the global settings asset as well, this contains e.g. the diffusion profiles now
+#if UNITY_2021_2_OR_NEWER && HDPipeline
+            GaiaPackageVersion unityVersion = GaiaManagerEditor.GetPackageVersion();
+            UnityVersionPipelineAsset mapping = profile.m_highDefinitionPipelineProfiles.Find(x => x.m_unityVersion == unityVersion);
+
+            string globalSettingsAssetName = "";
+            if (mapping != null)
+            {
+                globalSettingsAssetName = mapping.m_globalSettingsAssetName;
+            }
+            else
+            {
+                //No mapping? This is most likely a new, untested unity version. Try latest entry in this case since this is most likely to work.
+                globalSettingsAssetName = profile.m_highDefinitionPipelineProfiles.Last().m_globalSettingsAssetName;
+            }
+            RenderPipelineGlobalSettings gaiaSettings = AssetDatabase.LoadAssetAtPath<RenderPipelineGlobalSettings>(GaiaUtils.GetAssetPath(globalSettingsAssetName + GaiaConstants.gaiaFileFormatAsset));
+            RenderPipelineGlobalSettings currentSettings = GraphicsSettings.GetSettingsForRenderPipeline<UnityEngine.Rendering.HighDefinition.HDRenderPipeline>();
+            if (gaiaSettings != null)
+            {
+                bool otherSettingsExist = false;
+                if (currentSettings != null)
+                {
+                    if (currentSettings != gaiaSettings)
+                    {
+                        otherSettingsExist = true;
+                    }
+                }
+
+
+                if (!otherSettingsExist || EditorUtility.DisplayDialog("Setup HDRP Global Settings object?", "Do you want Gaia to set up an HDRP Global Settings Object for you? (Recommended).\r\n\r\nThis asset contains settings that ensure Gaia works correctly in HDRP. If you do not use these Global Settings, you would need to add the diffusion profiles that come with Gaia into the HDRP Global Settings manually afterwards. If you already use diffusion profiles, those will be kept active.", "Add Global Settings", "Skip"))
+                {
+                    SerializedObject gaiaSettingsSO = new SerializedObject(gaiaSettings);
+                    SerializedProperty gaiaDiffusionProfileList = gaiaSettingsSO.FindProperty("diffusionProfileSettingsList");
+                    SerializedObject currentSettingsSO = new SerializedObject(currentSettings);
+                    SerializedProperty currentDiffusionProfileList = currentSettingsSO.FindProperty("diffusionProfileSettingsList");
+                    for (int i = 0; i < currentDiffusionProfileList.arraySize; i++)
+                    {
+                        SerializedProperty obj1Property = currentDiffusionProfileList.GetArrayElementAtIndex(i);
+                        Object obj1 = obj1Property.objectReferenceValue;
+                        bool found = false;
+                        for (int j = 0; j < gaiaDiffusionProfileList.arraySize; j++)
+                        {
+                            Object obj2 = gaiaDiffusionProfileList.GetArrayElementAtIndex(j).objectReferenceValue;
+                            if (obj1 == obj2)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                        {
+                            gaiaDiffusionProfileList.InsertArrayElementAtIndex(gaiaDiffusionProfileList.arraySize);
+                            SerializedProperty newElement = gaiaDiffusionProfileList.GetArrayElementAtIndex(gaiaDiffusionProfileList.arraySize - 1);
+                            newElement.objectReferenceValue = obj1;
+                        }
+                    }
+                    gaiaSettingsSO.ApplyModifiedProperties();
+                    GraphicsSettings.RegisterRenderPipelineSettings<UnityEngine.Rendering.HighDefinition.HDRenderPipeline>(gaiaSettings);
+                }
+
+            }
+#endif
+        }
+
 #if HDPipeline
         /// <summary>
         /// Sets the new HDRP environment volume in underwater effects
@@ -764,12 +871,7 @@ namespace Gaia.Pipeline.HDRP
                     }
                 }
 
-                if (setDayInstead)
-                {
-                    GaiaSceneManagement.SaveToProfile(gaiaSettings.m_gaiaLightingProfile);
-                    GaiaLighting.GetProfile(gaiaSettings.m_gaiaLightingProfile, profile, GaiaConstants.EnvironmentRenderer.HighDefinition, true);
-                }
-                else
+                if (!setDayInstead)
                 {
                     if (CheckIfDefaultAlreadyExists(profile))
                     {
@@ -1604,6 +1706,7 @@ namespace Gaia.Pipeline.HDRP
                     lightData.volumetricDimmer = profile.m_hDSunVolumetricMultiplier;
                     lightData.useContactShadow.level = -1;
                     lightData.useContactShadow.useOverride = profile.m_hDContactShadows;
+                    lightData.useContactShadow.@override = profile.m_hDContactShadows;
                     lightData.EnableShadows(true);
                     switch (profile.m_hDShadowResolution)
                     {
@@ -1813,14 +1916,21 @@ namespace Gaia.Pipeline.HDRP
                         profile.m_underwaterHorizonMaterial.shader = Shader.Find(profile.m_highDefinitionHorizonObjectShader);
                     }
 
-                    GameObject waterObject = GameObject.Find(gaiaSettings.m_gaiaWaterProfile.m_waterPrefab.name);
-                    if (waterObject != null)
+                    if (gaiaSettings.m_gaiaWaterProfile != null && gaiaSettings.m_gaiaWaterProfile.m_waterPrefab != null)
                     {
-                        GaiaUtils.GetRuntimeSceneObject();
-                        if (GaiaGlobal.Instance != null)
+                        GameObject waterObject = GameObject.Find(gaiaSettings.m_gaiaWaterProfile.m_waterPrefab.name);
+                        if (waterObject != null)
                         {
-                            GaiaWater.GetProfile(gaiaSettings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex, GaiaGlobal.Instance.SceneProfile, true, false);
+                            GaiaUtils.GetRuntimeSceneObject();
+                            if (GaiaGlobal.Instance != null)
+                            {
+                                GaiaWater.GetProfile(gaiaSettings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex, GaiaGlobal.Instance.SceneProfile, true, false);
+                            }
                         }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Gaia Water Profile not set in the Gaia Settings, will not configure water for HDRP.");
                     }
                 }
             }

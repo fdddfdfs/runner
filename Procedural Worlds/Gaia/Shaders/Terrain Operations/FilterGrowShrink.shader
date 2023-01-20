@@ -56,21 +56,24 @@
                     {
                         for (float y = -absDistance; y <=absDistance; y+=_TexelSize) 
                         {
-                            float shiftedInput = (tex2D(_InputTex, float2(i.pcUV.x + x,i.pcUV.y +y)));
-                            float interpolated = lerp(shiftedInput,input,smoothstep(0,distance(float2(0,0),float2(absDistance,absDistance)),distance(float2(0,0),float2(x,y))));
-
-                            if(_Distance>0)
+                            //check if out of bounds
+                            if(0.0f<=i.pcUV.x+x && i.pcUV.x+x<=1.0f && 0.0f<=i.pcUV.y+y && i.pcUV.y+y<=1.0f)
                             {
-                                if(interpolated>input)
+                                float shiftedInput = (tex2D(_InputTex, float2(i.pcUV.x + x,i.pcUV.y +y)));
+                                float interpolated = lerp(shiftedInput,input,smoothstep(0,distance(float2(0,0),float2(absDistance,absDistance)),distance(float2(0,0),float2(x,y))));
+                                if(_Distance>0)
                                 {
-                                    input = interpolated;
+                                    if(interpolated>input)
+                                    {
+                                        input = interpolated;
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                if(interpolated<input)
+                                else
                                 {
-                                    input = interpolated;
+                                    if(interpolated<input)
+                                    {
+                                        input = interpolated;
+                                    }
                                 }
                             }
                         }

@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public sealed class HighJump : ActivatableItem<HighJump>
+public sealed class HighJump : ActivatableItem
 {
     public static int Weight => 1;
     

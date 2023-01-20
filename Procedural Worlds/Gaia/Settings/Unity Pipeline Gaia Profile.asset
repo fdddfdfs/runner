@@ -25,21 +25,27 @@ MonoBehaviour:
   m_universalPipelineProfiles:
   - m_unityVersion: 2
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 7.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 7.3.1
   - m_unityVersion: 3
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 7.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 7.4.1
   - m_unityVersion: 4
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 8.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 8.2.0
   - m_unityVersion: 5
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 8.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 10.1.0
   - m_unityVersion: 6
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 8.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 10.3.2
   - m_unityVersion: 8
     m_pipelineAssetName: UPRenderPipelineAsset PWS UP 8.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 11.0.0
   m_universalScriptDefine: UPPipeline
   m_universalHorizonObjectShader: Universal Render Pipeline/Lit
@@ -55,9 +61,11 @@ MonoBehaviour:
   m_lightweightPipelineProfiles:
   - m_unityVersion: 0
     m_pipelineAssetName: LWRenderPipelineAsset PWS LW 5.7.2
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 5.13.0
   - m_unityVersion: 1
     m_pipelineAssetName: LWRenderPipelineAsset PWS LW 6.9.1
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 5.13.0
   m_lightweightScriptDefine: LWPipeline
   m_lightweightHorizonObjectShader: Lightweight Render Pipeline/Lit
@@ -72,22 +80,32 @@ MonoBehaviour:
   m_highDefinitionPipelineProfiles:
   - m_unityVersion: 2
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 7.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 7.3.1
   - m_unityVersion: 3
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 7.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 7.4.1
   - m_unityVersion: 4
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 7.2.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 8.2.0
   - m_unityVersion: 5
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 10.0.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 10.1.0
   - m_unityVersion: 6
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 10.0.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 10.3.2
   - m_unityVersion: 8
     m_pipelineAssetName: HDRenderPipelineAsset PWS HD 10.0.0
+    m_globalSettingsAssetName: 
     m_verifiedSRPVersion: 11.0.0
+  - m_unityVersion: 9
+    m_pipelineAssetName: HDRenderPipelineAsset PWS HD 12.1.0
+    m_globalSettingsAssetName: HDRenderPipelineGlobalSettings HD 12.1
+    m_verifiedSRPVersion: 12.1.0
   m_highDefinitionScriptDefine: HDPipeline
   m_highDefinitionHorizonObjectShader: HDRP/Lit
   m_highDefinitionTerrainMaterial: {fileID: 2100000, guid: 7ddb07f91da7065499ff7264dd026365,
@@ -114,6 +132,9 @@ MonoBehaviour:
   - m_builtInShaderName: PWS/PW_General_Deferred
     m_URPReplacementShaderName: Shader Graphs/PW_General_ShaderGraph_URP
     m_HDRPReplacementShaderName: Shader Graphs/PW_General_ShaderGraph_HDRP
+  - m_builtInShaderName: PWS/Details/PW_Details_Foliage_BuiltIn
+    m_URPReplacementShaderName: PWS/Details/PW_Details_Foliage_URP
+    m_HDRPReplacementShaderName: PWS/Details/PW_Details_Foliage_HDRP
   m_packageSetupSettings:
   - m_version: 2019.1
     m_isSupported: 0

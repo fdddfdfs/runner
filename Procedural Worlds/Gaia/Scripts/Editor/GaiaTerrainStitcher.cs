@@ -23,17 +23,17 @@ namespace Gaia
 
         private EditorUtils m_editorUtils;
         bool m_targetAllTerrains = true;
-        bool m_stitchAllDirections = true;
-        bool m_stitchDirectionNorth = true;
-        bool m_stitchDirectionSouth = true;
-        bool m_stitchDirectionWest = true;
-        bool m_stitchDirectionEast = true;
+        static bool m_stitchAllDirections = true;
+        static bool m_stitchDirectionNorth = true;
+        static bool m_stitchDirectionSouth = true;
+        static bool m_stitchDirectionWest = true;
+        static bool m_stitchDirectionEast = true;
 
-        List<TerrainStitchInfo> m_stitchedTerrains = new List<TerrainStitchInfo>();
+        static List<TerrainStitchInfo> m_stitchedTerrains = new List<TerrainStitchInfo>();
 
-        Terrain m_targetTerrain;
-        int m_extraSeamSize = 1;
-        float m_maxDifference = 1.0f;
+        static Terrain m_targetTerrain;
+        public static int m_extraSeamSize = 1;
+        static float m_maxDifference = 1.0f;
         private GaiaSettings m_settings;
 
         public bool PositionChecked { get => true; set => PositionChecked = value; }
@@ -121,7 +121,7 @@ namespace Gaia
 
         }
 
-        private void StitchTerrain(Terrain terrain)
+        public static void StitchTerrain(Terrain terrain)
         {
             TerrainStitchInfo stitchInfo = GetOrCreateStitchInfo(terrain);
             Terrain neighborTerrain = null;
@@ -244,7 +244,7 @@ namespace Gaia
             }
         }
 
-        private TerrainStitchInfo GetOrCreateStitchInfo(Terrain terrain)
+        private static TerrainStitchInfo GetOrCreateStitchInfo(Terrain terrain)
         {
             string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(terrain.terrainData));
             if (!String.IsNullOrEmpty(guid))

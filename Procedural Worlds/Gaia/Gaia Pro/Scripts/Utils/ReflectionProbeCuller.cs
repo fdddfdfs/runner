@@ -138,7 +138,7 @@ namespace Gaia
             DistanceCalculate();
             if (currentDistance < m_maxRenderDistance)
             {
-                if (m_probeExists && m_probe.isActiveAndEnabled)
+                if (m_probeExists && !m_probe.isActiveAndEnabled)
                 {
                     m_probe.enabled = true;
                     m_probe.RenderProbe();

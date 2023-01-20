@@ -5,133 +5,24 @@
     private const int StartMoneyValue = 0;
     private const int StartLevel = 1;
     private const int StartBoardsCount = 5;
+
+    public static Stat Money { get; } = new (nameof(Money), StartMoneyValue);
     
-    public static Stats Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                Instance = new Stats();
-                Initialize();
-            }
-
-            return _instance;
-        }
-        private set => _instance = value;
-    }
-
-    private static Stats _instance;
-    private static int _money;
-    private static int _highJumpLevel;
-    private static int _magnetLevel;
-    private static int _doubleMoneyLevel;
-    private static int _immuneLevel;
-    private static int _flyLevel;
-    private static int _boardCount;
-    private static int _boardLevel;
-    private static int _doubleScoreLevel;
-
-    public int Money
-    {
-        get => _money;
-        set
-        {
-            _money = value;
-            Prefs.SaveVariable(_money, nameof(_money));
-        }
-    }
-
-    public int HighJumpLevel
-    {
-        get => _magnetLevel;
-        set
-        {
-            _highJumpLevel = value;
-            Prefs.SaveVariable(_highJumpLevel, nameof(_highJumpLevel));
-        }
-    }
+    public static Stat HighJumpLevel { get; } = new(nameof(HighJumpLevel), StartLevel);
     
-    public int MagnetLevel
-    {
-        get => _magnetLevel;
-        set
-        {
-            _highJumpLevel = value;
-            Prefs.SaveVariable(_magnetLevel, nameof(_magnetLevel));
-        }
-    }
-
-    public int ImmuneLevel
-    {
-        get => _immuneLevel;
-        set
-        {
-            _immuneLevel = value;
-            Prefs.SaveVariable(_immuneLevel, nameof(_immuneLevel));
-        }
-    }
-
-    public int DoubleMoneyLevel
-    {
-        get => _doubleMoneyLevel;
-        set
-        {
-            _doubleMoneyLevel = value;
-            Prefs.SaveVariable(_doubleMoneyLevel, nameof(_doubleMoneyLevel));
-        }
-    }
+    public static Stat MagnetLevel = new(nameof(MagnetLevel), StartLevel);
     
-    public int FlyLevel
-    {
-        get => _flyLevel;
-        set
-        {
-            _flyLevel = value;
-            Prefs.SaveVariable(_flyLevel, nameof(_flyLevel));
-        }
-    }
-
-    public int BoardCount
-    {
-        get => _boardCount;
-        set
-        {
-            _boardCount = value;
-            Prefs.SaveVariable(_boardCount, nameof(_boardCount));
-        }
-    }
-
-    public int BoardLevel
-    {
-        get => _boardLevel;
-        set
-        {
-            _boardLevel = value;
-            Prefs.SaveVariable(_boardLevel, nameof(_boardLevel));
-        }
-    }
-
-    public int DoubleScoreLevel
-    {
-        get => _doubleScoreLevel;
-        set
-        {
-            _doubleScoreLevel = value;
-            Prefs.SaveVariable(_doubleScoreLevel, nameof(_doubleScoreLevel));
-        }
-    }
-
-    private static void Initialize()
-    {
-        Prefs.LoadVariable(out _money, nameof(_money), StartMoneyValue);
-        Prefs.LoadVariable(out _highJumpLevel, nameof(_highJumpLevel), StartLevel);
-        Prefs.LoadVariable(out _magnetLevel, nameof(_magnetLevel), StartLevel);
-        Prefs.LoadVariable(out _doubleMoneyLevel, nameof(_doubleMoneyLevel), StartLevel);
-        Prefs.LoadVariable(out _immuneLevel, nameof(_immuneLevel), StartLevel);
-        Prefs.LoadVariable(out _flyLevel, nameof(_flyLevel), StartLevel);
-        Prefs.LoadVariable(out _boardCount, nameof(_boardCount), StartBoardsCount);
-        Prefs.LoadVariable(out _boardLevel, nameof(_boardLevel), StartLevel);
-        Prefs.LoadVariable(out _doubleScoreLevel, nameof(_boardCount), StartLevel);
-    }
+    public static Stat DoubleMoneyLevel = new(nameof(DoubleMoneyLevel), StartLevel);
+    
+    public static Stat ImmuneLevel = new(nameof(ImmuneLevel), StartLevel);
+    
+    public static Stat FlyLevel = new(nameof(FlyLevel), StartLevel);
+    
+    public static Stat BoardCount = new(nameof(BoardCount), StartBoardsCount);
+    
+    public static Stat BoardLevel = new(nameof(BoardLevel), StartLevel);
+    
+    public static Stat DoubleScoreLevel = new(nameof(DoubleScoreLevel), StartLevel);
+    
+    public static Stat Record = new(nameof(Record), 0);
 }

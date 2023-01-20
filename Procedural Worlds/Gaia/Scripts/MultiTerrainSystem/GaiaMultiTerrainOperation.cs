@@ -1,6 +1,6 @@
 ﻿#if FLORA_PRESENT
+using static ProceduralWorlds.Flora.CoreCommonFloraData;
 using ProceduralWorlds.Flora;
-using static ProceduralWorlds.Flora.FloraCommonData;
 #endif
 using System;
 using System.Collections;
@@ -16,7 +16,6 @@ using UnityEngine.Experimental.TerrainAPI;
 #endif
 using UnityEngine.SocialPlatforms;
 using static Gaia.GaiaConstants;
-
 
 namespace Gaia
 {
@@ -564,6 +563,17 @@ namespace Gaia
                 if (entry.Value.splatMapID == -1 || entry.Value.channelID == -1)
                     continue;
 
+                //skip with a warning if the painting would exceed the target render texture on the terrain
+                if (entry.Value.affectedLocalPixels.min.x + entry.Value.affectedLocalPixels.width > entry.Key.terrain.terrainData.alphamapResolution ||
+                    entry.Value.affectedLocalPixels.min.y + entry.Value.affectedLocalPixels.height > entry.Key.terrain.terrainData.alphamapResolution ||
+                    entry.Value.affectedLocalPixels.min.x < 0 ||
+                    entry.Value.affectedLocalPixels.min.y < 0)
+                {
+                    Debug.LogWarning($"Texture spawning on terrain '{entry.Key.terrain.name}' out of bounds of the splatmap texture! Texture spawning will be skipped.\r\nDebug Info:\r\nMin x: {entry.Value.affectedLocalPixels.min.x}\r\nMin y: {entry.Value.affectedLocalPixels.min.y}\r\nWidth:{entry.Value.affectedLocalPixels.width}\r\nHeight:{entry.Value.affectedLocalPixels.height}\r\nAlphamap Resolution:{ entry.Key.terrain.terrainData.alphamapResolution}");
+                    continue;
+                }
+
+
                 RectInt paintRect = entry.Value.affectedOperationPixels;
 
                 Rect sourceRect = new Rect(
@@ -809,38 +819,9 @@ namespace Gaia
                     //If the PW Grass System is used, make sure it uses the PW Grass component & the settings scriptable object is set up correctly
                     ResourceProtoDetail protoDetail = spawnerSettings.m_resources.m_detailPrototypes[spawnRule.m_resourceIdx];
 
-                    if (protoDetail.m_usePWGrass && protoDetail.DetailerSettingsObject != null)
+                    if (protoDetail.m_useFlora && protoDetail.m_floraLODs != null)
                     {
-                        //Set up the global manager for the detail system (if not present already)
-                        GaiaUtils.GetOrCreateDetailGlobalManager();
-                        FloraTerrainTile dtt = entry.Key.terrain.GetComponent<FloraTerrainTile>();
-                        if (dtt == null)
-                        {
-                            dtt = entry.Key.terrain.gameObject.AddComponent<FloraTerrainTile>();
-                        }
-                        if (dtt.m_detailObjectList == null)
-                        {
-                            dtt.m_detailObjectList = new List<DetailOverrideData>();
-                        }
-
-                        //We match by the detail settings object, this should be precise enough to get the correct entry in the list
-                        int listIndex = dtt.m_detailObjectList.FindIndex(x => x.DetailScriptableObject == protoDetail.DetailerSettingsObject);
-
-                        //DetailOverrideData is a struct, need to overwrite it in the list if it already exists
-                        DetailOverrideData detailOverrideData = new DetailOverrideData();
-                        detailOverrideData.DetailScriptableObject = protoDetail.DetailerSettingsObject;
-                        detailOverrideData.SourceDataType = SourceDataType.Detail;
-                        detailOverrideData.SourceDataIndex = terrainLayerID;
-                        if (listIndex == -1)
-                        {
-                            detailOverrideData.DebugColor = protoDetail.DetailerSettingsObject.m_data.DebugColor;
-                            dtt.m_detailObjectList.Add(detailOverrideData);
-                        }
-                        else
-                        {
-                            detailOverrideData.DebugColor = dtt.m_detailObjectList[listIndex].DebugColor;
-                            dtt.m_detailObjectList[listIndex] = detailOverrideData;
-                        }
+                        FloraUtils.AddFloraToTerrain(entry.Key.terrain, protoDetail.m_floraLODs, terrainLayerID, SourceDataType.Detail);
                     }
 #endif
                 }
@@ -953,7 +934,7 @@ namespace Gaia
         /// <param name="protoTree">The Gaia tree prototype data.</param>
         /// <param name="spawnerSettings">The used spawnerSettings</param>
         /// <param name="centerTerrainOnly">Should the trees be applied to the center terrain of the operation only?</param>
-        public bool SetTerrainTrees(RenderTexture targetTreeTexture, SpawnerSettings spawnerSettings, Spawner spawner, SpawnRule spawnRule, int seed, bool centerTerrainOnly = false)
+        public bool SetTerrainTrees(RenderTexture targetTreeTexture, SpawnerSettings spawnerSettings, Spawner spawner, SpawnRule spawnRule, int seed, bool centerTerrainOnly = false, float seaLevel = 0)
         {
             //initialize RNG
             XorshiftPlus randomGenerator = new XorshiftPlus(seed);
@@ -987,6 +968,7 @@ namespace Gaia
                 List<TreeInstance> spawnedTreeInstances = new List<TreeInstance>();
 
                 int protoTypeIndex = spawner.m_settings.m_resources.PrototypeIdxInTerrain(spawnRule.m_resourceType, spawnRule.m_resourceIdx, entry.Key.terrain);
+                ResourceProtoTree protoTree = spawner.m_settings.m_resources.m_treePrototypes[spawnRule.m_resourceIdx];
 
                 //Add the existing trees to our list
                 spawnedTreeInstances.AddRange(terrainData.treeInstances);
@@ -1012,9 +994,7 @@ namespace Gaia
                     //this creates a more natural distribution on terrain borders
                     stopX += (locationIncrementMax);
                     stopY += (locationIncrementMax);
-
-                    ResourceProtoTree protoTree = spawner.m_settings.m_resources.m_treePrototypes[spawnRule.m_resourceIdx];
-
+                                        
                     for (float x = startX; x <= stopX; x += locationIncrementMin)
                     {
                         for (float y = startY; y <= stopY; y += locationIncrementMin)
@@ -1058,7 +1038,32 @@ namespace Gaia
 
                                 TreeInstance treeInstance = new TreeInstance();
                                 treeInstance.prototypeIndex = protoTypeIndex;
-                                treeInstance.position = new Vector3(xPos / (float)terrainData.size.x, 0, yPos / (float)terrainData.size.z);
+
+                                float scalarY = 0;
+                                float scalarX = xPos / (float)terrainData.size.x;
+                                float scalarZ = yPos / (float)terrainData.size.z;
+
+
+                                if (!protoTree.m_snapToTerrain)
+                                {
+                                    switch (protoTree.m_yOffsetBasedOn)
+                                    {
+                                        case YOffsetBasedOn.TerrainHeight:
+                                            scalarY = terrainData.GetInterpolatedHeight(scalarX, scalarZ);
+                                            break;
+                                        case YOffsetBasedOn.SeaLevel:
+                                            scalarY = seaLevel;
+                                            break;
+                                        case YOffsetBasedOn.Custom:
+                                            scalarY = protoTree.m_customOffset;
+                                            break;
+                                    }
+                                    scalarY += randomGenerator.Next(protoTree.m_minYOffset, protoTree.m_maxYOffset);
+                                    scalarY = scalarY / (float)terrainData.size.y;
+                                }
+
+
+                                treeInstance.position = new Vector3(scalarX, scalarY, scalarZ);
                                 //Determine width and height scale according to the prototype settings
                                 switch (protoTree.m_spawnScale)
                                 {
@@ -1123,12 +1128,23 @@ namespace Gaia
                     }
                 }
 
-                terrainData.SetTreeInstances(spawnedTreeInstances.ToArray(), true);
-                //GaiaSessionManager.GetSessionManager().m_collisionMaskCache.BakeTerrainTreeCollisions(entry.Key.terrain, protoTypeIndex, 5f);
-                //if (cancel)
-                //{
-                //    break;
-                //}
+                terrainData.SetTreeInstances(spawnedTreeInstances.ToArray(), protoTree.m_snapToTerrain);
+
+#if FLORA_PRESENT && UNITY_EDITOR
+                if (FloraAutomationAPI.TreesEnabled)
+                {
+                    //set up flora on the terrain
+#pragma warning disable 162
+                    if (protoTree.m_useFlora && protoTree.m_floraLODs != null)
+                    {
+                        FloraAutomationAPI.AddCurrentPrefab(protoTree.m_desktopPrefab);
+                        FloraUtils.AddFloraToTerrain(entry.Key.terrain, protoTree.m_floraLODs, protoTypeIndex, SourceDataType.Tree);
+                        FloraAutomationAPI.RemoveCurrentPrefab(protoTree.m_desktopPrefab);
+                    }
+#pragma warning restore 162
+                }
+#endif
+
             }
             RenderTexture.ReleaseTemporary(targetTreeTexture);
             //targetTreeTexture = null;
@@ -1241,7 +1257,7 @@ namespace Gaia
         /// <param name="target">A target transform under which to create the new Game Object instances.</param>
         /// <param name="spawnMode">The used spawn mode (replace, add, etc.)</param>
         /// <param name="centerTerrainOnly">Should the Game Objects be applied to the center terrain of the operation only?</param>
-        public bool SetTerrainGameObjects(RenderTexture targetGameObjectTexture, ResourceProtoGameObject protoGO, SpawnRule rule, SpawnerSettings spawnerSettings, int randomSeed, ref int instanceCounter, float removalStrength = 0f, bool centerTerrainOnly = false)
+        public bool SetTerrainGameObjects(RenderTexture targetGameObjectTexture, ResourceProtoGameObject protoGO, SpawnRule rule, SpawnerSettings spawnerSettings, int randomSeed, ref int instanceCounter, float removalStrength = 0f, bool centerTerrainOnly = false, float seaLevel = 0f)
         {
             XorshiftPlus randomGenerator = new XorshiftPlus(randomSeed);
 
@@ -1312,6 +1328,10 @@ namespace Gaia
                     float startY = entry.Value.affectedLocalPixels.min.y * (m_originTerrain.terrainData.size.z / terrainGameObjectResolution);
                     float stopX = entry.Value.affectedLocalPixels.max.x * (m_originTerrain.terrainData.size.x / terrainGameObjectResolution);
                     float stopY = entry.Value.affectedLocalPixels.max.y * (m_originTerrain.terrainData.size.z / terrainGameObjectResolution);
+
+                    //Add the user offset
+                    startX += rule.m_startOffsetX;
+                    startY += rule.m_startOffsetZ;
 
                     //Add a bit of extra seam where we try to spawn outside of the terrain, and then "jitter back on to it"
                     //this creates a more natural distribution on terrain borders
@@ -1470,8 +1490,19 @@ namespace Gaia
 
                                             Vector3 interpolatedNormal = terrainData.GetInterpolatedNormal(scalarX, scalarZ);
 
-                                            instanceLocation.y = terrainData.GetInterpolatedHeight(scalarX, scalarZ) + entry.Key.terrain.transform.position.y;
-
+                                            switch (gpi.m_yOffsetBasedOn)
+                                            {
+                                                case YOffsetBasedOn.TerrainHeight:
+                                                    instanceLocation.y = terrainData.GetInterpolatedHeight(scalarX, scalarZ) + entry.Key.terrain.transform.position.y;
+                                                    break;
+                                                case YOffsetBasedOn.SeaLevel:
+                                                    instanceLocation.y = seaLevel;
+                                                    break;
+                                                case YOffsetBasedOn.Custom:
+                                                    instanceLocation.y = gpi.m_customOffset;
+                                                    break;
+                                            }
+ 
                                             //Determine the local scale according to the instance resource settings
 
                                             Vector3 localScale = new Vector3();
@@ -1534,7 +1565,7 @@ namespace Gaia
                                                     break;
                                             }
 
-                                            float localDist = Vector3.Distance(worldSpacelocation, instanceLocation);
+                                            float localDist = Vector2.Distance(new Vector2(worldSpacelocation.x, worldSpacelocation.z), new Vector2(instanceLocation.x,instanceLocation.z));
                                             float maxDistance = Mathf.Max(Mathf.Max(Mathf.Abs(gpi.m_maxSpawnOffsetX), Mathf.Abs(gpi.m_minSpawnOffsetX), Mathf.Max(Mathf.Abs(gpi.m_maxSpawnOffsetZ), Mathf.Abs(gpi.m_minSpawnOffsetZ))));
                                             float distanceScale = gpi.m_scaleByDistance.Evaluate(localDist / Mathf.Max(1, maxDistance));
 
@@ -1565,7 +1596,14 @@ namespace Gaia
                                                     randomGenerator.Next(gpi.m_minRotationOffsetY + spawnRotationY, gpi.m_maxRotationOffsetY + spawnRotationY),
                                                     randomGenerator.Next(gpi.m_minRotationOffsetZ, gpi.m_maxRotationOffsetZ)));
 
-                                            if (protoGO.m_instances[idx].m_rotateToSlope == true)
+
+
+                                            if (gpi.m_alignForwardVectorToSlope)
+                                            {
+                                                go.transform.rotation = Quaternion.FromToRotation(Vector3.forward, new Vector3(interpolatedNormal.x, 0f, interpolatedNormal.z)) * go.transform.rotation;
+                                            }
+
+                                            if (gpi.m_rotateToSlope == true)
                                             {
                                                 go.transform.rotation = Quaternion.FromToRotation(Vector3.up, interpolatedNormal) * go.transform.rotation;
                                             }
@@ -1665,6 +1703,9 @@ namespace Gaia
             //Calculate the actual location increment, taking the global spawn density into account
             float locationIncrementMin = rule.m_locationIncrementMin * (1 / spawnerSettings.m_spawnDensity);
 
+            //Store successful spawn locations in this list to perform self collision tests
+            List<Vector2> pastSpawnLocations = new List<Vector2>();
+
             foreach (var entry in relevantEntries)
             {
                 if (!entry.Value.IsAffected())
@@ -1726,11 +1767,45 @@ namespace Gaia
                         {
                             colorIndex = (localY - (entry.Value.affectedLocalPixels.y - entry.Value.affectedOperationPixels.y)) * targetSpawnExtensionTexture.descriptor.width + localX - (entry.Value.affectedLocalPixels.x - entry.Value.affectedOperationPixels.x);
                             strength = (colorIndex >= 0 && colorIndex < colors.Length - 1) ? colors[colorIndex].r : 0;
+                            float xWorldSpace = xPos + entry.Key.terrain.transform.position.x;
+                            float zWorldSpace = yPos + entry.Key.terrain.transform.position.z;
 
                             //Random failure chance to feather out the game objects with strength, the lower the strength is the higher the chance the spawn will fail, and vice versa
                             if (randomGenerator.Next(rule.m_minRequiredFitness, 1f) > strength)
                             {
                                 continue;
+                            }
+
+
+                            //if self collision checks are active, check against the past spawn locations to see if the bounds radii would collide
+                            if (rule.m_boundsCollisionCheck)
+                            {
+                                bool collision = false;
+                                //Iterate through the list backwards so we can remove irrelevant entries while we iterate
+                                //Entries are irrelevant when the spawn position has moved so far on the X axis
+                                //so that a collision is not possible anymore.
+                                for (int i = pastSpawnLocations.Count() - 1; i >= 0; i--)
+                                {
+                                    if (Vector2.Distance(new Vector2(xWorldSpace, zWorldSpace), pastSpawnLocations[i]) < (protoSpawnExtension.m_dna.m_boundsRadius * 2))
+                                    {
+                                        collision = true;
+                                    }
+                                    else
+                                    {
+                                        //check if we are so far on the X-axis so that a collision is impossible in the future
+                                        if (xWorldSpace > pastSpawnLocations[i].x + (protoSpawnExtension.m_dna.m_boundsRadius * 2))
+                                        {
+                                            //we are, we can remove that past Spawn Location
+                                            pastSpawnLocations.RemoveAt(i);
+                                        }
+                                    }
+                                }
+
+                                if (collision)
+                                {
+                                    //we collided, abort the spawn and continue iterating
+                                    continue;
+                                }
                             }
 
                             float spawnRotationY = randomGenerator.Next(rule.m_minDirection, rule.m_maxDirection);
@@ -1775,13 +1850,12 @@ namespace Gaia
                             {
                                 continue;
                             }
+
                             float scale = protoSpawnExtension.m_dna.m_scaleMultiplier;
 
                             int spawnedInstances = 0;
                             float boundsRadius = protoSpawnExtension.m_dna.m_boundsRadius * scale;
                             Vector3 scaleVect = new Vector3(scale, scale, scale);
-                            float xWorldSpace = xPos + entry.Key.terrain.transform.position.x;
-                            float zWorldSpace = yPos + entry.Key.terrain.transform.position.z;
                             float yWorldSpace = terrainData.GetInterpolatedHeight(xPos / (float)terrainData.size.x, yPos / (float)terrainData.size.z) + entry.Key.terrain.transform.position.y;
                             Vector3 worldSpacelocation = new Vector3(xWorldSpace, yWorldSpace, zWorldSpace);
 
@@ -1893,7 +1967,7 @@ namespace Gaia
                                                 randomGenerator.Next(instance.m_minRotationOffsetZ, instance.m_maxRotationOffsetZ)));
                                         info.m_scale = localScale * scale * distanceScale;
                                         info.m_currentTerrain = entry.Key.terrain;
-
+                                        pastSpawnLocations.Add(new Vector2(xWorldSpace, zWorldSpace));
                                         //Get all Spawn extensions and fire (could be multiple Spawn Extension components on the prefab)
 
                                         foreach (ISpawnExtension extension in instance.m_spawnerPrefab.GetComponents<ISpawnExtension>())
@@ -2460,26 +2534,6 @@ namespace Gaia
 
                 foreach (CollisionMask collMask in collisionMasks.Where(x => x.m_active == true))
                 {
-
-                    int treePrototypeID = -99;
-
-                    if (collMask.m_type == BakedMaskType.RadiusTree)
-                    {
-                        //Get the tree prototype ID from the spawn rule GUID stored in the collision mask
-                        SpawnRule sr = CollisionMask.m_allTreeSpawnRules.FirstOrDefault(x => x.GUID == collMask.m_treeSpawnRuleGUID);
-                        if (sr == null)
-                        {
-                            continue;
-                        }
-
-                        treePrototypeID = TerrainHelper.GetTreePrototypeIDFromSpawnRule(sr, entry.Key.terrain);
-
-                        if (treePrototypeID == -99)
-                        {
-                            continue;
-                        }
-                    }
-
                     BakedMaskTypeInternal bmti = BakedMaskTypeInternal.RadiusTag;
                     switch (collMask.m_type)
                     {
@@ -2503,7 +2557,7 @@ namespace Gaia
                             //    break;
                     }
 
-                    tempsourceTexture = gaiaSessionManager.m_bakedMaskCache.LoadBakedMask(entry.Key.terrain, bmti, collMask, "", treePrototypeID);
+                    tempsourceTexture = gaiaSessionManager.m_bakedMaskCache.LoadBakedMask(entry.Key.terrain, bmti, collMask, "");
                     if (tempsourceTexture != null)
                     {
                         if (collMask.m_type == BakedMaskType.LayerGameObject || collMask.m_type == BakedMaskType.LayerTree)
@@ -2592,7 +2646,7 @@ namespace Gaia
             {
                 if (!entry.Value.IsAffected())
                     continue;
-                tempsourceTexture = gaiaSessionManager.m_bakedMaskCache.LoadBakedMask(entry.Key.terrain, BakedMaskTypeInternal.WorldBiomeMask, null, worldBiomeMaskGUID, 0);
+                tempsourceTexture = gaiaSessionManager.m_bakedMaskCache.LoadBakedMask(entry.Key.terrain, BakedMaskTypeInternal.WorldBiomeMask, null, worldBiomeMaskGUID);
 
                 if (tempsourceTexture != null)
                 {
@@ -3150,7 +3204,7 @@ namespace Gaia
             return colors;
         }
 
-#endregion
+        #endregion
 
     }
 

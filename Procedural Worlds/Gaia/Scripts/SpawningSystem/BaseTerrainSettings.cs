@@ -42,6 +42,10 @@ namespace Gaia
         /// </summary>
         public bool m_drawPreview = true;
 
+        /// <summary>
+        /// If the world designer should always render the full preview immediately after a new world was created
+        /// </summary>
+        public bool m_alwaysFullPreview = false;
 
         public BaseTerrainInputType m_baseTerrainInputType = BaseTerrainInputType.Generator;
         public float m_heightScale = 7f;

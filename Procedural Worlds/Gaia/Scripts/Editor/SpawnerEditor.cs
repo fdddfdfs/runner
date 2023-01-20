@@ -111,6 +111,8 @@ namespace Gaia
 
         void OnEnable()
         {
+            SceneView.duringSceneGui += DuringSceneGUI;
+
             //Get the settings and update tooltips
             if (m_gaiaSettings == null)
             {
@@ -210,7 +212,14 @@ namespace Gaia
                     }
                 }
 
-                m_allBiomePresets.Sort();
+                if (m_userFiles.m_sortBiomesBy == SortBiomesBy.Name)
+                {
+                    m_allBiomePresets.Sort(BiomePresetDropdownEntry.CompareByName);
+                }
+                else
+                {
+                    m_allBiomePresets.Sort(BiomePresetDropdownEntry.CompareByOrderNumber);
+                }
                 //Add the artifical "Custom" option
                 m_allBiomePresets.Add(new BiomePresetDropdownEntry { ID = -999, name = "Custom", biomePreset = null });
 
@@ -242,8 +251,6 @@ namespace Gaia
 
             GaiaLighting.SetPostProcessingStatus(false);
 
-
-
             m_dirtyColor = GaiaUtils.GetColorFromHTML("#FF666666");
             m_normalBGColor = GUI.backgroundColor;
             SessionManager.CheckForNewTerrainsForMinMax();
@@ -254,7 +261,7 @@ namespace Gaia
 #endif
             //Check if fit to world is possible with the current resolution etc. settings
             float requiredFitToWorldWidth = (TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesX * TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesSize) / 2;
-            if (requiredFitToWorldWidth > m_spawner.GetMaxSpawnerRange())
+            if (requiredFitToWorldWidth > m_spawner.GetMaxSpawnRange())
             {
                 m_fitToWorldAllowed = false;
             }
@@ -269,10 +276,9 @@ namespace Gaia
             //m_spawner.BaseTerrainStamper.m_stampDirty = true;
             //Force a repaint to get the stamper visuailization running immediately
             //SceneView.RepaintAll();
-
-          
-
-
+#if FLORA_PRESENT
+            FloraEditorUtils.UnSubscribeToUndo();
+#endif
         }
 
         private void AddBiomeSpawnersForSelectedPreset()
@@ -356,6 +362,7 @@ namespace Gaia
 
         void OnDisable()
         {
+            SceneView.duringSceneGui -= DuringSceneGUI;
             GaiaLighting.SetPostProcessingStatus(true);
 #if GAIA_PRO_PRESENT
             if (m_spawner != null)
@@ -370,10 +377,16 @@ namespace Gaia
                 Tools.hidden = false;
                 TerrainLoaderManager.Instance.SwitchToLocalMap();
             }
+#if FLORA_PRESENT
+            FloraEditorUtils.UnSubscribeToUndo();
+#endif
+
         }
 
         void OnDestroy()
         {
+            GaiaSessionManager.OnWorldCreationCancelled -= OnWorldCreationCancelled;
+            GaiaSessionManager.OnWorldCreated -= OnWorldMapStampingFinished;
             //check if we opened a stamp selection window from this spawner, and if yes, close it down
             var allWindows = Resources.FindObjectsOfTypeAll<GaiaStampSelectorEditorWindow>();
             for (int i = allWindows.Length - 1; i >= 0; i--)
@@ -856,7 +869,7 @@ namespace Gaia
             }
         }
 
-        public void OnSceneGUI()
+        public void DuringSceneGUI(SceneView obj)
         {
             //Do not draw anything in scene gui while the world creation is running, this just blocks the view.
             if(SessionManager.m_worldCreationRunning)
@@ -1163,7 +1176,10 @@ namespace Gaia
                 {
                     if (GUI.Button(new Rect(scaledScreenWidth - rightOffset, scaledScreenHeight - 65, buttonwidth, buttonHeight), new GUIContent("Zoom Out", "Zooms out back to the full world map preview.")))
                     {
-                        stamper.m_useCustomPreviewBounds = true;
+                        if (!m_spawner.m_baseTerrainSettings.m_alwaysFullPreview)
+                        {
+                            stamper.m_useCustomPreviewBounds = true;
+                        }
                         ZoomOut();
                     }
                 }
@@ -1248,7 +1264,7 @@ namespace Gaia
 
                 if (m_spawner.m_worldCreationSettings.m_xTiles > 1)
                 {
-                    Rect backgroundRect = new Rect(scaledScreenWidth - 230, scaledScreenHeight - 300, 225, 150);
+                    Rect backgroundRect = new Rect(scaledScreenWidth - 230, scaledScreenHeight - 320, 225, 175);
                     EditorGUI.DrawRect(backgroundRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
                     int oldX = m_spawner.m_worldDesignerPreviewTileX;
                     int oldZ = m_spawner.m_worldDesignerPreviewTileZ;
@@ -1271,13 +1287,17 @@ namespace Gaia
 
                     if (m_lastTileCoordinateChangeTimestamp + 1000 < GaiaUtils.GetUnixTimestamp())
                     {
-                        m_spawner.RefreshWorldDesignerStamps();
+                        Stamper stamper = m_spawner.GetOrCreateBaseTerrainStamper(true);
+                        if (stamper != null && stamper.m_useCustomPreviewBounds)
+                        {
+                            m_spawner.RefreshWorldDesignerStamps();
+                        }
                         m_lastTileCoordinateChangeTimestamp = double.MaxValue;
                     }
                 }
                 else
                 {
-                    Rect backgroundRect = new Rect(scaledScreenWidth - 230, scaledScreenHeight - 300, 225, 100);
+                    Rect backgroundRect = new Rect(scaledScreenWidth - 230, scaledScreenHeight - 320, 225, 120);
                     EditorGUI.DrawRect(backgroundRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
 
                 }
@@ -1312,7 +1332,33 @@ namespace Gaia
                 GaiaUtils.GUITextWithShadow(labelRect, m_editorUtils.GetContent("DrawWorldDesignerDensityViz"), m_sceneViewToggleStyle, m_sceneViewShadowStyle);
                 checkboxRect.y -= EditorGUIUtility.singleLineHeight;
                 labelRect.y -= EditorGUIUtility.singleLineHeight;
+                if (!m_spawner.m_baseTerrainSettings.m_drawPreview)
+                {
+                    GUI.enabled = false;
+                }
+                else
+                {
+                    GUI.enabled = currentGUIState;
+                }
+                bool m_oldFullPreview = m_spawner.m_baseTerrainSettings.m_alwaysFullPreview;
+                m_spawner.m_baseTerrainSettings.m_alwaysFullPreview = EditorGUI.Toggle(checkboxRect, m_spawner.m_baseTerrainSettings.m_alwaysFullPreview);
+                GaiaUtils.GUITextWithShadow(labelRect, m_editorUtils.GetContent("DrawWorldDesignerAlwaysFullPreview"), m_sceneViewToggleStyle, m_sceneViewShadowStyle);
+                if (m_oldFullPreview != m_spawner.m_baseTerrainSettings.m_alwaysFullPreview)
+                {
+                    if (m_spawner.m_baseTerrainSettings.m_alwaysFullPreview)
+                    { 
+                        Stamper stamper = m_spawner.GetOrCreateBaseTerrainStamper(true);
+                        if (stamper != null && stamper.m_useCustomPreviewBounds)
+                        {
+                            stamper.m_useCustomPreviewBounds = false;
+                            m_spawner.RefreshWorldDesignerStamps();
+                        }
+                    }
+
+                }
                 GUI.enabled = currentGUIState;
+                checkboxRect.y -= EditorGUIUtility.singleLineHeight;
+                labelRect.y -= EditorGUIUtility.singleLineHeight;
                 m_spawner.m_baseTerrainSettings.m_drawPreview = EditorGUI.Toggle(checkboxRect, m_spawner.m_baseTerrainSettings.m_drawPreview);
                 GaiaUtils.GUITextWithShadow(labelRect, m_editorUtils.GetContent("DrawWorldDesignerPreview"), m_sceneViewToggleStyle, m_sceneViewShadowStyle);
                 Handles.EndGUI();
@@ -1348,6 +1394,7 @@ namespace Gaia
             m_spawner.m_worldDesignerPreviewMode = WorldDesignerPreviewMode.Worldmap;
             m_spawner.transform.position = Vector3.zero;
             stamper.transform.position = m_spawner.transform.position;
+            m_spawner.UpdateBaseTerrainStamper();
             m_spawner.UpdateWorldDesignerPreviewSizeAndResolution();
             stamper.m_stampDirty = true;
             Quaternion quaternion = SceneView.lastActiveSceneView.camera.transform.rotation;
@@ -1447,7 +1494,7 @@ namespace Gaia
                 m_spawner.m_highlightLoadingSettings = false;
             }
 
-            m_spawner.m_settings.m_spawnRange = Mathf.Clamp(m_spawner.m_settings.m_spawnRange, 1f, m_spawner.GetMaxSpawnerRange());
+            m_spawner.m_settings.m_spawnRange = Mathf.Clamp(m_spawner.m_settings.m_spawnRange, 1f, m_spawner.GetMaxSpawnRange());
 
             //Handle terrain auto-loading
             m_spawner.UpdateAutoLoadRange();
@@ -1822,6 +1869,9 @@ namespace Gaia
                 {
                     switch (wcs.m_targetSizePreset)
                     {
+                        case GaiaConstants.EnvironmentSizePreset.Micro:
+                            m_spawner.m_worldTileSize = GaiaConstants.EnvironmentSize.Is128MetersSq;
+                            break;
                         case GaiaConstants.EnvironmentSizePreset.Tiny:
                             m_spawner.m_worldTileSize = GaiaConstants.EnvironmentSize.Is256MetersSq;
                             break;
@@ -1876,6 +1926,9 @@ namespace Gaia
                     //not custom, this is one of the default settings:
                     switch (wcs.m_tileSize)
                     {
+                        case 128:
+                            wcs.m_targetSizePreset = EnvironmentSizePreset.Micro;
+                            break;
                         case 256:
                             wcs.m_targetSizePreset = EnvironmentSizePreset.Tiny;
                             break;
@@ -2658,6 +2711,14 @@ namespace Gaia
                 }
             }
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            {
+                if (m_editorUtils.Button("ResourceManagementConvertTrees"))
+                {
+                    GaiaEditorUtils.ShowResourceHelperWindow(GaiaResourceHelperOperation.TreesToGameObjects, new Vector2(Display.main.systemWidth * 2, Display.main.systemHeight / 2));
+                }
+            }
+            GUILayout.EndHorizontal();
 
         }
 
@@ -3069,6 +3130,16 @@ namespace Gaia
 
         private void StartExport()
         {
+            if (!GaiaUtils.UsesCorrectPipelineDefines())
+            {
+                if (!EditorUtility.DisplayDialog("Wrong Render Pipeline Configured", "This project does use a different render pipeline asset in the graphics settings than what Gaia is configured for. This can lead to wrong spawning results. Please open the Gaia Manager and configure Gaia for the correct render pipeline that you are using.", "Continue Anyways", "Cancel"))
+                {
+                    GUIUtility.ExitGUI();
+                    return;
+                }
+            }
+
+
             try
             {
 
@@ -3119,7 +3190,7 @@ namespace Gaia
                     m_spawner.m_useExistingTerrainForWorldMapExport = true;
                     m_spawner.m_lastExportedWorldSize = wcs.m_tileSize * wcs.m_xTiles;
                     m_spawner.m_lastExportedHeightMapResolution = wcs.m_gaiaDefaults.m_heightmapResolution;
-                    ; List<StamperSettings> combinedStamperSettings = new List<StamperSettings>();
+                    List<StamperSettings> combinedStamperSettings = new List<StamperSettings>();
                     WorldMapStampSettings worldMapStampSettings = ScriptableObject.CreateInstance<WorldMapStampSettings>();
                     worldMapStampSettings.m_worldMapSize = Mathf.RoundToInt(TerrainLoaderManager.Instance.TerrainSceneStorage.m_worldMapPreviewRange * 2);
                     worldMapStampSettings.m_targetWorldSize = wcs.m_tileSize * wcs.m_xTiles;
@@ -3128,6 +3199,7 @@ namespace Gaia
                     worldMapStampSettings.m_tileHeight = wcs.m_tileHeight;
                     worldMapStampSettings.m_heightmapResolution= wcs.m_gaiaDefaults.m_heightmapResolution;
                     worldMapStampSettings.m_baseTerrainStamperSettings = baseTerrainStamper.m_settings;
+                    worldMapStampSettings.m_baseTerrainStamperSettings.m_y *= 2f; 
                     worldMapStampSettings.m_minWorldHeight = baseTerrainStamper.m_minCurrentTerrainHeight;
                     worldMapStampSettings.m_maxWorldHeight = baseTerrainStamper.m_maxCurrentTerrainHeight;
                     //set up the base terrain stamper to work in "Set Height" mode to override the existing heightmaps on the terrains (if any)
@@ -3180,6 +3252,9 @@ namespace Gaia
                 
                 GaiaSessionManager.OnWorldMapStampingFinished -= OnWorldMapStampingFinished;
                 GaiaSessionManager.OnWorldMapStampingFinished += OnWorldMapStampingFinished;
+
+                GaiaSessionManager.OnWorldCreationCancelled -= OnWorldCreationCancelled;
+                GaiaSessionManager.OnWorldCreationCancelled += OnWorldCreationCancelled;
                 //GaiaSessionManager.ExportWorldMapToLocalMap(wcs, true);
             }
             catch (Exception ex)
@@ -3194,8 +3269,22 @@ namespace Gaia
             }
         }
 
+        private void OnWorldCreationCancelled()
+        {
+            GaiaSessionManager.OnWorldCreationCancelled -= OnWorldCreationCancelled;
+            GaiaSessionManager.OnWorldMapStampingFinished -= OnWorldMapStampingFinished;
+            m_spawner.m_ExportRunning = false;
+            Stamper stamper = m_spawner.GetOrCreateBaseTerrainStamper(false);
+            stamper.m_useCustomPreviewBounds = false;
+            m_spawner.RefreshWorldDesignerStamps();
+        }
+
         private void OnWorldMapStampingFinished()
         {
+            if (m_spawner == null)
+            {
+                return;
+            }
             //remember the biome controller that will be created (if any) to select it later
             BiomeController bc = null;
             try
@@ -3298,6 +3387,33 @@ namespace Gaia
                         Selection.activeObject = null;
                     }
                 }
+                //If we got a biome controller, switch it to world mode -> less confusing when doint multiterrain worlds.
+                if (bc != null)
+                {
+                    bc.m_autoSpawnerArea = AutoSpawnerArea.World;
+                }
+
+                //Mark the terrains for stitching again, or run the stitching process again if not using terrain loading
+                //- the stitching result might be slightly different now, since not all terrains might have been there when the first stitch occured.
+                GaiaTerrainStitcher.m_extraSeamSize = 5;
+                if (GaiaUtils.HasDynamicLoadedTerrains())
+                {
+                    foreach (TerrainScene ts in TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes)
+                    {
+                        ts.m_stitchedNorthBorder = false;
+                        ts.m_stitchedEastBorder = false;
+                        ts.m_stitchedSouthBorder = false;
+                        ts.m_stitchedWestBorder = false;
+                    }
+                }
+                else
+                {
+                    foreach (Terrain t in Terrain.activeTerrains)
+                    {
+                        GaiaTerrainStitcher.StitchTerrain(t);
+                    }
+                }
+                GaiaTerrainStitcher.m_extraSeamSize = 1;
 
                 Debug.Log("Finished at: " + DateTime.Now.ToLongTimeString());
                 ProgressBar.Clear(ProgressBarPriority.CreateSceneTools);
@@ -3704,12 +3820,22 @@ namespace Gaia
             //Check if there are any terrains in the scene that don't use "Draw Instanced"
             if (Terrain.activeTerrains.Where(x => x.drawInstanced == false).Count() > 0)
             {
-                if (!EditorUtility.DisplayDialog("Draw Instanced Warning", "This scene contains terrains that have the setting 'Draw Instanced' turned off. This can lead to wrong spawn results when using certain masks. Please enable 'Draw Instanced' in the terrain inspector settings tab on all terrains. ", "Continue Anyways", "Cancel"))
+                if (!EditorUtility.DisplayDialog("Draw Instanced Warning", "This scene contains terrains that have the setting 'Draw Instanced' turned off. This can lead to wrong spawn results when using certain masks. Please enable 'Draw Instanced' in the terrain inspector settings tab on all terrains.", "Continue Anyways", "Cancel"))
                 {
                     GUIUtility.ExitGUI();
                     return;
                 }
             }
+
+            if (!GaiaUtils.UsesCorrectPipelineDefines())
+            {
+                if (!EditorUtility.DisplayDialog("Wrong Render Pipeline Configured", "This project does use a different render pipeline asset in the graphics settings than what Gaia is configured for. This can lead to wrong spawn results. Please open the Gaia Manager and configure Gaia for the correct render pipeline that you are using.", "Continue Anyways", "Cancel"))
+                {
+                    GUIUtility.ExitGUI();
+                    return;
+                }
+            }
+
         }
 
         private void DrawWorldDesignerSpawnControls()
@@ -3772,6 +3898,7 @@ namespace Gaia
                     {
                         SessionManager.m_massStamperSettingsIndex = int.MaxValue;
                         m_spawner.m_ExportRunning = false;
+                        OnWorldCreationCancelled();
                     }
                     GUI.enabled = currentGUIState;
                 }
@@ -3957,7 +4084,14 @@ namespace Gaia
                             view.Repaint();
                         }
                         GUI.enabled = currentGUIState;
-                        
+
+                    }
+                    else
+                    {
+                        if (!isStampSpawnPanel)
+                        {
+                            m_editorUtils.Label("Ellipsis");
+                        }
                     }
                     if (EditorGUIUtility.currentViewWidth > 400)
                     {
@@ -4262,7 +4396,7 @@ namespace Gaia
                 //Only apply a new name if it is actually different, otherwise affects editor performance
                 m_spawner.transform.name = newName;
             }
-            m_spawner.m_settings.m_spawnRange = m_editorUtils.Slider("Range", m_spawner.m_settings.m_spawnRange, 1, m_spawner.GetMaxSpawnerRange(), helpEnabled);
+            m_spawner.m_settings.m_spawnRange = m_editorUtils.Slider("Range", m_spawner.m_settings.m_spawnRange, 1, m_spawner.GetMaxSpawnRange(), helpEnabled);
             DrawSeaLevelSlider(helpEnabled);
             if (!m_spawner.m_settings.m_isWorldmapSpawner)
             {
@@ -4516,6 +4650,10 @@ namespace Gaia
                         }
                         GUI.enabled = ruleGUIState;
                     }
+                    else
+                    {
+                        m_editorUtils.Label("Ellipsis");
+                    }
 
                     if (rule.m_resourceType == SpawnerResourceType.StampDistribution)
                     {
@@ -4717,23 +4855,25 @@ namespace Gaia
             targetRule.m_resourceType = sourceRule.m_resourceType;
             targetRule.m_name = ObjectNames.GetUniqueName(m_spawner.m_settings.m_spawnerRules.Select(x => x.m_name).ToArray(), sourceRule.m_name);
 
-            targetRule.m_boundsCheckQuality = sourceRule.m_boundsCheckQuality;
+            targetRule.m_failureRate = sourceRule.m_failureRate;
             targetRule.m_locationIncrementMin = sourceRule.m_locationIncrementMin;
             targetRule.m_locationIncrementMax = sourceRule.m_locationIncrementMax;
             targetRule.m_jitterPercent = sourceRule.m_jitterPercent;
             targetRule.m_minRequiredFitness = sourceRule.m_minRequiredFitness;
+            targetRule.m_minInstanceRequiredFitness = sourceRule.m_minInstanceRequiredFitness;
             targetRule.m_minDirection = sourceRule.m_minDirection;
             targetRule.m_maxDirection = sourceRule.m_maxDirection;
 
-            targetRule.m_goSpawnTarget = sourceRule.m_goSpawnTarget;
-            targetRule.m_goSpawnTargetMode = sourceRule.m_goSpawnTargetMode;
+            targetRule.m_boundsCheckQuality = sourceRule.m_boundsCheckQuality;
             targetRule.m_boundsCollisionCheck = sourceRule.m_boundsCollisionCheck;
+
+            targetRule.m_goSpawnTargetMode = sourceRule.m_goSpawnTargetMode;
+            targetRule.m_goSpawnTarget = sourceRule.m_goSpawnTarget;
             targetRule.m_terrainGOSpawnTargetName = sourceRule.m_terrainGOSpawnTargetName;
             targetRule.m_visibleInSceneHierarchy = sourceRule.m_visibleInSceneHierarchy;
 
             targetRule.m_isFoldedOut = sourceRule.m_isFoldedOut;
             targetRule.m_resourceSettingsFoldedOut = sourceRule.m_resourceSettingsFoldedOut;
-
         }
 
         public void CopyRuleToClipboard(int ruleId)
@@ -4812,9 +4952,25 @@ namespace Gaia
                     break;
                 case SpawnerResourceType.TerrainDetail:
                     targetRule.m_resourceIdx = AddNewTerrainDetailResource();
-                    GaiaUtils.CopyFields(sourceSpawner.m_settings.m_resources.m_detailPrototypes[sourceRule.m_resourceIdx], m_spawner.m_settings.m_resources.m_detailPrototypes[targetRule.m_resourceIdx]);
-                    m_spawner.m_settings.m_resources.m_detailPrototypes[targetRule.m_resourceIdx].m_name = ObjectNames.GetUniqueName(m_spawner.m_settings.m_resources.m_detailPrototypes.Select(x => x.m_name).ToArray(), m_spawner.m_settings.m_resources.m_detailPrototypes[targetRule.m_resourceIdx].m_name);
+                    ResourceProtoDetail protoDetailTarget = m_spawner.m_settings.m_resources.m_detailPrototypes[targetRule.m_resourceIdx];
+                    ResourceProtoDetail protoDetailSource = sourceSpawner.m_settings.m_resources.m_detailPrototypes[sourceRule.m_resourceIdx];
+                    GaiaUtils.CopyFields(protoDetailSource, protoDetailTarget);
 
+                    protoDetailTarget.m_name = ObjectNames.GetUniqueName(m_spawner.m_settings.m_resources.m_detailPrototypes.Select(x => x.m_name).ToArray(), protoDetailTarget.m_name);
+#if FLORA_PRESENT
+                    //We need to a deep copy of the Flora LOD settings and re-instantiate them as well - otherwise both resource settings would be working with the same flora data, 
+                    //which might be undesireable for most cases where the user wants to create a new, independent detail object
+                    protoDetailTarget.m_floraLODs = new List<FloraLOD>();
+                    Dictionary<int, string> materialMap = new Dictionary<int, string>();
+                    if (protoDetailTarget.m_useFlora)
+                    {
+                        for (int i = 0; i < protoDetailSource.m_floraLODs.Count; i++)
+                        {
+                            FloraUtils.AddNewDetailerSettingsObject(protoDetailTarget.m_floraLODs, protoDetailSource.m_floraLODs[i].m_name, SpawnerResourceType.TerrainDetail);
+                            GaiaUtils.CopyFields(protoDetailSource.m_floraLODs[i].DetailerSettingsObject, protoDetailTarget.m_floraLODs[i].DetailerSettingsObject, true);
+                        }
+                    }
+#endif
                     break;
                 case SpawnerResourceType.TerrainTexture:
                     targetRule.m_resourceIdx = AddNewTextureResource();
@@ -4941,8 +5097,19 @@ namespace Gaia
 
             GUIContent GCvisualizeIcon = GaiaEditorUtils.GetIconGUIContent("IconVisible", m_gaiaSettings.m_IconVisible, m_gaiaSettings.m_IconProVisible, m_editorUtils);
             if (m_editorUtils.Button(GCvisualizeIcon, buttonStyle, GUILayout.Height(smallButtonSize), GUILayout.Width(smallButtonSize)))
-
             {
+                if (!GaiaUtils.UsesCorrectPipelineDefines())
+                {
+                    if (!m_spawner.m_previewRuleIds.Contains(spawnRuleID))
+                    {
+                        if (!EditorUtility.DisplayDialog("Wrong Render Pipeline Configured", "This project does use a different render pipeline asset in the graphics settings than what Gaia is configured for. This can lead to wrong visualization results. Please open the Gaia Manager and configure Gaia for the correct render pipeline that you are using.", "Continue Anyways", "Cancel"))
+                        {
+                            GUIUtility.ExitGUI();
+                            return;
+                        }
+                    }
+                }
+
                 //is this rule being shown already? then only remove this rule
                 if (m_spawner.m_previewRuleIds.Contains(spawnRuleID) && m_spawner.m_drawPreview)
                 {
@@ -5161,8 +5328,21 @@ namespace Gaia
             {
                 m_editorUtils.Heading("GameObjectProtoHeadingSpawning");
                 EditorGUI.indentLevel++;
-                rule.m_failureRate = 1f - m_editorUtils.Slider("GameObjectProtoInstanceProbabilityRate", (1f - rule.m_failureRate) * 100, 0, 100f, helpEnabled) / 100f;
+                rule.m_failureRate = 1f - m_editorUtils.Slider("GameObjectProtoInstanceProbabilityRate", (1f - rule.m_failureRate) * 100, 0, 100f) / 100f;
+                EditorGUILayout.BeginHorizontal();
+                {
+                    GUILayout.Space(15);
+                    m_editorUtils.Label("GameObjectProtoStartOffset", GUILayout.Width(EditorGUIUtility.labelWidth - 30));
+                    EditorGUIUtility.labelWidth = 40;
+                    rule.m_startOffsetX = m_editorUtils.FloatField("GameObjectProtoStartOffsetX", rule.m_startOffsetX);
+                    rule.m_startOffsetZ = m_editorUtils.FloatField("GameObjectProtoStartOffsetZ", rule.m_startOffsetZ);
+                    EditorGUIUtility.labelWidth = 0;
+
+                }
+                EditorGUILayout.EndHorizontal();
+                m_editorUtils.InlineHelp("GameObjectProtoStartOffset", helpEnabled);
                 rule.m_locationIncrementMin = m_editorUtils.Slider("TreeProtoLocationIncrement", rule.m_locationIncrementMin, GaiaConstants.minlocationIncrement, maxLocationIncrement, helpEnabled);
+                
                 //Do warnings for intercollision and amount of instances for Game Objects only - impossible to predict what the spawn extension will actually do
                 if (rule.m_resourceType == GaiaConstants.SpawnerResourceType.GameObject)
                 {
@@ -5201,6 +5381,7 @@ namespace Gaia
                 else
                 {
                     rule.m_jitterPercent = m_editorUtils.Slider("TreeProtoJitterPercent", rule.m_jitterPercent * 100f, 0f, 100f, helpEnabled) / 100f;
+                    
                 }
                 rule.m_minRequiredFitness = m_editorUtils.Slider("GameObjectMinAreaFitness", rule.m_minRequiredFitness * 100f, 0, 100f, helpEnabled) / 100f;
                 //The max on the slider for min instance fitness is tied to area fitness. 
@@ -5244,6 +5425,8 @@ namespace Gaia
                 rule.m_boundsCollisionCheck = m_editorUtils.Toggle("GameObjectProtoBoundsCollisionCheck", rule.m_boundsCollisionCheck, helpEnabled);
                 if (rule.m_resourceType == GaiaConstants.SpawnerResourceType.SpawnExtension)
                 {
+                    rule.m_collisionLayersToClear = GaiaEditorUtils.LayerMaskField(m_editorUtils.GetContent("SpawnExtensionProtoCollisionLayersToClear"), rule.m_collisionLayersToClear.value);
+                    m_editorUtils.InlineHelp("SpawnExtensionProtoCollisionLayersToClear", helpEnabled);
                     rule.m_changesHeightmap = m_editorUtils.Toggle("SpawnExtensionProtoChangesHeightmap", rule.m_changesHeightmap, helpEnabled);
                 }
                 m_editorUtils.Heading("GameObjectProtoHeadingSceneHierarchy");
@@ -5739,7 +5922,7 @@ namespace Gaia
                 GameObject oldDesktopPrefab = m_spawner.m_settings.m_resources.m_treePrototypes[rule.m_resourceIdx].m_desktopPrefab;
                 m_spawner.m_treeResourcePrototypeBeingDrawn = m_spawner.m_settings.m_resources.m_treePrototypes[rule.m_resourceIdx];
 
-                DrawTreePrototype(helpEnabled);
+                DrawTreePrototype(m_spawner,helpEnabled);
 
                 if (oldDesktopPrefab != m_spawner.m_settings.m_resources.m_treePrototypes[rule.m_resourceIdx].m_desktopPrefab)
                 {
@@ -6218,6 +6401,7 @@ namespace Gaia
 
                     //Check if any other spawn rules currently use this terrain layer already - if yes, we cannot alter it and must create a new alternative layer instead.
                     bool layerUsedByAnotherRule = false;
+                    bool sameResourceUsedByBothRules = false;
                     if (texturePrototypeID != -1)
                     {
                         TerrainLayer oldLayer = activeTerrain.terrainData.terrainLayers[texturePrototypeID];
@@ -6231,6 +6415,10 @@ namespace Gaia
                                 if (spawner.m_settings.m_resources.m_texturePrototypes[checkRule.m_resourceIdx].m_LayerGUID == oldLayerGUID && checkRule != sr)
                                 {
                                     layerUsedByAnotherRule = true;
+                                    if (checkRule.m_resourceIdx == sr.m_resourceIdx)
+                                    {
+                                        sameResourceUsedByBothRules = true;
+                                    }
                                     break;
                                 }
                             }
@@ -6245,9 +6433,16 @@ namespace Gaia
                     {
                         foreach (Terrain t in Terrain.activeTerrains)
                         {
+                            if (t.terrainData.terrainLayers.Length < texturePrototypeID)
+                            {
+                                continue;
+                            }
+
                             ResourceProtoTexture resourceProtoTexture = m_spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx];
                             //reference the exisiting prototypes, then assign them - otherwise the terrain details won't update properly
                             TerrainLayer[] exisitingLayers = t.terrainData.terrainLayers;
+
+
 #if SUBSTANCE_PLUGIN_ENABLED
                             if (resourceProtoTexture.m_substanceMaterial != null)
                             {
@@ -6313,7 +6508,7 @@ namespace Gaia
                     }
                     else
                     {
-                        if (isUserRefresh)
+                        if (isUserRefresh && !layerUsedByAnotherRule)
                         {
 
                             //Prototype was not found
@@ -6326,9 +6521,19 @@ namespace Gaia
                         {
                             EditorUtility.DisplayDialog("Creation of new texture layer", "You are changing a texture resource that shares its terrain layer with another spawn rule. This will create a new terrain layer with the changed texture at the end of the terrain layer stack on your terrain. \r\n\r\n This can result in the terrain layers on the terrain having a different order than the spawn rules in your spawner. This is normally not a problem on its own, but can create issues in other tools that depend on the terrain layer order. \r\n\r\n If you would like to keep the order between the spawn rules and terrain layers in sync, consider removing all terrain layers from the terrain via Advanced > Resource Management > Remove Resources and then running the spawner again.", "OK");
 
+                            //We need to create a new resource to keep both layers independent
+                            if (sameResourceUsedByBothRules)
+                            {
+                                int oldIdx = sr.m_resourceIdx;
+                                sr.m_resourceIdx = AddNewTextureResource();
+                                GaiaUtils.CopyFields(m_spawner.m_settings.m_resources.m_texturePrototypes[oldIdx], m_spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx]);
+                                m_spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx].m_name = ObjectNames.GetUniqueName(m_spawner.m_settings.m_resources.m_texturePrototypes.Select(x => x.m_name).ToArray(), m_spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx].m_name);
+
+                            }
+
                             //reset the layer GUID - we want to force the creation of a new texture layer with the new texture
                             m_spawner.m_settings.m_resources.m_texturePrototypes[sr.m_resourceIdx].m_LayerGUID = "";
-                            m_spawner.m_settings.m_resources.AddPrototypeToTerrain(sr.m_resourceType, sr.m_resourceIdx, Terrain.activeTerrains);
+                            m_spawner.m_settings.m_resources.AddPrototypeToTerrain(sr.m_resourceType, sr.m_resourceIdx, Terrain.activeTerrains, true);
                         }
                     }
 #if CTS_PRESENT
@@ -6372,6 +6577,11 @@ namespace Gaia
                     {
                         foreach (Terrain t in Terrain.activeTerrains)
                         {
+                            if (t.terrainData.detailPrototypes.Length < detailPrototypeID)
+                            {
+                                continue;
+                            }
+
                             ResourceProtoDetail resourceProtoDetail = m_spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx];
                             //reference the exisiting prototypes, then assign them - otherwise the terrain details won't update properly
                             DetailPrototype[] exisitingPrototypes = t.terrainData.detailPrototypes;
@@ -6436,6 +6646,11 @@ namespace Gaia
                     {
                         foreach (Terrain t in Terrain.activeTerrains)
                         {
+                            if (t.terrainData.treePrototypes.Length < treePrototypeID)
+                            {
+                                continue;
+                            }
+
                             ResourceProtoTree resourceProtoTree = m_spawner.m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx];
                             //reference the exisiting prototypes, then assign them - otherwise the terrain details won't update properly
                             TreePrototype[] exisitingPrototypes = t.terrainData.treePrototypes;
@@ -6565,9 +6780,9 @@ namespace Gaia
 
         }
 
-        private void DrawTreePrototype(bool showHelp)
+        private void DrawTreePrototype(Spawner spawner, bool showHelp)
         {
-            GaiaResourceEditor.DrawTreePrototype(m_spawner.m_treeResourcePrototypeBeingDrawn, m_editorUtils, showHelp);
+            GaiaResourceEditor.DrawTreePrototype(m_spawner.m_treeResourcePrototypeBeingDrawn, spawner, m_editorUtils, showHelp);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(18);
             bool currentGUIState = GUI.enabled;
@@ -6734,10 +6949,6 @@ namespace Gaia
             }
             if (m_editorUtils.Button("SaveButton"))
             {
-                //Dismiss Tutorial messages at this point
-                m_spawner.m_createdfromBiomePreset = false;
-                m_spawner.m_createdFromGaiaManager = false;
-
                 string dialogPath = AssetDatabase.GUIDToAssetPath(m_spawner.m_settings.m_lastGUIDSaved);
                 string filename = m_spawner.transform.name;
                 if (string.IsNullOrEmpty(dialogPath))
@@ -6771,88 +6982,19 @@ namespace Gaia
 
                 if (saveConditionsMet)
                 {
-                    saveFilePath = GaiaDirectories.GetPathStartingAtAssetsFolder(saveFilePath);
-                    m_spawner.m_settings.m_lastGUIDSaved = AssetDatabase.AssetPathToGUID(saveFilePath);
-
-                    AssetDatabase.CreateAsset(m_spawner.m_settings, saveFilePath);
-                    AssetDatabase.ImportAsset(saveFilePath);
-                    AssetDatabase.SetLabels(m_spawner.m_settings, new string[1] { GaiaConstants.gaiaManagerSpawnerLabel });
-
-
-
-#if FLORA_PRESENT
-
-                    //remember the original GUIDs & IDs so we can restore them back before reloading the settings file after saving.
-                    //Otherwise we would create duplicates of the scriptable objects when the settings file is reloaded below.
-                    string[] originalDetailerAssetGUIDs = new string[m_spawner.m_settings.m_resources.m_detailPrototypes.Length];
-                    int[] originalDetailerInstanceIDs = new int[m_spawner.m_settings.m_resources.m_detailPrototypes.Length];
-
-                    for (int i = 0; i < m_spawner.m_settings.m_resources.m_detailPrototypes.Length; i++)
+                    if(m_spawner.SaveSettings(saveFilePath))
                     {
-                        ResourceProtoDetail rpd = (ResourceProtoDetail)m_spawner.m_settings.m_resources.m_detailPrototypes[i];
-                        originalDetailerAssetGUIDs[i] = rpd.m_detailerSettingsObjectAssetGUID;
-                        originalDetailerInstanceIDs[i] = rpd.m_detailerSettingsObjectInstanceID;
-                    }
-
-                    //save all the setting scriptable object files for the grass system / detailer
-                    foreach (SpawnRule sr in m_spawner.m_settings.m_spawnerRules.Where(x => x.m_resourceType == SpawnerResourceType.TerrainDetail))
-                    {
-                        ResourceProtoDetail resourceProtoDetail = m_spawner.m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx];
-                        if (resourceProtoDetail.DetailerSettingsObject != null)
-                        {
-                            resourceProtoDetail.DetailerSettingsObject.m_data.Name = resourceProtoDetail.m_name;
-                            DetailScriptableObject newDSO = Instantiate(resourceProtoDetail.DetailerSettingsObject);
-                            //Sanitize the name from any numbering and "(Clone)", just want a clean name of the original resource for storing it
-                            newDSO.name = resourceProtoDetail.m_name;
-                            AssetDatabase.AddObjectToAsset(newDSO, saveFilePath);
-                            //For the saved spawner settings file, we need to assign the new instance that we just saved.
-                            //The following reload will turn this back into the association with the files in the Gaia user directory
-                            resourceProtoDetail.DetailerSettingsObject = newDSO;
-                        }
-                    }
-#endif
-                    EditorUtility.SetDirty(m_spawner.m_settings);
-                    AssetDatabase.SaveAssets();
-
-
-                    //Check if save was successful
-                    SpawnerSettings settingsToLoad = (SpawnerSettings)AssetDatabase.LoadAssetAtPath(saveFilePath, typeof(SpawnerSettings));
-                    if (settingsToLoad != null)
-                    {
-                        m_SaveAndLoadMessage = m_editorUtils.GetContent("SaveSuccessful").text;
-                        m_changesMadeSinceLastSave = false;
-                        m_SaveAndLoadMessageType = MessageType.Info;
-                        EditorGUIUtility.PingObject(settingsToLoad);
-
-                        //Add the saved file to the user file collection so it shows up in the Gaia Manager
-                        UserFiles userFiles = GaiaUtils.GetOrCreateUserFiles();
-                        if (userFiles.m_autoAddNewFiles)
-                        {
-                            if (!userFiles.m_gaiaManagerSpawnerSettings.Contains(settingsToLoad))
-                            {
-                                userFiles.m_gaiaManagerSpawnerSettings.Add(settingsToLoad);
-                            }
-                        }
-                        userFiles.PruneNonExisting();
-                        EditorUtility.SetDirty(userFiles);
-                        AssetDatabase.SaveAssets();
-
-                        //dissociate the current stamper settings from the file we just saved, otherwise the user will continue editing the file afterwards
-                        //We do this by just loading the file in again we just created
-#if FLORA_PRESENT
-                        m_spawner.LoadSettings(settingsToLoad, false, originalDetailerAssetGUIDs, originalDetailerInstanceIDs);
-#else
-                        m_spawner.LoadSettings(settingsToLoad);
-#endif
                         CreateMaskLists();
-                        m_spawner.m_spawnPreviewDirty = true;
+
                         m_spawner.SetWorldBiomeMasksDirty();
                         //update the gaia manager window (if exists)
-
                         foreach (GaiaManagerEditor gme in Resources.FindObjectsOfTypeAll<GaiaManagerEditor>())
                         {
                             gme.UpdateAllSpawnersList();
                         }
+                        m_SaveAndLoadMessage = m_editorUtils.GetContent("SaveSuccessful").text;
+                        m_changesMadeSinceLastSave = false;
+                        m_SaveAndLoadMessageType = MessageType.Info;
 
 
                     }

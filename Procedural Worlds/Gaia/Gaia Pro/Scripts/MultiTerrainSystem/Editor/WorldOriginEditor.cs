@@ -59,11 +59,13 @@ namespace Gaia
         private static GaiaSessionManager m_sessionManager;
         private static Vector2 m_terrainOpScrollPos;
         //private static EditorUtils m_editorUtils;
-        private static GaiaSessionManager SessionManager {
-            get {
+        private static GaiaSessionManager SessionManager
+        {
+            get
+            {
                 if (m_sessionManager == null)
                 {
-                    m_sessionManager = GaiaSessionManager.GetSessionManager(false,false);
+                    m_sessionManager = GaiaSessionManager.GetSessionManager(false, false);
                     if (m_sessionManager == null)
                     {
                         m_sessionManagerExits = false;
@@ -125,7 +127,7 @@ namespace Gaia
             {
                 return;
             }
-            
+
             if (m_helpButtonImage == null)
             {
                 m_helpButtonImage = Resources.Load("helpBtnOffp" + PWConst.VERSION_IN_FILENAMES) as Texture2D;
@@ -227,17 +229,17 @@ namespace Gaia
                 m_operationPingButtonStyle.margin = new RectOffset(0, 0, 1, 2);
             }
 
-            GUILayout.BeginArea(new Rect(x,y,sizeX,sizeY));
+            GUILayout.BeginArea(new Rect(x, y, sizeX, sizeY));
             {
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.BeginVertical(GUIStylePanel, GUILayout.MaxWidth(280));
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                    GUILayout.Label("Terrain Operations", GUIStyleHeader, GUILayout.MaxHeight(16));
+                        GUILayout.Label("Terrain Operations", GUIStyleHeader, GUILayout.MaxHeight(16));
 
 
-                    GUIContent buttonContent = null;
+                        GUIContent buttonContent = null;
                         if (EditorGUIUtility.isProSkin)
                         {
                             if (SessionManager.m_showTerrainOpsPanel)
@@ -264,7 +266,7 @@ namespace Gaia
                         {
                             SessionManager.m_showTerrainOpsPanel = !SessionManager.m_showTerrainOpsPanel;
                         }
-                          
+
                     }
                     EditorGUILayout.EndHorizontal();
 
@@ -285,7 +287,7 @@ namespace Gaia
                     {
                         GUI.enabled = false;
                     }
-                    m_flaggedTerrainsFoldedOut = EditorGUILayout.Foldout(m_flaggedTerrainsFoldedOut, "View List..."  , true);
+                    m_flaggedTerrainsFoldedOut = EditorGUILayout.Foldout(m_flaggedTerrainsFoldedOut, "View List...", true);
                     if (GUILayout.Button("Regenerate now"))
                     {
                         SessionManager.RegenerateFlaggedTerrains();
@@ -303,7 +305,7 @@ namespace Gaia
                         //EditorGUI.indentLevel++;
                         for (int i = 0; i < SessionManager.m_session.m_operations.Count; i++)
                         {
-                            if (SessionManager.m_session.m_operations[i].m_affectedTerrainNames.FirstOrDefault(j=>j.Contains(terrain.name))!=null)
+                            if (SessionManager.m_session.m_operations[i].m_affectedTerrainNames.FirstOrDefault(j => j.Contains(terrain.name)) != null)
                             {
                                 GaiaOperation op = SessionManager.m_session.m_operations[i];
                                 GUIStyle headerStyle = m_operationCreateWorldStyle;
@@ -345,7 +347,7 @@ namespace Gaia
                                 GUI.enabled = op.m_isActive;
                                 //GUILayout.Label(op.m_description);
                                 op.m_isFoldedOut = EditorGUILayout.Foldout(op.m_isFoldedOut, new GUIContent((i + 1).ToString() + " " + op.m_description.ToString()), true, m_operationFoldoutStyle);
-                                GUILayout.Space(sizeX-106);
+                                GUILayout.Space(sizeX - 106);
                                 float pingButtonWidth = 20f;
                                 GUIContent pingButtonContent = new GUIContent("P", "Ping this operation in the scene view to find it");
                                 switch (op.m_operationType)
@@ -357,7 +359,7 @@ namespace Gaia
                                         {
                                             Vector3Double stamperPos = new Vector3Double(op.StamperSettings.m_x, op.StamperSettings.m_y, op.StamperSettings.m_z);
                                             Terrain pingTerrain = TerrainHelper.GetTerrain(stamperPos);
-                                            float range = (pingTerrain.terrainData.size.x / 100f * op.StamperSettings.m_width)/2f;
+                                            float range = (pingTerrain.terrainData.size.x / 100f * op.StamperSettings.m_width) / 2f;
                                             PingInSceneView(stamperPos, range);
                                         }
                                         break;
@@ -424,7 +426,7 @@ namespace Gaia
             {
                 foreach (string name in op.m_affectedTerrainNames)
                 {
-                    if(GUILayout.Button(name))
+                    if (GUILayout.Button(name))
                     {
                         Vector3 pos = Vector3.zero;
 
@@ -438,11 +440,11 @@ namespace Gaia
                         }
                         else
                         {
-                            Terrain terrain = Terrain.activeTerrains.Where(x=>x.name == name).First();
+                            Terrain terrain = Terrain.activeTerrains.Where(x => x.name == name).First();
                             PingInSceneView(terrain.transform.position + terrain.terrainData.bounds.center, terrain.terrainData.bounds.extents.x);
                         }
 
-                        
+
                     }
                     Rect rect = GUILayoutUtility.GetLastRect();
                     EditorGUIUtility.AddCursorRect(rect, MouseCursor.Zoom);
@@ -455,7 +457,7 @@ namespace Gaia
             switch (op.m_operationType)
             {
                 case GaiaOperation.OperationType.CreateWorld:
-                    EditorGUILayout.LabelField("xTiles",op.WorldCreationSettings.m_xTiles.ToString());
+                    EditorGUILayout.LabelField("xTiles", op.WorldCreationSettings.m_xTiles.ToString());
                     EditorGUILayout.LabelField("zTiles", op.WorldCreationSettings.m_zTiles.ToString());
                     EditorGUILayout.LabelField("TileSize", op.WorldCreationSettings.m_tileSize.ToString());
                     break;
@@ -471,7 +473,7 @@ namespace Gaia
             GUILayout.Space(20);
             if (GUILayout.Button("Delete"))
             {
-                if (EditorUtility.DisplayDialog("Delete Operation?","Do you want to remove this operation from the session? This operation will be removed from the Session permanently and the affected terrains will be flagged for regeneration. (Regeneration will play back the session on those tiles WITHOUT the operation you are deleting now, effectively removing the operation from the terrains.)", "OK", "Cancel"))
+                if (EditorUtility.DisplayDialog("Delete Operation?", "Do you want to remove this operation from the session? This operation will be removed from the Session permanently and the affected terrains will be flagged for regeneration. (Regeneration will play back the session on those tiles WITHOUT the operation you are deleting now, effectively removing the operation from the terrains.)", "OK", "Cancel"))
                 {
                     SessionManager.RemoveOperation(i);
                 }
@@ -559,19 +561,19 @@ namespace Gaia
                 customUIScale = EditorPrefs.GetInt("CustomEditorUIScale") / 100f;
             }
 
-           
+
             //float dpiScalingFactor = (96 / Screen.dpi); //* EditorGUIUtility.pixelsPerPoint;
-            
-            float scaledScreenWidth = (Camera.current.pixelRect.size.x  / EditorGUIUtility.pixelsPerPoint);
-            float scaledScreenHeight = (Camera.current.pixelRect.size.y  / EditorGUIUtility.pixelsPerPoint);
-            
+
+            float scaledScreenWidth = (Camera.current.pixelRect.size.x / EditorGUIUtility.pixelsPerPoint);
+            float scaledScreenHeight = (Camera.current.pixelRect.size.y / EditorGUIUtility.pixelsPerPoint);
+
 
             float sizeX = GaiaSettings.m_gaiaPanelSizeType == GaiaConstants.PositionType.Relative ? scaledScreenWidth * GaiaSettings.m_gaiaPanelSize.x / 100f : GaiaSettings.m_gaiaPanelSize.x;
             float sizeY = GaiaSettings.m_gaiaPanelSizeType == GaiaConstants.PositionType.Relative ? scaledScreenHeight * GaiaSettings.m_gaiaPanelSize.y / 100f : GaiaSettings.m_gaiaPanelSize.y;
             float x = GaiaSettings.m_gaiaPanelPositionType == GaiaConstants.PositionType.Relative ? (scaledScreenWidth * GaiaSettings.m_gaiaPanelPosition.x / 100f) - (sizeX + 50f) / 2f : GaiaSettings.m_gaiaPanelPosition.x;
             float y = GaiaSettings.m_gaiaPanelPositionType == GaiaConstants.PositionType.Relative ? (scaledScreenHeight * GaiaSettings.m_gaiaPanelPosition.y / 100f) : GaiaSettings.m_gaiaPanelPosition.y;
 
-            GUILayout.BeginArea(new Rect(x, y, sizeX+50, sizeY));
+            GUILayout.BeginArea(new Rect(x, y, sizeX + 50, sizeY));
             float leftSpace = 6f;
             EditorGUI.BeginChangeCheck();
 
@@ -581,7 +583,7 @@ namespace Gaia
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.BeginVertical(GUIStylePanel, GUILayout.MaxWidth(sizeX));
                 {
-                    
+
                     EditorGUILayout.BeginHorizontal();
                     {
                         GUILayout.Space(leftSpace);
@@ -591,7 +593,7 @@ namespace Gaia
                             //Manager can be null if the dependency package installation is started upon opening the manager window.
                             if (manager != null)
                             {
-                                Vector2 initialSize = new Vector2(650f, 450f);
+                                Vector2 initialSize = new Vector2(850f, 450f);
                                 manager.position = new Rect(new Vector2(Screen.currentResolution.width / 2f - initialSize.x / 2f, Screen.currentResolution.height / 2f - initialSize.y / 2f), initialSize);
                                 manager.Show();
                             }
@@ -617,7 +619,7 @@ namespace Gaia
                                 GUI.enabled = currentGUIState;
                             }
                             else
-                            { 
+                            {
                                 if (GUILayout.Button(new GUIContent("Show Designer", "Switches the Scene View to display the high-level world map of the world designer."), GUILayout.Height(15), GUILayout.Width(100)))
                                 {
                                     TerrainLoaderManager.Instance.SwitchToWorldMap();
@@ -628,7 +630,7 @@ namespace Gaia
                             {
                                 Application.OpenURL("https://proceduralworlds.freshdesk.com/support/solutions/articles/33000258900-using-the-gaia-scene-view-panel");
                             }
-                          
+
                         }
                         else
                         {
@@ -653,14 +655,14 @@ namespace Gaia
                             GUILayout.Space(leftSpace);
                             m_oldX = TerrainLoaderManager.Instance.m_originTargetTileX;
                             m_oldZ = TerrainLoaderManager.Instance.m_originTargetTileZ;
-                            EditorGUILayout.LabelField(new GUIContent("Tile X:","Navigate through your terrains along the X coordinate"), GUILayout.Width(50));
+                            EditorGUILayout.LabelField(new GUIContent("Tile X:", "Navigate through your terrains along the X coordinate"), GUILayout.Width(50));
                             TerrainLoaderManager.Instance.m_originTargetTileX = EditorGUILayout.IntSlider(TerrainLoaderManager.Instance.m_originTargetTileX, 0, TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesX - 1, GUILayout.Width(295));
                             EditorGUILayout.EndHorizontal();
                             EditorGUILayout.BeginHorizontal();
                             GUILayout.Space(leftSpace);
                             EditorGUILayout.LabelField(new GUIContent("Tile Z:", "Navigate through your terrains along the Z coordinate"), GUILayout.Width(50));
                             TerrainLoaderManager.Instance.m_originTargetTileZ = EditorGUILayout.IntSlider(TerrainLoaderManager.Instance.m_originTargetTileZ, 0, TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainTilesZ - 1, GUILayout.Width(295));
-                            
+
                             //if (GUILayout.Button("Go", GUILayout.Height(18), GUILayout.Width(30)))
 
                             if (m_oldX != TerrainLoaderManager.Instance.m_originTargetTileX || m_oldZ != TerrainLoaderManager.Instance.m_originTargetTileZ)
@@ -721,7 +723,7 @@ namespace Gaia
                             if (!GaiaUtils.HasImpostorTerrains())
                             {
                                 impostorRange = 0;
-                                if (GUILayout.Button(new GUIContent("Create Impostor Terrains...","Opens the Terrain Mesh Exporter to create Impostor Terrains. Impostors are simple, low detail mesh versions of your terrains that can be displayed as a placeholder for the full terrain in the distance."), GUILayout.Width(170)))
+                                if (GUILayout.Button(new GUIContent("Create Impostor Terrains...", "Opens the Terrain Mesh Exporter to create Impostor Terrains. Impostors are simple, low detail mesh versions of your terrains that can be displayed as a placeholder for the full terrain in the distance."), GUILayout.Width(170)))
                                 {
                                     ExportTerrain exportTerrainWindow = EditorWindow.GetWindow<ExportTerrain>();
                                     exportTerrainWindow.FindAndSetPreset("Create Impostors");
@@ -730,8 +732,8 @@ namespace Gaia
                                 GUILayout.Space(20);
                             }
                             else
-                            { 
-                                GUILayout.Label(new GUIContent("Impostor Range:","Loading Range for Impostor Terrains. Additional to the regular terrain loading in the scene view, you can choose to load Impostor terrains at a larger range. This can help with orientation in large worlds during design time."), GUILayout.Width(116));
+                            {
+                                GUILayout.Label(new GUIContent("Impostor Range:", "Loading Range for Impostor Terrains. Additional to the regular terrain loading in the scene view, you can choose to load Impostor terrains at a larger range. This can help with orientation in large worlds during design time."), GUILayout.Width(116));
                                 impostorRange = EditorGUILayout.DelayedDoubleField(emptyContent, impostorRange, GUILayout.Width(coordInputWidth));
                                 GUILayout.Space(20);
                             }
@@ -740,7 +742,7 @@ namespace Gaia
                             {
                                 GUI.enabled = false;
                             }
-                            EditorGUILayout.LabelField(new GUIContent("Show Loading Ranges:","Shows the loading ranges around the world origin as red cube Gizmos in the scene view."), GUILayout.Width(138));
+                            EditorGUILayout.LabelField(new GUIContent("Show Loading Ranges:", "Shows the loading ranges around the world origin as red cube Gizmos in the scene view."), GUILayout.Width(138));
                             TerrainLoaderManager.Instance.m_showOriginLoadingBounds = EditorGUILayout.Toggle(TerrainLoaderManager.Instance.m_showOriginLoadingBounds, GUILayout.Width(12));
                             EditorGUILayout.EndHorizontal();
                         }
@@ -749,14 +751,14 @@ namespace Gaia
                         EditorGUILayout.BeginHorizontal();
                         {
                             GUILayout.Space(leftSpace);
-                            if (GUILayout.Button(new GUIContent("Show Loader Manager...","Opens the Terrain Loader Manager with more advanced Terrain Loading Settings."), GUILayout.Width(170)))
+                            if (GUILayout.Button(new GUIContent("Show Loader Manager...", "Opens the Terrain Loader Manager with more advanced Terrain Loading Settings."), GUILayout.Width(170)))
                             {
                                 GameObject loaderObj = GaiaUtils.GetTerrainLoaderManagerObject();
                                 Selection.activeObject = loaderObj;
                             }
                             GUILayout.Space(20);
                             EditorGUILayout.BeginHorizontal();
-                            EditorGUILayout.LabelField(new GUIContent("Show Terrain Bounds:","Shows the bounds of the loaded and unloaded terrain scenes as Gizmos in the scene view. This gives you an overview about the terrain layout in your scene even when terrains are currently not loaded in."), GUILayout.Width(138));
+                            EditorGUILayout.LabelField(new GUIContent("Show Terrain Bounds:", "Shows the bounds of the loaded and unloaded terrain scenes as Gizmos in the scene view. This gives you an overview about the terrain layout in your scene even when terrains are currently not loaded in."), GUILayout.Width(138));
                             TerrainLoaderManager.Instance.m_showOriginTerrainBoxes = EditorGUILayout.Toggle(TerrainLoaderManager.Instance.m_showOriginTerrainBoxes, GUILayout.Width(12));
                             EditorGUILayout.EndHorizontal();
                         }
@@ -814,7 +816,13 @@ namespace Gaia
                 {
                     if (!TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainLoadingEnabled)
                     {
-                        EditorUtility.DisplayDialog("Terrain Loading Disabled", "All Terrain Loaders are currently disabled under Gaia Runtime > Terrain Loader. Changing the Loading Range in the Gaia Panel will have no effect until the Loaders are enabled again.", "OK");
+                        if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_showTerrainLoadingDisabledWarning)
+                        {
+                            if (EditorUtility.DisplayDialog("Terrain Loading Disabled", "All Terrain Loaders are currently disabled under Gaia Runtime > Terrain Loader. Changing the Loading Range in the Gaia Panel will have no effect until the Loaders are enabled again.", "Do not show this again", "OK"))
+                            {
+                                TerrainLoaderManager.Instance.TerrainSceneStorage.m_showTerrainLoadingDisabledWarning = false;
+                            }
+                        }
                     }
                     TerrainLoaderManager.Instance.SetLoadingRange(range, impostorRange);
                 }

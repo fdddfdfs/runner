@@ -2,15 +2,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if !UNITY_2021_2_OR_NEWER
-using UnityEngine.Experimental.TerrainAPI;
-#endif
 using System.Linq;
 using static Gaia.GaiaConstants;
 using System.Text;
 using UnityEngine.SceneManagement;
 using System.IO;
 using UnityEngine.UI;
+using ProceduralWorlds;
+
+#if !UNITY_2021_2_OR_NEWER
+using UnityEngine.Experimental.TerrainAPI;
+#endif
 
 #if CTS_PRESENT
 using CTS;
@@ -126,6 +128,10 @@ namespace Gaia
                 stamper.OnWorldDesignerStampRenderingFinished -= OnWDStapmperRenderingFinished;
                 stamper.OnWorldDesignerStampRenderingFinished += OnWDStapmperRenderingFinished;
             }
+            if (m_baseTerrainStamper != null)
+            {
+                m_baseTerrainStamper.transform.hideFlags = HideFlags.HideInHierarchy;
+            }
             return m_baseTerrainStamper;
         }
 
@@ -137,6 +143,7 @@ namespace Gaia
             {
                 CreateTerrainModifierPreviewStamper();
             }
+            m_terrainModifierPreviewStamper.transform.hideFlags = HideFlags.HideInHierarchy;
             return m_terrainModifierPreviewStamper;
         }
 
@@ -811,6 +818,11 @@ namespace Gaia
         /// </summary>
         private void SpawnWDPreviewObjects()
         {
+            if (this == null)
+            {
+                return;
+            }
+
             if (transform == null)
             {
                 return;
@@ -1999,161 +2011,13 @@ namespace Gaia
             DrawSpawnerPreview();
         }
 
-
         /// <summary>
-        /// Run a spawner iteration - called by timed invoke or manually
+        /// Gets the max spawn range for this spawner.
         /// </summary>
-        //        public void RunSpawnerIteration()
-        //        {
-        //            //Reset status
-        //            m_cancelSpawn = false;
-        //            m_spawnComplete = false;
-
-        //            //Perform a spawner iteration preinitialisation
-        //            PreSpawnInitialise();
-
-        //			//Check that there are rules that can be applied
-        //			if (m_activeRuleCnt <= 0)
-        //			{
-        //				if (m_showDebug)
-        //				{
-        //					Debug.Log(string.Format("{0}: There are no active spawn rules. Can't spawn without rules.", gameObject.name));
-        //				}
-        //                m_spawnComplete = true;
-        //				return;
-        //			}
-
-        //			//Check that we can actually add new instances
-        //			if (!CanSpawnInstances())
-        //			{
-        //				if (m_showDebug)
-        //				{
-        //					Debug.Log(string.Format("{0}: Can't spawn or activate new instance - max instance count reached.", gameObject.name));
-        //				}
-        //                m_spawnComplete = true;
-        //				return;
-        //			}
-
-        //            //Call out any issues with terrain height
-        //            Terrain t = TerrainHelper.GetTerrain(transform.position);
-        //            if (t != null)
-        //            {
-        //                m_terrainHeight = t.terrainData.size.y;
-        //                if (m_resources != null && m_resources.m_terrainHeight != m_terrainHeight)
-        //                {
-        //                    Debug.LogWarning(string.Format("There is a mismatch between your resources Terrain Height {0} and your actual Terrain Height {1}. Your Spawn may not work as intended!", m_resources.m_terrainHeight, m_terrainHeight));
-        //                }
-        //            }
-
-        //            //Look for any tagged objects that are acting as triggers and check if they were in range
-        //            if (m_mode == GaiaConstants.OperationMode.RuntimeTriggeredInterval)
-        //            {
-        //                m_checkDistance = m_triggerRange + 1f;
-        //                List<GameObject> triggerObjects = new List<GameObject>();
-        //                string[] tags = new string[0];
-        //                if (!string.IsNullOrEmpty(m_triggerTags))
-        //                {
-        //                    tags = m_triggerTags.Split(',');
-        //                }
-        //                else
-        //                {
-        //                    Debug.LogError("You have not supplied a trigger tag. Spawner will not spawn!");
-        //                }
-        //                int idx = 0;
-        //                if (m_triggerTags.Length > 0 &&  tags.Length > 0)
-        //                {
-        //                    //Grab the tagged objects
-        //                    for (idx = 0; idx < tags.Length; idx++)
-        //                    {
-        //                        triggerObjects.AddRange(GameObject.FindGameObjectsWithTag(tags[idx]));
-        //                    }
-
-        //                    //Now look for anything in range
-        //                    for (idx = 0; idx < triggerObjects.Count; idx++)
-        //                    {
-        //                        m_checkDistance = Vector3.Distance(transform.position, triggerObjects[idx].transform.position);
-        //                        if (m_checkDistance <= m_triggerRange)
-        //                        {
-        //                            break;
-        //                        }
-        //                    }
-
-        //                    //And if its wasnt found then drop out
-        //                    if (m_checkDistance > m_triggerRange)
-        //                    {
-        //                        if (m_showDebug)
-        //                        {
-        //                            Debug.Log(string.Format("{0}: No triggers were close enough", gameObject.name));
-        //                        }
-        //                        m_spawnComplete = true;
-        //                        return; //Nothing to do - trigger is too far away
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    //Nothing to see, drop out
-        //                    if (m_showDebug)
-        //                    {
-        //                        Debug.Log(string.Format("{0}: No triggers found", gameObject.name));
-        //                    }
-        //                    m_spawnComplete = true;
-        //                    return;
-        //                }
-        //            }
-
-        //            //Update the session - but only of we are not playing
-        //            if (!Application.isPlaying)
-        //            {
-        //                AddToSession(GaiaOperation.OperationType.Spawn, "Spawning " + transform.name);
-        //            }
-
-        //            //Run the spawner based on the location selection method chosen
-        //            if (m_spawnLocationAlgorithm == GaiaConstants.SpawnerLocation.RandomLocation || m_spawnLocationAlgorithm == GaiaConstants.SpawnerLocation.RandomLocationClustered)
-        //            {
-        //                #if UNITY_EDITOR
-        //                    if (!Application.isPlaying)
-        //                    {
-        //                        m_updateCoroutine = RunRandomSpawnerIteration();
-        //                        StartEditorUpdates();
-        //                    }
-        //                    else
-        //                    {
-        //                        StartCoroutine(RunRandomSpawnerIteration());
-        //                    }
-        //#else
-        //                    StartCoroutine(RunRandomSpawnerIteration(terrainID));
-        //#endif
-        //            }
-        //            else
-        //            {
-        //                #if UNITY_EDITOR
-        //                    if (!Application.isPlaying)
-        //                    {
-        //                        m_updateCoroutine = RunAreaSpawnerIteration();
-        //                        StartEditorUpdates();
-        //                    }
-        //                    else
-        //                    {
-        //                        StartCoroutine(RunAreaSpawnerIteration());
-        //                    }
-        //#else
-        //                    StartCoroutine(RunAreaSpawnerIteration(terrainID));
-        //#endif
-        //            }
-        //        }
-
-        public float GetMaxSpawnerRange()
+        /// <returns></returns>
+        public float GetMaxSpawnRange()
         {
-            Terrain currentTerrain = null;
-            currentTerrain = GetCurrentTerrain();
-            if (currentTerrain != null)
-            {
-                return Mathf.Round((float)8192 / (float)currentTerrain.terrainData.heightmapResolution * currentTerrain.terrainData.size.x / 2f);
-            }
-            else
-            {
-                return 1000;
-            }
+            return GaiaUtils.GetMaxSpawnRange(GetCurrentTerrain());
         }
 
 
@@ -2184,16 +2048,21 @@ namespace Gaia
             //Track if we spawn GameObject -> If yes, the scenes affected must be dirtied for saving
             bool spawnedGameObjects = false;
 
+            //We need to check what the max possible range is - there is a world spawn range setting in the Gaia settings, but if high resolution settings are chosen on
+            //smaller terrains, it can be that we need to limit the range further to not exceed the size limit of render textures while spawning.
+            float maxPossibleRange = Mathf.Min(gaiaSettings.m_spawnerWorldSpawnRange, GetMaxSpawnRange());
+
             //Does the area exceed the range of the world spawn range? if yes,
             //this means we need to spawn in multiple locations. Otherwise a single location spawn
             //should do the trick.
             //World map spawns are always local across the entire world map - since the world map is just a single terrain this works fine
             //even if the world map spans 100s of km
-            float locationIncrement = gaiaSettings.m_spawnerWorldSpawnRange * 2;
-            if ((area.size.x > gaiaSettings.m_spawnerWorldSpawnRange * 2f || area.size.z > gaiaSettings.m_spawnerWorldSpawnRange * 2f) && !m_settings.m_isWorldmapSpawner)
+            float locationIncrement = maxPossibleRange * 2;
+
+            if ((area.size.x > maxPossibleRange * 2f || area.size.z > maxPossibleRange * 2f) && !m_settings.m_isWorldmapSpawner)
             {
                 //Multiple locations required
-                spawnRange = (float)Mathd.Min(gaiaSettings.m_spawnerWorldSpawnRange, Mathd.Min(area.extents.x, area.extents.z));
+                spawnRange = (float)Mathd.Min(maxPossibleRange, Mathd.Min(area.extents.x, area.extents.z));
                 startPosition = new Vector3Double(area.min.x + spawnRange, 0, area.min.z + spawnRange);
             }
             else
@@ -2364,7 +2233,7 @@ namespace Gaia
                                         string spawnExtensionAssetGUID = sr.m_name;
                                         if (m_clearedSpawnExtensionProtos.Find(x => x.terrain == t && x.m_prototypeAssetGUID == spawnExtensionAssetGUID) == null)
                                         {
-                                            ClearSpawnExtensionsForRule(sr);
+                                            ClearSpawnExtensionsForRule(sr, spawner.m_settings);
                                             m_clearedSpawnExtensionProtos.Add(new TerrainPrototypeId() { terrain = t, m_prototypeAssetGUID = spawnExtensionAssetGUID });
                                         }
                                         if (sr.m_isActive && sr.m_changesHeightmap)
@@ -2528,6 +2397,7 @@ namespace Gaia
 
                 }// for Z
             } // for X
+
             SpawnProgressBar.ClearProgressBar();
             m_updateCoroutine = null;
 
@@ -2572,6 +2442,7 @@ namespace Gaia
                 TerrainLoaderManager.Instance.SetOrigin(originalOrigin);
             }
 #endif
+            SimpleCameraLayerCulling.Refresh();
             GaiaStopwatch.EndEvent("Area Spawn");
             GaiaStopwatch.Stop();
             yield return null;
@@ -2895,7 +2766,7 @@ namespace Gaia
                                 {
                                     //Remember the scaling settings that were last used in a spawn - required to re-scale tree instances when doing a prototype refresh.
                                     m_settings.m_resources.m_treePrototypes[m_settings.m_spawnerRules[i].m_resourceIdx].StoreLastUsedScaleSettings();
-                                    operation.SetTerrainTrees(tempTreeRT, m_settings, this, m_settings.m_spawnerRules[i], randomSeeds[i], false);
+                                    operation.SetTerrainTrees(tempTreeRT, m_settings, this, m_settings.m_spawnerRules[i], randomSeeds[i], false, SessionManager.GetSeaLevel());
                                 }
 
                                 collisionMaskCache.SetTreeDirty(m_settings.m_spawnerRules[i].GUID, m_settings.m_resources.m_treePrototypes[m_settings.m_spawnerRules[i].m_resourceIdx].m_desktopPrefab.layer);
@@ -2927,7 +2798,7 @@ namespace Gaia
                                 int affectedGameObjectTerrainsCount = operation.affectedTerrainPixels.Where(x => x.Key.operationType == MultiTerrainOperationType.GameObject && x.Value.simulationPositive == true).Count();
                                 if (affectedGameObjectTerrainsCount > 0)
                                 {
-                                    operation.SetTerrainGameObjects(tempGameObjectRT, protoGO, m_settings.m_spawnerRules[i], m_settings, randomSeeds[i], ref m_settings.m_spawnerRules[i].m_spawnedInstances, m_settings.m_spawnerRules[i].m_minRequiredFitness, false);
+                                    operation.SetTerrainGameObjects(tempGameObjectRT, protoGO, m_settings.m_spawnerRules[i], m_settings, randomSeeds[i], ref m_settings.m_spawnerRules[i].m_spawnedInstances, m_settings.m_spawnerRules[i].m_minRequiredFitness, false, SessionManager.GetSeaLevel());
                                 }
 
                                 //Dirty affected collision masks - if we spawned Gameobject instances with tags that are used in other collision masks, we must dirty them so they will be re-baked upon request
@@ -2971,6 +2842,11 @@ namespace Gaia
                                         spawnExtension.Close();
                                     }
                                 }
+                                foreach (int layerID in GaiaUtils.GetIndicesfromLayerMask(m_settings.m_spawnerRules[i].m_collisionLayersToClear))
+                                {
+                                    collisionMaskCache.SetLayerIDDirty(layerID);
+                                }
+
                                 break;
 
                             case GaiaConstants.SpawnerResourceType.StampDistribution:
@@ -3135,13 +3011,16 @@ namespace Gaia
             stamper.m_stampDirty = true;
         }
 
-        public void SetRecommendedStampSizes()
+        public void SetRecommendedStampSizes(bool allowHeightChange = true)
         {
             float targetWorldSize = m_worldCreationSettings.m_tileSize * m_worldCreationSettings.m_xTiles;
 
             if (targetWorldSize > 2048)
             {
-                m_worldCreationSettings.m_tileHeight = Mathf.Min(4097, Mathf.Max(2048, targetWorldSize / 10f));
+                if (allowHeightChange)
+                {
+                    m_worldCreationSettings.m_tileHeight = Mathf.Min(4097, Mathf.Max(2048, targetWorldSize / 10f));
+                }
                 m_baseTerrainSettings.m_heightScale = 7 + Mathf.Min(40, targetWorldSize / 3000);
                 m_settings.m_stampDensity = 5 + Mathf.RoundToInt(m_worldCreationSettings.m_xTiles * m_worldCreationSettings.m_gaiaDefaults.m_heightmapResolution / 4097);
                 m_settings.m_stampWidth = Mathf.RoundToInt(100f / (float)m_settings.m_stampDensity *5f); //Mathf.RoundToInt(((float)targetWorldSize / (float)m_worldCreationSettings.m_xTiles / (float)m_settings.m_stampDensity) /2f);
@@ -3149,7 +3028,10 @@ namespace Gaia
             }
             else if (targetWorldSize > 1024)
             {
-                m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                if (allowHeightChange)
+                {
+                    m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                }
                 m_baseTerrainSettings.m_heightScale = 7;
                 m_settings.m_stampDensity = 5;
                 m_settings.m_stampWidth = 100;
@@ -3158,7 +3040,10 @@ namespace Gaia
             }
             else if (targetWorldSize > 512)
             {
-                m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                if (allowHeightChange)
+                {
+                    m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                }
                 m_baseTerrainSettings.m_heightScale = 7;
                 m_settings.m_stampDensity = 4;
                 m_settings.m_stampWidth = 120;
@@ -3166,7 +3051,10 @@ namespace Gaia
             }
             else if (targetWorldSize > 256)
             {
-                m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                if (allowHeightChange)
+                {
+                    m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                }
                 m_baseTerrainSettings.m_heightScale = 7;
                 m_settings.m_stampDensity = 3;
                 m_settings.m_stampWidth = 140;
@@ -3174,7 +3062,10 @@ namespace Gaia
             }
             else //256 and smaller
             {
-                m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                if (allowHeightChange)
+                {
+                    m_worldCreationSettings.m_tileHeight = m_worldCreationSettings.m_tileSize;
+                }
                 m_baseTerrainSettings.m_heightScale = 7;
                 m_settings.m_stampDensity = 3;
                 m_settings.m_stampWidth = 160;
@@ -3671,7 +3562,7 @@ namespace Gaia
             Stamper stamper = GetOrCreateBaseTerrainStamper(false);
 
             //unfold the preview if not 1:1, so the user can see the advanced settings in the preview panel
-            if (heightmapResExceeded || stampsExceeded)
+            if ((heightmapResExceeded || stampsExceeded) && !m_baseTerrainSettings.m_alwaysFullPreview)
             {
                 stamper.m_useCustomPreviewBounds = true;
             }
@@ -3716,6 +3607,10 @@ namespace Gaia
             {
                 stamper.m_worldDesignerPreviewBounds.center = m_worldDesignerUserBounds.center;
                 stamper.m_worldDesignerPreviewBounds.size = m_worldDesignerUserBounds.size;
+                if (m_worldCreationSettings.m_gaiaDefaults == null)
+                {
+                    m_worldCreationSettings.m_gaiaDefaults = GaiaSettings.m_currentDefaults;
+                }
                 TerrainLoaderManager.Instance.TerrainSceneStorage.m_worldMapPreviewHeightmapResolution = Math.Min(4097, m_worldCreationSettings.m_xTiles * m_worldCreationSettings.m_gaiaDefaults.m_heightmapResolution);
                 TerrainLoaderManager.Instance.TerrainSceneStorage.m_worldMapPreviewRange = Mathf.RoundToInt(m_worldCreationSettings.m_xTiles * m_worldCreationSettings.m_tileSize);
                 TerrainLoaderManager.Instance.TerrainSceneStorage.m_worldMapPreviewTerrainHeight = m_worldCreationSettings.m_tileHeight;
@@ -5952,19 +5847,24 @@ namespace Gaia
         /// Calls the Delete function on all Spawn Extensions of a certain rule
         /// </summary>
         /// <param name="spawnRule"></param>
-        public void ClearSpawnExtensionsForRule(SpawnRule spawnRule)
+        public void ClearSpawnExtensionsForRule(SpawnRule spawnRule, SpawnerSettings spawnerSettings = null)
         {
-            if (spawnRule.m_resourceIdx > m_settings.m_resources.m_spawnExtensionPrototypes.Length - 1)
+            if (spawnerSettings == null)
+            {
+                spawnerSettings = m_settings;
+            }
+
+            if (spawnRule.m_resourceIdx > spawnerSettings.m_resources.m_spawnExtensionPrototypes.Length - 1)
             {
                 return;
             }
 
-            if (m_settings.m_resources.m_spawnExtensionPrototypes[spawnRule.m_resourceIdx] == null)
+            if (spawnerSettings.m_resources.m_spawnExtensionPrototypes[spawnRule.m_resourceIdx] == null)
             {
                 return;
             }
 
-            ResourceProtoSpawnExtension protoSE = m_settings.m_resources.m_spawnExtensionPrototypes[spawnRule.m_resourceIdx];
+            ResourceProtoSpawnExtension protoSE = spawnerSettings.m_resources.m_spawnExtensionPrototypes[spawnRule.m_resourceIdx];
 
             //iterate through all instances
             foreach (ResourceProtoSpawnExtensionInstance instance in protoSE.m_instances)
@@ -6155,12 +6055,6 @@ namespace Gaia
                             DestroyImmediate(GOtoDelete);
                             deletedSomething = true;
                         }
-                    }
-                    //if the target is empty now, we can remove it as well to keep scene clean
-                    if (target.childCount <= 0)
-                    {
-                        deletedSomething = true;
-                        DestroyImmediate(target.gameObject);
                     }
                 }
                 //if we deleted something the scene we deleted from should be marked as dirty.
@@ -6598,9 +6492,9 @@ namespace Gaia
         /// </summary>
         /// <param name="settingsToLoad">The settings to apply to this spawner</param>
         /// <param name="createDetailSOs">Whether the detail scriptable objects for this spawner settings file should be created or not</param>
-        /// <param name="overrideSOAssetGUIDs">Array with asset guids to detailer scriptable objects to override - only needs to be used if you want to override the existing GUIDS in the spawner settings file</param>
-        /// <param name="overrideSOInstanceIDs">Array with instance IDs to detailer scriptable objects to override - only needs to be used if you want to override the existing instance IDs in the spawner settings file</param>
-        public void LoadSettings(SpawnerSettings settingsToLoad, bool createDetailSOs = true, string[] overrideSOAssetGUIDs = null, int[]overrideSOInstanceIDs = null)
+        /// <param name="floraDetailLODIdOverrides">LOD ID overrides for terrain details for the flora system</param>
+        /// /// <param name="floraTreeLODIdOverrides">LOD ID overrides for terrain trees for the flora system</param>
+        public void LoadSettings(SpawnerSettings settingsToLoad, bool createDetailSOs = true, List<FloraLODIdOverrides>[] floraDetailLODIdOverrides = null, List<FloraLODIdOverrides>[] floraTreeLODIdOverrides = null)
         {
             m_settings.ClearImageMaskTextures();
             //Set existing settings = null to force a new scriptable object
@@ -6611,26 +6505,26 @@ namespace Gaia
             m_settings.m_lastGUIDSaved = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(settingsToLoad));
 #endif
 
-            //override assetGUIDs / instance ids, if provided
-            if (overrideSOAssetGUIDs != null || overrideSOInstanceIDs != null)
+            //override assetGUIDs / instance ids in the flora data for terrain details, if provided
+            if (floraDetailLODIdOverrides != null)
             {
 #if FLORA_PRESENT
                 for (int i = 0; i < m_settings.m_resources.m_detailPrototypes.Length; i++)
                 {
                     ResourceProtoDetail rpd = m_settings.m_resources.m_detailPrototypes[i];
+                    FloraUtils.ResetSettingsObjects(rpd.m_floraLODs, floraDetailLODIdOverrides[i]);
+                }
+#endif
+            }
 
-                    //Deliberately reset the settings object first, so it is loaded from the overriden ids on next access.
-                    rpd.DetailerSettingsObject = null;
-
-                    if (overrideSOAssetGUIDs != null && i<overrideSOAssetGUIDs.Length)
-                    {
-                        rpd.m_detailerSettingsObjectAssetGUID = overrideSOAssetGUIDs[i];
-                    }
-                    if (overrideSOInstanceIDs != null && i < overrideSOInstanceIDs.Length)
-                    {
-                        rpd.m_detailerSettingsObjectInstanceID = overrideSOInstanceIDs[i];
-                    }
-
+            //override assetGUIDs / instance ids in the flora data for terrain trees, if provided
+            if (floraTreeLODIdOverrides != null)
+            {
+#if FLORA_PRESENT
+                for (int i = 0; i < m_settings.m_resources.m_treePrototypes.Length; i++)
+                {
+                    ResourceProtoTree rpt = m_settings.m_resources.m_treePrototypes[i];
+                    FloraUtils.ResetSettingsObjects(rpt.m_floraLODs, floraTreeLODIdOverrides[i]);
                 }
 #endif
             }
@@ -6638,7 +6532,8 @@ namespace Gaia
             //GaiaUtils.CopyFields(settingsToLoad, m_settings);
 
             Spawner[] allSpawner = Resources.FindObjectsOfTypeAll<Spawner>().Where(x=>!x.name.StartsWith("Session")).ToArray();
-        
+
+            Dictionary<int, string> materialMap = new Dictionary<int, string>();
 
 #if HDPipeline && !FLORA_PRESENT
             bool hdTerrainDetailMessageDisplayed = false;
@@ -6657,10 +6552,23 @@ namespace Gaia
                     ResourceProtoDetail protoDetail = m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx];
                     if (protoDetail != null)
                     {
-                        //the instantiation of the copy is handled within the proto detail object
-                        protoDetail.InstantiateDetailerSettingsGO();
+                        foreach (FloraLOD floraLOD in protoDetail.m_floraLODs)
+                        {
+                            floraLOD.InstantiateDetailerSettingsGO(ref materialMap);
+                        }
                     }
                 }
+                //if (rule.m_resourceType == SpawnerResourceType.TerrainTree && createDetailSOs)
+                //{
+                //    ResourceProtoTree protoTree = m_settings.m_resources.m_treePrototypes[rule.m_resourceIdx];
+                //    if (protoTree != null)
+                //    {
+                //         foreach (FloraLOD floraLOD in protoTree.m_floraLODs)
+                //        {
+                //            floraLOD.InstantiateDetailerSettingsGO(ref materialMap);
+                //        }
+                //    }
+                //}
 #endif
 
                 //check if the spawn rule guid exists in this scene already - if yes, this rule must get a new ID then to avoid duplicate IDs
@@ -6669,15 +6577,20 @@ namespace Gaia
                     rule.RegenerateGUID();
                 }
 
-#if HDPipeline
-                if(rule.m_resourceType == SpawnerResourceType.TerrainDetail)
+                if (rule.m_resourceType == SpawnerResourceType.TerrainTree)
+                {
+                    m_settings.m_resources.m_treePrototypes[rule.m_resourceIdx].m_useFlora = false;
+                }
+
+                if (rule.m_resourceType == SpawnerResourceType.TerrainDetail)
                 {
 #if FLORA_PRESENT
-                    if (m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx].DetailerSettingsObject != null)
+                    if (m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx].m_floraLODs == null || m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx].m_floraLODs.Count == 0)
                     {
-                        m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx].m_usePWGrass = true;
+                        m_settings.m_resources.m_detailPrototypes[rule.m_resourceIdx].m_useFlora = false;
                     }
 #else
+#if HDPipeline
                     rule.m_isActive = false;
                     if (!hdTerrainDetailMessageDisplayed)
                     {
@@ -6685,10 +6598,11 @@ namespace Gaia
                         hdTerrainDetailMessageDisplayed = true;
                     }
 #endif
-                }
 #endif
-            }
+                }
 
+
+            }
 
             //Reset the stored terrain layer asset guids - need to start fresh
             foreach (ResourceProtoTexture resourceProtoTexture in m_settings.m_resources.m_texturePrototypes)
@@ -6769,6 +6683,192 @@ namespace Gaia
         public Vector3 GetRandomV3(float range)
         {
             return m_rndGenerator.NextVector(-range, range);
+        }
+
+
+        /// <summary>
+        /// Saves the spawner settings into a scriptable object file. Also attaches scriptable objects / materials from the Flora System
+        /// </summary>
+        /// <returns></returns>
+        public SpawnerSettings SaveSettings(string saveFilePath)
+        {
+#if UNITY_EDITOR
+
+            //Dismiss Tutorial messages at this point
+            m_createdfromBiomePreset = false;
+            m_createdFromGaiaManager = false;
+
+            if (!saveFilePath.StartsWith("Assets/"))
+            {
+                saveFilePath = GaiaDirectories.GetPathStartingAtAssetsFolder(saveFilePath);
+            }
+            m_settings.m_lastGUIDSaved = AssetDatabase.AssetPathToGUID(saveFilePath);
+
+            if (File.Exists(saveFilePath))
+            {
+                AssetDatabase.DeleteAsset(saveFilePath);
+            }
+
+            AssetDatabase.CreateAsset(m_settings, saveFilePath);
+            AssetDatabase.ImportAsset(saveFilePath);
+            AssetDatabase.SetLabels(m_settings, new string[1] { GaiaConstants.gaiaManagerSpawnerLabel });
+#if FLORA_PRESENT
+            //remember the original GUIDs & IDs so we can restore them back before reloading the settings file after saving.
+            //Otherwise we would create duplicates of the scriptable objects when the settings file is reloaded below.
+            List<FloraLODIdOverrides>[] originalDetailFloraIDs = new List<FloraLODIdOverrides>[m_settings.m_resources.m_detailPrototypes.Length];
+
+            //Likewise remember the asset paths for the material instance ids used in this spawner so we can restore them later
+            Dictionary<string, string> materialAssetGUIDMap = new Dictionary<string, string>();
+
+            for (int i = 0; i < m_settings.m_resources.m_detailPrototypes.Length; i++)
+            {
+                ResourceProtoDetail rpd = (ResourceProtoDetail)m_settings.m_resources.m_detailPrototypes[i];
+
+                originalDetailFloraIDs[i] = new List<FloraLODIdOverrides>();
+                for (int k = 0; k < rpd.m_floraLODs.Count; k++)
+                {
+                    originalDetailFloraIDs[i].Add(new FloraLODIdOverrides()
+                    {
+                        m_assetGUIDOverride = rpd.m_floraLODs[k].m_detailerSettingsObjectAssetGUID,
+                        m_instanceIDOverride = rpd.m_floraLODs[k].m_detailerSettingsObjectInstanceID
+                    });
+
+                    for (int o = 0; o < rpd.m_floraLODs[k].DetailerSettingsObject.Mat.Length; o++)
+                    {
+                        Material mat = rpd.m_floraLODs[k].DetailerSettingsObject.Mat[o];
+                        string nameAndIndex = mat.name + "_" + o.ToString();
+                        if (!materialAssetGUIDMap.ContainsKey(nameAndIndex))
+                        {
+                            materialAssetGUIDMap.Add(nameAndIndex, AssetDatabase.GetAssetPath(mat));
+                        }
+                    }
+                }
+            }
+
+            //save all the setting scriptable object files for the grass system / detailer
+            foreach (SpawnRule sr in m_settings.m_spawnerRules.Where(x => x.m_resourceType == SpawnerResourceType.TerrainDetail))
+            {
+                ResourceProtoDetail resourceProtoDetail = m_settings.m_resources.m_detailPrototypes[sr.m_resourceIdx];
+                FloraUtils.SaveFloraLODs(resourceProtoDetail.m_floraLODs, resourceProtoDetail.m_name, saveFilePath);
+            }
+
+            //Likewise for trees
+            List<FloraLODIdOverrides>[] originalTreeFloraIDs = new List<FloraLODIdOverrides>[m_settings.m_resources.m_treePrototypes.Length];
+
+            for (int i = 0; i < m_settings.m_resources.m_treePrototypes.Length; i++)
+            {
+                ResourceProtoTree rpt = (ResourceProtoTree)m_settings.m_resources.m_treePrototypes[i];
+                originalTreeFloraIDs[i] = new List<FloraLODIdOverrides>();
+                for (int k = 0; k < rpt.m_floraLODs.Count; k++)
+                {
+                    originalTreeFloraIDs[i].Add(new FloraLODIdOverrides()
+                    {
+                        m_assetGUIDOverride = rpt.m_floraLODs[k].m_detailerSettingsObjectAssetGUID,
+                        m_instanceIDOverride = rpt.m_floraLODs[k].m_detailerSettingsObjectInstanceID
+                    });
+                    for (int o = 0; o < rpt.m_floraLODs[k].DetailerSettingsObject.Mat.Length; o++)
+                    {
+                        Material mat = rpt.m_floraLODs[k].DetailerSettingsObject.Mat[o];
+                        string nameAndIndex = mat.name + "_" + o.ToString();
+                        if (!materialAssetGUIDMap.ContainsKey(nameAndIndex))
+                        {
+                            materialAssetGUIDMap.Add(nameAndIndex, AssetDatabase.GetAssetPath(mat));
+                        }
+                    }
+                }
+            }
+
+            //save all the setting scriptable object files for the grass system / detailer
+            foreach (SpawnRule sr in m_settings.m_spawnerRules.Where(x => x.m_resourceType == SpawnerResourceType.TerrainTree))
+            {
+                ResourceProtoTree resourceProtoTree = m_settings.m_resources.m_treePrototypes[sr.m_resourceIdx];
+                FloraUtils.SaveFloraLODs(resourceProtoTree.m_floraLODs, resourceProtoTree.m_name, saveFilePath);
+            }
+
+#endif
+            EditorUtility.SetDirty(m_settings);
+            AssetDatabase.SaveAssets();
+
+
+            //Check if save was successful
+            SpawnerSettings settingsToLoad = (SpawnerSettings)AssetDatabase.LoadAssetAtPath(saveFilePath, typeof(SpawnerSettings));
+            if (settingsToLoad != null)
+            {
+                EditorGUIUtility.PingObject(settingsToLoad);
+
+                //Add the saved file to the user file collection so it shows up in the Gaia Manager
+                UserFiles userFiles = GaiaUtils.GetOrCreateUserFiles();
+                if (userFiles.m_autoAddNewFiles)
+                {
+                    if (!userFiles.m_gaiaManagerSpawnerSettings.Contains(settingsToLoad))
+                    {
+                        userFiles.m_gaiaManagerSpawnerSettings.Add(settingsToLoad);
+                    }
+                }
+                userFiles.PruneNonExisting();
+                EditorUtility.SetDirty(userFiles);
+                AssetDatabase.SaveAssets();
+
+                //dissociate the current stamper settings from the file we just saved, otherwise the user will continue editing the file afterwards
+                //We do this by just loading the file in again we just created
+#if FLORA_PRESENT
+                LoadSettings(settingsToLoad, false, originalDetailFloraIDs, originalTreeFloraIDs);
+
+                //Restore the original material associations
+                for (int i = 0; i < m_settings.m_resources.m_detailPrototypes.Length; i++)
+                {
+                    ResourceProtoDetail rpd = (ResourceProtoDetail)m_settings.m_resources.m_detailPrototypes[i];
+                    for (int k = 0; k < rpd.m_floraLODs.Count; k++)
+                    {
+                        if (rpd.m_floraLODs[k].DetailerSettingsObject != null && rpd.m_floraLODs[k].DetailerSettingsObject.Mat != null)
+                        {
+                            for (int o = 0; o < rpd.m_floraLODs[k].DetailerSettingsObject.Mat.Length; o++)
+                            {
+                                Material mat = rpd.m_floraLODs[k].DetailerSettingsObject.Mat[o];
+                                string nameAndIndex = mat.name + "_" + o.ToString();
+                                if (materialAssetGUIDMap.ContainsKey(nameAndIndex))
+                                {
+                                    string path = "";
+                                    materialAssetGUIDMap.TryGetValue(nameAndIndex, out path);
+                                    if (path != "")
+                                    {
+                                        rpd.m_floraLODs[k].DetailerSettingsObject.Mat[o] = (Material)AssetDatabase.LoadAssetAtPath(path, typeof(Material));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (int i = 0; i < m_settings.m_resources.m_treePrototypes.Length; i++)
+                {
+                    ResourceProtoTree rpt = (ResourceProtoTree)m_settings.m_resources.m_treePrototypes[i];
+                    for (int k = 0; k < rpt.m_floraLODs.Count; k++)
+                    {
+                        for (int o = 0; o < rpt.m_floraLODs[k].DetailerSettingsObject.Mat.Length; o++)
+                        {
+                            Material mat = rpt.m_floraLODs[k].DetailerSettingsObject.Mat[o];
+                            string nameAndIndex = mat.name + "_" + o.ToString();
+                            if (materialAssetGUIDMap.ContainsKey(nameAndIndex))
+                            {
+                                string path = "";
+                                materialAssetGUIDMap.TryGetValue(nameAndIndex, out path);
+                                if (path != "")
+                                {
+                                    rpt.m_floraLODs[k].DetailerSettingsObject.Mat[o] = (Material)AssetDatabase.LoadAssetAtPath(path, typeof(Material));
+                                }
+                            }
+                        }
+                    }
+                }
+#else
+                LoadSettings(settingsToLoad);
+#endif
+                m_spawnPreviewDirty = true;
+                return settingsToLoad;
+            }
+#endif //UNITY_EDITOR
+            return null;
         }
 
 #endregion

@@ -45,7 +45,6 @@ namespace Gaia
         //The maximum terrain height, NOT the theoretical maximum height, but the highest measured physical point on the terrain 
         public float m_maxWorldHeight = 0f;
 
-
         //The minimum terrain height, NOT the theoretical minimum height, but the lowest measured physical point on the terrain 
         public float m_minWorldHeight = 0f;
 
@@ -112,11 +111,17 @@ namespace Gaia
         //distance Mask specific
         public AnimationCurve m_distanceMaskCurve = new AnimationCurve(new Keyframe[2] { new Keyframe() { time = 0, value = 1, weightedMode = WeightedMode.None }, new Keyframe() { time = 1, value = 0, weightedMode = WeightedMode.None } });
 
-        //height Mask specific
-        public AnimationCurve m_heightMaskCurve = new AnimationCurve(new Keyframe[2] { new Keyframe() { time = 0, value = 0, weightedMode = WeightedMode.None }, new Keyframe() { time = 1, value = 1, weightedMode = WeightedMode.None } });
 
         //strength Transform specific
         public AnimationCurve m_strengthTransformCurve = NewAnimCurveStraightUpwards();
+
+        #region Height Mask
+
+        //height Mask specific
+        public AnimationCurve m_heightMaskCurve = new AnimationCurve(new Keyframe[2] { new Keyframe() { time = 0, value = 0, weightedMode = WeightedMode.None }, new Keyframe() { time = 1, value = 1, weightedMode = WeightedMode.None } });
+
+
+
 
         public HeightMaskType m_heightMaskType = HeightMaskType.RelativeToSeaLevel;
         [SerializeField]
@@ -161,6 +166,16 @@ namespace Gaia
             }
         }
 
+        //Various helper properties that help dealing with the different ways to set / get the height values in the different modes
+
+        public float ScalarSeaLevel { get { return Mathf.InverseLerp(m_minWorldHeight, m_maxWorldHeight, m_seaLevel); } }
+        public float MinPossibleMeter { get { return m_minWorldHeight - m_seaLevel; } }
+        public float MaxPossibleMeter { get { return m_maxWorldHeight - m_seaLevel; } }
+        public float WorldHeightDifference { get { return m_maxWorldHeight - m_minWorldHeight; } }
+        public float WorldHeightPercentInMeter { get { return WorldHeightDifference / 100f; } }
+        public float MinPossiblePercent { get { return MinPossibleMeter / WorldHeightPercentInMeter; } }
+        public float MaxPossiblePercent { get { return MaxPossibleMeter / WorldHeightPercentInMeter; } }
+        public float SeaLevelInPercent { get { return m_seaLevel / WorldHeightPercentInMeter; } }
 
 
         //The absolute minimum height for the heightmask selection, e.g. "the selection starts at 50 meters"
@@ -176,6 +191,8 @@ namespace Gaia
         //This is a legacy field that is not really used in the height mask anymore, but serves as a flag to detect whether
         //a height mask has been created under an older data structure - it will then automatically be migrated when the mask is used.
         public float m_seaLevelRelativeHeightMax = 109876.54321f;
+
+#endregion
 
 
         public bool tree1active = false;
@@ -405,8 +422,8 @@ namespace Gaia
 
             if (m_imageMaskSpace == ImageMaskSpace.World)
             {
-                m_xOffSetScalar = (m_xOffSet - m_multiTerrainOperation.m_originTransform.position.x) / size / worldSpaceScaleOffset;
-                m_zOffSetScalar = (m_zOffSet - m_multiTerrainOperation.m_originTransform.position.z) / size / worldSpaceScaleOffset;
+                m_xOffSetScalar = (m_xOffSet - m_multiTerrainOperation.m_originTransform.position.x - (float)TerrainLoaderManager.Instance.GetOrigin().x) / size / worldSpaceScaleOffset;
+                m_zOffSetScalar = (m_zOffSet - m_multiTerrainOperation.m_originTransform.position.z - (float)TerrainLoaderManager.Instance.GetOrigin().z) / size / worldSpaceScaleOffset;
             }
             else
             {
@@ -1330,6 +1347,7 @@ namespace Gaia
             m_allTextureSpawnRules = tempTextureSpawnRules.ToArray();
             m_allTextureSpawners = tempTextureSpawner.ToArray();
             m_allTextureSpawnRuleNames = tempTextureSpawnRuleNames.ToArray();
+
         }
 
         public static ImageMask Clone(ImageMask source)
@@ -1345,6 +1363,9 @@ namespace Gaia
             //special treatment for the heightmask min max fields - those are properites which will not be copied by the field copy above
             target.m_absoluteHeightMax = source.m_absoluteHeightMax;
             target.m_absoluteHeightMin = source.m_absoluteHeightMin;
+
+            //special treatment for the heightmask unit, not being copied since it is a private field that is only exposed as a property.
+            target.m_heightMaskUnit = source.m_heightMaskUnit;
 
 
             //special treatment for all object fields
@@ -1394,6 +1415,15 @@ namespace Gaia
         {
             foreach (CollisionMask collisionMask in m_collisionMasks)
             {
+                //copy the legacy single tree spawn rule guid into the newer list for multi-selection
+                if(!string.IsNullOrEmpty(collisionMask.m_treeSpawnRuleGUID) && collisionMask.m_selectedTreeSpawnRuleGUIDs.Count==0)
+                {
+                    collisionMask.m_selectedTreeSpawnRuleGUIDs.Add(collisionMask.m_treeSpawnRuleGUID);
+                    //not required anymore
+                    collisionMask.m_treeSpawnRuleGUID = "";
+                }
+
+
                 if (collisionMask.m_type == BakedMaskType.LayerGameObject || collisionMask.m_type == BakedMaskType.LayerTree)
                 {
                     LayerMask refreshedMask = new LayerMask();

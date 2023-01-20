@@ -393,6 +393,9 @@ inline void CalculateThicknessHDRP_float(
 	o_thickness = thickness;
 }
 
+half _PW_Global_CoverLayer1FadeStart;
+half _PW_Global_CoverLayer1FadeDist;
+
 //=============================================================================
 inline void CoverSurface_half ( 
 						  in half3	i_albedo,
@@ -446,9 +449,9 @@ inline void CoverSurface_half (
 	#endif
 
 	// fade cover
-	half delta = i_worldPosY - i_user_FadeStartY;
+	half delta = i_worldPosY - i_user_FadeStartY - _PW_Global_CoverLayer1FadeStart;
 	half sgn   = max ( sign ( delta ), 0 );
-	half fade  = clamp ( length ( delta ) / max ( i_user_FadeDistance, HALF_MIN ), 0.0, 1.0 ) * sgn;
+	half fade  = clamp ( length ( delta ) / max ( i_user_FadeDistance + _PW_Global_CoverLayer1FadeDist, HALF_MIN ), 0.0, 1.0 ) * sgn;
 
 	progress *= fade;
 

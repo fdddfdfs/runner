@@ -46,7 +46,8 @@ namespace Gaia
         public List<AutoSpawner> m_autoSpawners = new List<AutoSpawner>();
 #if UNITY_POST_PROCESSING_STACK_V2
         public PostProcessProfile m_postProcessProfile;
-        public BiomePostProcessingVolumeSpawnMode m_ppVSpawnMode = BiomePostProcessingVolumeSpawnMode.Add;
+        public bool m_ppVIsGlobal = true;
+        public BiomePostProcessingVolumeSpawnMode m_ppVSpawnMode = BiomePostProcessingVolumeSpawnMode.Replace;
 #endif
         public bool m_autoSpawnRequested;
         public bool m_drawPreview;
@@ -595,8 +596,6 @@ namespace Gaia
                 ProgressBar.Show(ProgressBarPriority.BiomeRemoval, "Removing Foreign GameObjects", "Removing Game Objects...", protoIndex , allSpawners.Length);
                 foreach (SpawnRule sr in spawner.m_settings.m_spawnerRules)
                 {
-                    
-
                     if (sr.m_resourceType == GaiaConstants.SpawnerResourceType.GameObject)
                     {
                         ResourceProtoGameObject protoGO = spawner.m_settings.m_resources.m_gameObjectPrototypes[sr.m_resourceIdx];
@@ -604,7 +603,7 @@ namespace Gaia
                         {
                             if (!knownProtoInstances.Contains(instance))
                             {
-                                operation.SetTerrainGameObjects(ApplyBrush(operation, MultiTerrainOperationType.GameObject), protoGO, sr, spawner.m_settings, 0, ref sr.m_spawnedInstances, m_settings.m_removeForeignGameObjectStrength,false);
+                                operation.SetTerrainGameObjects(ApplyBrush(operation, MultiTerrainOperationType.GameObject), protoGO, sr, spawner.m_settings, 0, ref sr.m_spawnedInstances, m_settings.m_removeForeignGameObjectStrength,false, SessionManager.GetSeaLevel());
                                 //no need to look at other instances if this one triggered the removal already
                                 break;
                             }
@@ -655,7 +654,15 @@ namespace Gaia
             ProgressBar.Clear(ProgressBarPriority.BiomeRemoval);
         }
 
+        /// <summary>
+        /// Gets the max spawn range for this biome controller.
+        /// </summary>
+        /// <returns></returns>
 
+        public float GetMaxSpawnRange()
+        {
+            return GaiaUtils.GetMaxSpawnRange(GetCurrentTerrain());
+        }
     }
 
 

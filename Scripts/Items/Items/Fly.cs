@@ -1,7 +1,7 @@
 ﻿using System;
 using StarterAssets;
 
-public sealed class Fly : ActivatableItem<Fly>
+public sealed class Fly : ActivatableItem
 {
     private static ThirdPersonController _player;
     

@@ -17,8 +17,15 @@ using UnityEditor.SceneManagement;
 using Gaia.Pipeline.HDRP;
 using Gaia.Pipeline.URP;
 using Gaia.Pipeline;
-#if UNITY_2018_3_OR_NEWER
 using UnityEngine.Networking;
+using ProceduralWorlds;
+using ProceduralWorlds.Addressables1;
+using UnityEngine.SceneManagement;
+#if AIGAMEDEV
+using AIGamedevToolkit;
+#endif
+#if PW_ADDRESSABLES
+using UnityEditor.AddressableAssets;
 #endif
 
 namespace Gaia
@@ -29,6 +36,8 @@ namespace Gaia
     public class GaiaManagerEditor : EditorWindow, IPWEditor
     {
         #region Variables, Properties
+        private bool m_copySettingsToClipboard = false;
+        private bool m_buildHistoryFoldedOut;
         private GUIStyle m_boxStyle;
         private GUIStyle m_wrapStyle;
         private GUIStyle m_titleStyle;
@@ -36,11 +45,17 @@ namespace Gaia
         private GUIStyle m_bodyStyle;
         private GUIStyle m_linkStyle;
         private GUIStyle m_worldSizeStyle;
+        private GUIStyle m_smallButtonStyle;
+        private GUIContent m_cogwheelImpostorsContent;
+        private GUIContent m_cogwheelServerSceneContent;
+        private GUIContent m_removeConfigContent;
+        private GUIContent m_buildAndDeployTabContent;
         private static GUIStyle m_oldTerrainLabelStyle;
         private static GUIStyle m_oldWorldSizeLabelStyle;
         private static GUIStyle m_newTerrainLabelStyle;
         private static GUIStyle m_sceneViewShadowStyle;
         private static GUIStyle m_sceneViewToggleStyle;
+
         private static GaiaSettings m_settings;
         private UnityPipelineProfile m_gaiaPipelineSettings;
         private IEnumerator m_updateCoroutine;
@@ -53,11 +68,6 @@ namespace Gaia
         //Extension manager
         bool m_needsScan = true;
         GaiaExtensionManager m_extensionMgr = new GaiaExtensionManager();
-        //private bool m_foldoutSession = false;
-        //private bool m_foldoutTerrain = false;
-        //private bool m_foldoutSpawners = false;
-        //private bool m_foldoutCharacters = false;
-        //private bool m_foldoutUtils = false;
         private GaiaConstants.EnvironmentSize m_oldTargetSize;
         private GaiaConstants.EnvironmentTarget m_oldTargetEnv;
         private bool m_foldoutTerrainResolutionSettings = false;
@@ -95,7 +105,8 @@ namespace Gaia
         private UnityEditorInternal.ReorderableList m_biomeSpawnersList;
         private UnityEditorInternal.ReorderableList m_advancedTabBiomesList;
         private UnityEditorInternal.ReorderableList m_advancedTabSpawnersList;
-
+        private UnityEditorInternal.ReorderableList m_buildSettingsSceneList;
+        
         //Misc
         private bool m_foldoutSpawnerSettings;
         private bool m_foldOutWorldSizeSettings;
@@ -109,6 +120,7 @@ namespace Gaia
         private static int m_oldTerrainGridOffsetX = 0;
         private static int m_oldTerrainGridOffsetZ = 0;
         private static bool m_recenterOnUpdate;
+        private bool m_impostorStateUpdated = false;
 
 
         private GaiaSessionManager m_sessionManager;
@@ -120,6 +132,10 @@ namespace Gaia
         private bool m_runtimeCreated;
         private bool m_renderPipelineDefaultStatus;
         private string m_setupWarningText;
+
+        PWAddressablesConfig m_addressableConfig = null;
+        BuildConfig m_buildConfig = null;
+
         private UserFiles m_userFiles;
         private bool m_showInstallPipelineHelp;
 
@@ -155,7 +171,7 @@ namespace Gaia
                 //Manager can be null if the dependency package installation is started upon opening the manager window.
                 if (manager != null)
                 {
-                    Vector2 initialSize = new Vector2(650f, 450f);
+                    Vector2 initialSize = new Vector2(850f, 450f);
                     manager.position = new Rect(new Vector2(Screen.currentResolution.width / 2f - initialSize.x / 2f, Screen.currentResolution.height / 2f - initialSize.y / 2f), initialSize);
                     manager.Show();
                 }
@@ -216,6 +232,7 @@ namespace Gaia
                     m_settings = CreateSettingsAsset();
                 }
             }
+            m_settings.m_shaderReimportRestartRequired = false;
 
             if (m_editorUtils == null)
             {
@@ -292,11 +309,26 @@ namespace Gaia
                 new Tab ("GX", m_gxIcon, ExtensionsTab),
                 new Tab ("More...", m_moreIcon, TutorialsAndSupportTab),
             };
+
+            //The "Build and Deploy tab" can have a dynamic number, depending on whether the AI gamedev toolkit is present or not
+#if AIGAMEDEV
+            string number = "5. ";
+#else
+            string number = "4. ";
+#endif
+
+            m_buildAndDeployTabContent = new GUIContent(number + m_editorUtils.GetTextValue("BuildAndDeploy"), m_editorUtils.GetTooltip("BuildAndDeploy"));
+
             var creationTabs = new Tab[] {
                 //new Tab ("Legacy", LegacyTab),
+
                 new Tab ("Setup", SetupTab),
                 new Tab ("WorldCreation", WorldCreationTab),
                 new Tab ("RuntimeCreation", RuntimeCreationTab),
+#if AIGAMEDEV
+                new Tab ("Inference", InferenceTab),
+#endif
+                new Tab (m_buildAndDeployTabContent, BuildAndDeployTab),
             };
 
             var gxTabs = new Tab[] {
@@ -406,7 +438,14 @@ namespace Gaia
                     m_allBiomePresets.Add(new BiomePresetDropdownEntry { ID = i, name = sp.name, biomePreset = sp });
                 }
             }
-            m_allBiomePresets.Sort();
+            if (m_userFiles.m_sortBiomesBy == SortBiomesBy.Name)
+            {
+                m_allBiomePresets.Sort(BiomePresetDropdownEntry.CompareByName);
+            }
+            else
+            {
+                m_allBiomePresets.Sort(BiomePresetDropdownEntry.CompareByOrderNumber);
+            }
             //Add the artifical "Custom" option
             m_allBiomePresets.Add(new BiomePresetDropdownEntry { ID = -999, name = "Custom", biomePreset = null });
 
@@ -424,6 +463,21 @@ namespace Gaia
 
             CreateAdvancedTabBiomesList();
             CreateAdvancedTabSpawnersList();
+#if AIGAMEDEV
+            InferenceFeatureListEditor.RefreshFeatureList();
+#endif
+
+
+            if (m_addressableConfig == null)
+            {
+                m_addressableConfig = GaiaUtils.GetOrCreateAddressableConfig();
+            }
+            if (m_buildConfig == null)
+            {
+                m_buildConfig = GaiaUtils.GetOrCreateBuildConfig();
+            }
+            CreateBuildSettingsSceneList();
+
             if (m_settings != null)
             {
                 ValidateLightingProfileIndex(m_settings.m_gaiaLightingProfile.m_selectedLightingProfileValuesIndex);
@@ -431,7 +485,6 @@ namespace Gaia
 
             EditorApplication.update -= ReflectionProbeBakeUpdate;
             EditorApplication.update += ReflectionProbeBakeUpdate;
-
             m_initResSettings = true;
         }
 
@@ -490,6 +543,7 @@ namespace Gaia
             }
 
             GaiaLightingProfile profile = m_settings.m_gaiaLightingProfile;
+#if !UNITY_2021_2_OR_NEWER
             if (GaiaUtils.GetActivePipeline() == GaiaConstants.EnvironmentRenderer.HighDefinition)
             {
                 if (profile != null)
@@ -498,9 +552,9 @@ namespace Gaia
                     {
                         if (showPopupMessage)
                         {
-                            if (EditorUtility.DisplayDialog("Procedural Worlds Sky Not Supported",
-                                "Procedural Worlds Sky is not currently supported in HDRP the selected profile will be reverted to the '" + searchFor + "'" + " profile",
-                                "Ok"))
+                            if (EditorUtility.DisplayDialog("Procedural Worlds Sky Only Supported In 2021.2+",
+                                    "Procedural Worlds Sky system is only supported in 2021.2 in HDRP, the selected profile will be reverted to the '" + searchFor + "'" + " profile",
+                                    "Ok"))
                             {
                                 profile.m_selectedLightingProfileValuesIndex = GetLightingProfile(searchFor, profile.m_selectedLightingProfileValuesIndex);
                                 return true;
@@ -519,6 +573,7 @@ namespace Gaia
                     }
                 }
             }
+#endif
 
 #if !GAIA_PRO_PRESENT
             if (profile != null)
@@ -598,6 +653,16 @@ namespace Gaia
         private void RuntimeCreationTab()
         {
             m_editorUtils.Panel("RuntimeCreation", DrawRuntimeCreation, true);
+        }
+
+        private void InferenceTab()
+        {
+            m_editorUtils.Panel("Inference", DrawInference, true);
+        }
+
+        private void BuildAndDeployTab()
+        {
+            m_editorUtils.Panel("BuildAndDeploy", DrawBuildAndDeploy, true);
         }
 
         private void ToolCreationTab()
@@ -694,7 +759,7 @@ namespace Gaia
             StopEditorUpdates();
         }
 
-        #region Spawner Preset List
+#region Spawner Preset List
 
         void CreateBiomePresetList()
         {
@@ -753,7 +818,270 @@ namespace Gaia
 
 
 
-        #endregion
+#endregion
+
+#region Addressable Scene List
+        void CreateBuildSettingsSceneList()
+        {
+            m_buildSettingsSceneList = new UnityEditorInternal.ReorderableList(m_buildConfig.m_sceneBuildEntries, typeof(SceneAsset), true, true, true, true);
+            m_buildSettingsSceneList.elementHeightCallback = OnElementHeightSceneListEntry;
+            m_buildSettingsSceneList.drawElementCallback = DrawSceneListElement; ;
+            m_buildSettingsSceneList.drawHeaderCallback = DrawSceneListHeader;
+            m_buildSettingsSceneList.onAddCallback = OnAddSceneListEntry;
+            m_buildSettingsSceneList.onRemoveCallback = OnRemoveSceneListEntry;
+            m_buildSettingsSceneList.onReorderCallback = OnReorderSceneList;
+        }
+
+        private void OnReorderSceneList(ReorderableList list)
+        {
+            //Do nothing, changing the order does not immediately affect anything in the stamper
+        }
+
+        private void OnRemoveSceneListEntry(ReorderableList list)
+        {
+            m_buildConfig.m_sceneBuildEntries.RemoveAt(m_buildSettingsSceneList.index);
+            list.list = m_buildConfig.m_sceneBuildEntries;
+        }
+
+        private void OnAddSceneListEntry(ReorderableList list)
+        {
+            m_buildConfig.m_sceneBuildEntries.Add(new SceneBuildEntry());
+            list.list = m_buildConfig.m_sceneBuildEntries;
+        }
+
+        private void DrawSceneListHeader(Rect rect)
+        {
+            EditorGUI.LabelField(rect, m_editorUtils.GetContent("AddressablesSceneListHeader"));
+            float width = (rect.width / 4f) +25;
+            if (GUI.Button(new Rect(rect.width - width +15, rect.y, width, rect.height), m_editorUtils.GetContent("AddActiveSceneToAddressables")))
+            {
+                if (SessionManager != null && SessionManager.gameObject != null)
+                {
+                    if (SessionManager.gameObject.scene.path != "")
+                    {
+                        SceneAsset sceneAsset = (SceneAsset)AssetDatabase.LoadAssetAtPath(SessionManager.gameObject.scene.path, typeof(SceneAsset));
+                        if (!m_buildConfig.m_sceneBuildEntries.Exists(x=>x.m_masterScene == sceneAsset))
+                        {
+                            m_buildConfig.m_sceneBuildEntries.Add(new SceneBuildEntry() { m_masterScene = sceneAsset });
+                            TerrainLoaderManager.Instance.UpdateImpostorStateInBuildSettings();
+                            EditorUtility.SetDirty(m_buildConfig);
+                            AssetDatabase.SaveAssets();
+                        }
+                    }
+                    else
+                    {
+                        EditorUtility.DisplayDialog("Scene not saved yet", "The current scene was not saved yet, please save the scene first before trying to add it to the list.", "OK");
+                    }
+                }
+            }
+        }
+
+        private void DrawSceneListElement(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            rect.height = EditorGUIUtility.singleLineHeight;
+            Rect fieldRect = new Rect(rect);
+            //**********
+            //Main Scene
+            fieldRect.x -= 2;
+            EditorGUI.BeginChangeCheck();
+
+            Color originalBgColor = GUI.backgroundColor;
+            if (m_buildConfig.m_sceneBuildEntries[index].m_masterScene && m_buildConfig.m_sceneBuildEntries[index].m_masterScene.name == EditorSceneManager.GetActiveScene().name)
+            {
+                GUI.backgroundColor = Color.green;
+            }
+
+            m_buildConfig.m_sceneBuildEntries[index].m_masterScene = (SceneAsset)EditorGUI.ObjectField(fieldRect, m_editorUtils.GetContent("SceneListMainScene"), m_buildConfig.m_sceneBuildEntries[index].m_masterScene, typeof(SceneAsset), false);
+            GUI.backgroundColor = originalBgColor;
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(m_buildConfig);
+                AssetDatabase.SaveAssets();
+            }
+            rect.y += EditorGUIUtility.singleLineHeight;
+            //**********
+            //Impostor Scenes
+            fieldRect = new Rect(rect);
+
+            fieldRect.width = EditorGUIUtility.labelWidth;
+
+            EditorGUI.LabelField(fieldRect, m_editorUtils.GetContent("AdditionalScenesImpostors"));
+
+            fieldRect.x += fieldRect.width;
+            fieldRect.width = rect.width / 2.5f;
+            bool originalGUIState = GUI.enabled;
+            EditorGUI.LabelField(fieldRect, m_editorUtils.GetContent(m_buildConfig.m_sceneBuildEntries[index].m_impostorState.ToString()));
+            if (m_buildConfig.m_sceneBuildEntries[index].m_impostorState == ImpostorState.NoTerrainLoading)
+            {
+                GUI.enabled = false;
+            }
+            fieldRect.width = rect.width / 4f;
+            fieldRect.x = rect.width - fieldRect.width +3;
+            if (GUI.Button(fieldRect, m_editorUtils.GetContent("AdditionalScenesCreateImpostors")))
+            {
+                if (CheckForCurrentScene(m_buildConfig.m_sceneBuildEntries[index].m_masterScene))
+                {
+                    if (EditorUtility.DisplayDialog("Create Impostor Terrains?", $"Do you want to create impostor terrains for the scene \r\n\r\n {m_buildConfig.m_sceneBuildEntries[index].m_masterScene.name} \r\n\r\n now? Impostor terrains are lightweight, low detail versions of your terrain intended to be displayed in the distance as replacement for your full terrains. The creation process will use the default settings for impostor creation, for more advanced settings you can use the cogwheel icon button.", "Create Impostors", "Cancel"))
+                    {
+                        ExportTerrainUtility.m_settings = GaiaUtils.FindTerrainExportPreset("Create Impostors");
+                        if (ExportTerrainUtility.m_settings != null)
+                        {
+                            ExportTerrainUtility.m_copyToPath = "";
+                            string path = GaiaDirectories.GetExportDirectory() + GaiaDirectories.TERRAIN_MESH_EXPORT_DIRECTORY;
+                            ExportTerrainUtility.ExportTerrain(ExportTerrainUtility.m_settings, path);
+                        }
+                    }
+                }
+            }
+            fieldRect.x = rect.width + 11;
+            fieldRect.width = 20;
+            if (GUI.Button(fieldRect, m_cogwheelImpostorsContent, m_smallButtonStyle))
+            {
+                if (CheckForCurrentScene(m_buildConfig.m_sceneBuildEntries[index].m_masterScene))
+                {
+                    ExportTerrain exportTerrainWindow = EditorWindow.GetWindow<ExportTerrain>();
+                    exportTerrainWindow.m_UIMode = ExportTerrainWindowUIMode.ImpostorScenes;
+                    exportTerrainWindow.FindAndSetPreset("Create Impostors");
+                    exportTerrainWindow.m_settings.m_customSettingsFoldedOut = false;
+                }
+            }
+
+            GUI.enabled = originalGUIState;
+
+            //**********
+            //Server Scene
+            rect.y += EditorGUIUtility.singleLineHeight;
+            fieldRect = new Rect(rect);
+            fieldRect.width = EditorGUIUtility.labelWidth;
+            EditorGUI.LabelField(fieldRect, m_editorUtils.GetContent("AdditionalScenesServerSideScene"));
+
+            fieldRect.x += fieldRect.width;
+            fieldRect.width = (rect.width / 2.5f) -20;
+
+            string sceneName = m_buildConfig.m_sceneBuildEntries[index].m_serverScene == null ? "None" : m_buildConfig.m_sceneBuildEntries[index].m_serverScene.name;
+
+            EditorGUI.LabelField(fieldRect, sceneName);
+           
+            fieldRect.width = rect.width / 4f;
+            fieldRect.x = rect.width - fieldRect.width + 3;
+            if (GUI.Button(fieldRect, m_editorUtils.GetContent("AdditionalScenesCreateColliderScenes")))
+            {
+                if (CheckForCurrentScene(m_buildConfig.m_sceneBuildEntries[index].m_masterScene))
+                {
+                    if (EditorUtility.DisplayDialog("Create Server Side Scene?", $"Do you want to create a server scene that contains all the collision information for the scene  \r\n\r\n {m_buildConfig.m_sceneBuildEntries[index].m_masterScene}?", "Yes, create Server Scene", "Skip"))
+                    {
+                        bool scenesSaved = false;
+                        //Abort if exporting to scenes is active and the current scene has not been saved yet - we need a valid scene filename to create subfolders for the scene files, etc.
+                        if (string.IsNullOrEmpty(EditorSceneManager.GetActiveScene().path))
+                        {
+                            if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("SceneNotSavedYetTitle"), m_editorUtils.GetTextValue("AdditionalScenesSceneNotSavedYetText"), m_editorUtils.GetTextValue("SaveNow"), m_editorUtils.GetTextValue("Cancel")))
+                            {
+                                string suggestedPath = GaiaDirectories.GetSessionSubFolderPath(SessionManager.m_session, true);
+                                string sceneTargetPath = EditorUtility.SaveFilePanel("Save Scene As...", suggestedPath, "New Gaia Scene", "unity");
+                                if (!string.IsNullOrEmpty(sceneTargetPath))
+                                {
+                                    EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), GaiaDirectories.GetPathStartingAtAssetsFolder(sceneTargetPath));
+                                    scenesSaved = true;
+                                }
+                                else
+                                {
+                                    scenesSaved = false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            scenesSaved = true;
+                        }
+                    
+
+                        if (scenesSaved)
+                        {
+                            ExportTerrainUtility.m_settings = GaiaUtils.FindTerrainExportPreset("Bake Collider Objects");
+                            if (ExportTerrainUtility.m_settings != null)
+                            {
+                                ExportTerrainUtility.m_copyToPath = "";
+                                string path = GaiaDirectories.GetExportDirectory() + GaiaDirectories.TERRAIN_MESH_EXPORT_DIRECTORY;
+                                ExportTerrainUtility.ExportTerrain(ExportTerrainUtility.m_settings, path);
+                            }
+                            CreateServerScene(index);
+                        }
+                    }
+                }
+            }
+            fieldRect.x = rect.width + 11;
+            fieldRect.width = 20;
+            if (GUI.Button(fieldRect, m_cogwheelServerSceneContent, m_smallButtonStyle))
+            {
+                if (CheckForCurrentScene(m_buildConfig.m_sceneBuildEntries[index].m_masterScene))
+                {
+                    ExportTerrain exportTerrainWindow = EditorWindow.GetWindow<ExportTerrain>();
+                    exportTerrainWindow.m_UIMode = ExportTerrainWindowUIMode.ServerScene;
+                    exportTerrainWindow.maxSize = new Vector2(500, 180);
+                    exportTerrainWindow.m_buildConfigIndex = index;
+                    exportTerrainWindow.FindAndSetPreset("Bake Collider Objects");
+                    exportTerrainWindow.m_settings.m_customSettingsFoldedOut = false;
+                }
+            }
+
+        }
+
+        public static void CreateServerScene(int index)
+        {
+            GaiaSessionManager gaiaSessionManager = GaiaSessionManager.GetSessionManager();
+            BuildConfig buildConfig = GaiaUtils.GetOrCreateBuildConfig();
+            string serverSceneName = gaiaSessionManager.gameObject.scene.name + " - Server";
+            Scene newScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            newScene.name = serverSceneName;
+
+            if (GaiaUtils.HasDynamicLoadedTerrains())
+            {
+                Action<GameObject> act = (go) =>
+                {
+                    GameObject goCopy = Instantiate(go);
+                    EditorSceneManager.MoveGameObjectToScene(goCopy, newScene);
+                };
+                GaiaUtils.CallFunctionOnDynamicLoadedColliderScenes(act, false, "Copying baked colliders...");
+            }
+            else
+            {
+                GameObject exportedTerrainGO = GaiaUtils.GetTerrainExportObject();
+                EditorSceneManager.MoveGameObjectToScene(exportedTerrainGO, newScene);
+            }
+            string newScenePath = gaiaSessionManager.gameObject.scene.path.Replace(gaiaSessionManager.gameObject.scene.name + ".unity", serverSceneName + ".unity");
+            EditorSceneManager.SaveScene(newScene, newScenePath);
+            buildConfig.m_sceneBuildEntries[index].m_serverScene = (SceneAsset)AssetDatabase.LoadAssetAtPath(newScenePath, typeof(SceneAsset));
+            buildConfig.AddBuildHistoryEntry(BuildLogCategory.ServerScene, buildConfig.m_sceneBuildEntries[index].m_masterScene.name, GaiaUtils.GetUnixTimestamp());
+            EditorSceneManager.SetActiveScene(EditorSceneManager.GetSceneByName(buildConfig.m_sceneBuildEntries[index].m_masterScene.name));
+        }
+
+        private float OnElementHeightSceneListEntry(int index)
+        {
+            return EditorGUIUtility.singleLineHeight *3.2f;
+        }
+
+
+        private bool CheckForCurrentScene(SceneAsset scene)
+        {
+            if (scene.name != EditorSceneManager.GetActiveScene().name)
+            {
+                if (EditorUtility.DisplayDialog("Switch to selected scene?", $"The selected scene for this operation \r\n\r\n {scene.name} \r\n\r\n is not the current active scene. Do you want to switch to that scene now to perform the selected operation? You will be prompted to save if there are any unsaved changes in the currently loaded scenes.", "OK, switch scene", "Cancel"))
+                {
+                    EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+                    EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(scene), OpenSceneMode.Single);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+#endregion
 
         /// <summary>
         /// Creates a new Gaia settings asset
@@ -767,9 +1095,9 @@ namespace Gaia
             return settings;
         }
 
-        #endregion
+#endregion
 
-        #region Tabs
+#region Tabs
         /// <summary>
         /// Draw the brief editor
         /// </summary>
@@ -806,9 +1134,9 @@ namespace Gaia
 
             //reduced label width for world creation tab
             float smallLabelWidth = 100;
-           
 
-            #region WORLD SIZE
+
+#region WORLD SIZE
             GUILayout.BeginHorizontal();
             {
                 GaiaConstants.EnvironmentSizePreset oldSizePreset = m_settings.m_targeSizePreset;
@@ -839,29 +1167,42 @@ namespace Gaia
 
                 switch (m_settings.m_targeSizePreset)
                 {
+                    case GaiaConstants.EnvironmentSizePreset.Micro:
+                        m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is128MetersSq;
+                        break;
                     case GaiaConstants.EnvironmentSizePreset.Tiny:
                         m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is256MetersSq;
-                        m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
                         break;
                     case GaiaConstants.EnvironmentSizePreset.Small:
                         m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is512MetersSq;
-                        m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
                         break;
                     case GaiaConstants.EnvironmentSizePreset.Medium:
                         m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is1024MetersSq;
-                        m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
                         break;
                     case GaiaConstants.EnvironmentSizePreset.Large:
                         m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is2048MetersSq;
-                        m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
                         break;
                         //case GaiaConstants.EnvironmentSizePreset.XLarge:
                         //    m_settings.m_currentSize = GaiaConstants.EnvironmentSize.Is4096MetersSq;
                         //    m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
                         //    break;
                 }
+                float targetWorldSize = m_settings.m_currentDefaults.m_terrainSize * Mathf.Max(m_settings.m_tilesX, m_settings.m_tilesZ);
 
                 m_settings.m_currentDefaults.m_terrainSize = GaiaUtils.EnvironmentSizeToInt(m_settings.m_currentSize);
+
+                //If the size preset was changed, auto-set the terrain height
+                if (oldSizePreset != m_settings.m_targeSizePreset)
+                {
+                    if (targetWorldSize > 2048)
+                    {
+                        m_settings.m_currentDefaults.m_terrainHeight = 2048;
+                    }
+                    else
+                    {
+                        m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
+                    }
+                }
 
                 if (m_settings.m_targeSizePreset != GaiaConstants.EnvironmentSizePreset.Custom)
                 {
@@ -880,7 +1221,7 @@ namespace Gaia
 
             float offSet = 16;
 
-            #region ADVANCED WORLD SIZE SETTINGS
+#region ADVANCED WORLD SIZE SETTINGS
 
             if (m_foldOutWorldSizeSettings)
             {
@@ -910,7 +1251,21 @@ namespace Gaia
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Space(smallLabelWidth + offSet);
+                    var oldSize = m_settings.m_currentSize;
                     m_settings.m_currentSize = (GaiaConstants.EnvironmentSize)m_editorUtils.EnumPopup("Terrain Size", m_settings.m_currentSize);
+                    m_settings.m_currentDefaults.m_terrainSize = GaiaUtils.EnvironmentSizeToInt(m_settings.m_currentSize);
+                    if (oldSize!= m_settings.m_currentSize)
+                    {
+                        float targetWorldSize = m_settings.m_currentDefaults.m_terrainSize * Mathf.Max(m_settings.m_tilesX, m_settings.m_tilesZ);
+                        if (targetWorldSize > 2048)
+                        {
+                            m_settings.m_currentDefaults.m_terrainHeight = 2048;
+                        }
+                        else
+                        {
+                            m_settings.m_currentDefaults.m_terrainHeight = m_settings.m_currentDefaults.m_terrainSize;
+                        }
+                    }
                 }
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
@@ -987,11 +1342,22 @@ namespace Gaia
                             m_editorUtils.InlineHelp("CreateTerrainScenes", helpEnabled);
                         }
                         GUILayout.EndHorizontal();
+
+                        EditorGUI.indentLevel++;
+
+
+                        if (!m_settings.m_createTerrainScenes)
+                        {
+                            GUI.enabled = false;
+                        }
+
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Space(smallLabelWidth + offSet);
                             m_settings.m_unloadTerrainScenes = m_editorUtils.Toggle("UnloadTerrainScenes", m_settings.m_unloadTerrainScenes);
 #if !GAIA_PRO_PRESENT
+                            //need to counteract offset from indentation
+                            GUILayout.Space(-30);
                             m_editorUtils.LabelField("GaiaProOnly");
 #endif
                         }
@@ -1002,6 +1368,12 @@ namespace Gaia
                             m_editorUtils.InlineHelp("UnloadTerrainScenes", helpEnabled);
                         }
                         GUILayout.EndHorizontal();
+
+                        EditorGUI.indentLevel--;
+#if GAIA_PRO_PRESENT
+                        GUI.enabled = currentGUIState;
+#endif
+
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Space(smallLabelWidth + offSet);
@@ -1011,6 +1383,7 @@ namespace Gaia
 #endif
                         }
                         GUILayout.EndHorizontal();
+
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Space(smallLabelWidth + offSet);
@@ -1079,6 +1452,9 @@ namespace Gaia
                     {
                         switch (m_settings.m_currentSize)
                         {
+                            case GaiaConstants.EnvironmentSize.Is128MetersSq:
+                                m_settings.m_targeSizePreset = GaiaConstants.EnvironmentSizePreset.Micro;
+                                break;
                             case GaiaConstants.EnvironmentSize.Is256MetersSq:
                                 m_settings.m_targeSizePreset = GaiaConstants.EnvironmentSizePreset.Tiny;
                                 break;
@@ -1104,11 +1480,11 @@ namespace Gaia
                     EditorUtility.SetDirty(m_settings);
                 }
             }
-            #endregion
+#endregion
 
-            #endregion
+#endregion
 
-            #region TARGET QUALITY
+#region TARGET QUALITY
             GUILayout.BeginHorizontal();
             {
                 m_oldTargetEnv = m_settings.m_currentEnvironment;
@@ -1289,11 +1665,11 @@ namespace Gaia
                 EditorUtility.SetDirty(m_settings.m_currentDefaults);
             }
 
-            #endregion
+#endregion
 
-            #region BIOME & WORKFLOW
+#region BIOME & WORKFLOW
             DrawToolCreation(helpEnabled);
-            #endregion
+#endregion
 
             EditorGUIUtility.labelWidth = 0;
 
@@ -1329,21 +1705,21 @@ namespace Gaia
 
                 newSizeDifferent = existing_numberOfTerrains != new_numberOfTerrains || existing_world_xDimension != new_world_xDimension || existing_world_zDimension != new_world_zDimension;
 
-                    string existing_worldXText = String.Format("{0:0} m", existing_world_xDimension);
-                    string existing_worldZText = String.Format("{0:0} m", existing_world_zDimension);
-                    if (existing_world_xDimension > 1000 || existing_world_zDimension > 1000)
-                    {
-                        existing_worldXText = String.Format("{0:0.00} km", existing_world_xDimension / 1000f);
-                        existing_worldZText = String.Format("{0:0.00} km", existing_world_zDimension / 1000f);
-                    }
+                string existing_worldXText = String.Format("{0:0} m", existing_world_xDimension);
+                string existing_worldZText = String.Format("{0:0} m", existing_world_zDimension);
+                if (existing_world_xDimension > 1000 || existing_world_zDimension > 1000)
+                {
+                    existing_worldXText = String.Format("{0:0.00} km", existing_world_xDimension / 1000f);
+                    existing_worldZText = String.Format("{0:0.00} km", existing_world_zDimension / 1000f);
+                }
 
-                    GUIContent exisitng_worldSizeInfo = new GUIContent(m_editorUtils.GetContent("TotalExistingWorldSize").text + String.Format(": {0} x {1}, " + m_editorUtils.GetContent("Terrains").text + ": {2}", existing_worldXText, existing_worldZText, existing_numberOfTerrains));
+                GUIContent exisitng_worldSizeInfo = new GUIContent(m_editorUtils.GetContent("TotalExistingWorldSize").text + String.Format(": {0} x {1}, " + m_editorUtils.GetContent("Terrains").text + ": {2}", existing_worldXText, existing_worldZText, existing_numberOfTerrains));
 
-                    GUILayout.BeginHorizontal();
-                    {
-                        m_editorUtils.Label(exisitng_worldSizeInfo, m_worldSizeStyle);
-                    }
-                    GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    m_editorUtils.Label(exisitng_worldSizeInfo, m_worldSizeStyle);
+                }
+                GUILayout.EndHorizontal();
             }
 
             //Only display information about the new terrain size if there is actually different settings that would create a different new world 
@@ -1370,55 +1746,55 @@ namespace Gaia
             {
                 GUILayout.FlexibleSpace();
                 GUI.backgroundColor = m_settings.GetActionButtonColor();
-          
-                    if (hasExistingWorld)
+
+                if (hasExistingWorld)
+                {
+                    if (m_editorUtils.Button("StandardTabButtonUpdateTerrain"))
                     {
-                        if (m_editorUtils.Button("StandardTabButtonUpdateTerrain"))
+                        if (EditorUtility.DisplayDialog("WARNING - Updating Scene", "WARNING - You are about to update your scene with a different terrain setup. The Gaia Manager will update your scene according to the current world size and target platform settings in the World Creation tab. You can see a preview of the target terrain tile setup in the scene view.\r\n\r\nAPPLYING THIS NEW SETUP CAN MASSIVELY AND PERMANENTLY IMPACT YOUR EXISTING TERRAINS - PLEASE BACKUP YOUR PROJECT IF THERE IS ANY RISK OF LOSING WORK.\r\n\r\n", "Continue", "Cancel"))
                         {
-                            if (EditorUtility.DisplayDialog("WARNING - Updating Scene", "WARNING - You are about to update your scene with a different terrain setup. The Gaia Manager will update your scene according to the current world size and target platform settings in the World Creation tab. You can see a preview of the target terrain tile setup in the scene view.\r\n\r\nAPPLYING THIS NEW SETUP CAN MASSIVELY AND PERMANENTLY IMPACT YOUR EXISTING TERRAINS - PLEASE BACKUP YOUR PROJECT IF THERE IS ANY RISK OF LOSING WORK.\r\n\r\n", "Continue", "Cancel"))
-                            {
-                                //Update the world according to the new settings, add or remove terrains, etc.
-                                CreateOrUpdateTerrains(true, true);
-                                EditorUtility.SetDirty(m_settings);
-                                AssetDatabase.SaveAssets();
-                            }
+                            //Update the world according to the new settings, add or remove terrains, etc.
+                            CreateOrUpdateTerrains(true, true);
+                            EditorUtility.SetDirty(m_settings);
+                            AssetDatabase.SaveAssets();
                         }
                     }
-                    else
+                }
+                else
+                {
+                    if (m_settings.m_creationWorkflow == GaiaConstants.TerrainCreationWorkflow.WorldDesigner)
                     {
-                        if (m_settings.m_creationWorkflow == GaiaConstants.TerrainCreationWorkflow.WorldDesigner)
+                        if (m_editorUtils.Button("CreateWorldDesigner"))
                         {
-                            if (m_editorUtils.Button("CreateWorldDesigner"))
-                            {
-    #if HDPipeline
+#if HDPipeline
                             GaiaHDRPPipelineUtils.SetDefaultHDRPLighting(m_settings.m_pipelineProfile);
-    #else
-                                GaiaLighting.SetDefaultAmbientLight(m_settings.m_gaiaLightingProfile);
-    #endif
-                                GameObject worldMapObj = GaiaUtils.GetOrCreateWorldDesigner();
-                                Selection.activeObject = worldMapObj;
+#else
+                            GaiaLighting.SetDefaultAmbientLight(m_settings.m_gaiaLightingProfile);
+#endif
+                            GameObject worldMapObj = GaiaUtils.GetOrCreateWorldDesigner();
+                            Selection.activeObject = worldMapObj;
 
-                                WorldMap.ShowWorldMapStampSpawner();
+                            WorldMap.ShowWorldMapStampSpawner();
 
-                                Selection.activeGameObject = worldMapObj;
-                                m_creationTabs.ActiveTabIndex = 2;
+                            Selection.activeGameObject = worldMapObj;
+                            m_creationTabs.ActiveTabIndex = 2;
 
-    #if GAIA_PRO_PRESENT
-                                if (SessionManager != null)
-                                {
-                                    WorldOriginEditor.m_sessionManagerExits = true;
-                                }
-    #else
+#if GAIA_PRO_PRESENT
+                            if (SessionManager != null)
+                            {
+                                WorldOriginEditor.m_sessionManagerExits = true;
+                            }
+#else
                     if (SessionManager != null)
                     {
                         Gaia2TopPanel.m_sessionManagerExits = true;
                     }
-    #endif
+#endif
 
-                            }
                         }
-                        else
-                        {
+                    }
+                    else
+                    {
                         if (m_editorUtils.Button("StandardTabButtonCreateTerrain"))
                         {
                             //Create a new world from scratch
@@ -1429,13 +1805,7 @@ namespace Gaia
                         m_settings.m_unloadTerrainScenes = false;
                         m_settings.m_floatingPointFix = false;
 #endif
-                            //No terrain yet, create everything as usual
-                            //Check lighting first
-#if HDPipeline
-                        GaiaHDRPPipelineUtils.SetDefaultHDRPLighting(m_settings.m_pipelineProfile);
-#else
-                            GaiaLighting.SetDefaultAmbientLight(m_settings.m_gaiaLightingProfile);
-#endif
+
                             bool cancel = false;
 
                             EditorUtility.SetDirty(m_settings);
@@ -1565,7 +1935,7 @@ namespace Gaia
 
             EditorGUILayout.BeginHorizontal();
             {
-                m_editorUtils.Label("TerrainCreationWorkflow", GUILayout.Width(smallLabelWidth-3));
+                m_editorUtils.Label("TerrainCreationWorkflow", GUILayout.Width(smallLabelWidth - 3));
 
                 string[] displayedOptions = new string[2] { "Manual with Stamper", "World Designer (Random Generation)" };
                 int[] optionValues = new int[2] { 0, 1 };
@@ -1575,7 +1945,7 @@ namespace Gaia
                 selectedIndex = EditorGUILayout.IntPopup(selectedIndex, displayedOptions, optionValues);
 
                 m_settings.m_creationWorkflow = (GaiaConstants.TerrainCreationWorkflow)selectedIndex;
-                
+
             }
             EditorGUILayout.EndHorizontal();
             GUI.backgroundColor = m_defaultPanelColor;
@@ -1933,6 +2303,7 @@ namespace Gaia
             {
                 m_settings.m_enableLoadingScreen = m_editorUtils.Toggle("LoadingScreen", m_settings.m_enableLoadingScreen, helpEnabled);
             }
+           
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -1976,6 +2347,622 @@ namespace Gaia
             }
             GUILayout.EndHorizontal();
             GUI.enabled = currentGUIState;
+        }
+
+        private void DrawInference(bool helpEnabled)
+        {
+#if AIGAMEDEV
+            InferenceFeatureListEditor.DisplayFeatureList();
+#endif
+        }
+
+        private void DrawBuildAndDeploy(bool helpEnabled)
+        {
+            bool currentGUIState = GUI.enabled;
+
+            //if (AddressableUpload.m_uploadingFolder)
+            //{
+            //    GUI.enabled = false;
+            //}
+
+            if (m_addressableConfig == null)
+            {
+                m_addressableConfig = GaiaUtils.GetOrCreateAddressableConfig();
+            }
+
+            if (!m_impostorStateUpdated)
+            {
+                TerrainLoaderManager.Instance.UpdateImpostorStateInBuildSettings();
+                m_impostorStateUpdated = true;
+            }
+
+            if (m_userFiles == null)
+            {
+                m_userFiles = GaiaUtils.GetOrCreateUserFiles();
+            }
+
+            if (m_smallButtonStyle == null)
+            {
+                m_smallButtonStyle = new GUIStyle(GUI.skin.button);
+                m_smallButtonStyle.padding = new RectOffset(2, 2, 2, 2);
+            }
+
+            if (m_cogwheelImpostorsContent == null)
+            {
+                if (EditorGUIUtility.isProSkin)
+                {
+                    m_cogwheelImpostorsContent = new GUIContent(m_settings.m_IconProSettings, m_editorUtils.GetTextValue("AdditonalScenesAdvancedImpostorSettings"));
+                }
+                else
+                {
+                    m_cogwheelImpostorsContent = new GUIContent(m_settings.m_IconSettings, m_editorUtils.GetTextValue("AdditonalScenesAdvancedImpostorSettings"));
+                }
+            }
+            if (m_cogwheelServerSceneContent == null)
+            {
+                if (EditorGUIUtility.isProSkin)
+                {
+                    m_cogwheelServerSceneContent = new GUIContent(m_settings.m_IconProSettings, m_editorUtils.GetTextValue("AdditonalScenesAdvancedColliderBakingSettings"));
+                }
+                else
+                {
+                    m_cogwheelServerSceneContent = new GUIContent(m_settings.m_IconSettings, m_editorUtils.GetTextValue("AdditonalScenesAdvancedColliderBakingSettings"));
+                }
+            }
+
+            if (m_removeConfigContent == null)
+            {
+                if (EditorGUIUtility.isProSkin)
+                {
+                    m_removeConfigContent = new GUIContent(m_settings.m_IconProRemove, m_editorUtils.GetTextValue("AddressablesRemoveConfig"));
+                }
+                else
+                {
+                    m_removeConfigContent = new GUIContent(m_settings.m_IconRemove, m_editorUtils.GetTextValue("AddressablesRemoveConfig"));
+                }
+            }
+            PublicationType oldPublicationType = m_buildConfig.m_publicationType;
+            m_buildConfig.m_publicationType = (PublicationType)m_editorUtils.EnumPopup("BuildPublicationType", m_buildConfig.m_publicationType, helpEnabled);
+
+
+            GUILayout.BeginHorizontal();
+            {
+                //GUILayout.Space(EditorGUIUtility.labelWidth);
+                Rect listRect = EditorGUILayout.GetControlRect(true, m_buildSettingsSceneList.GetHeight());
+                m_buildSettingsSceneList.DoList(listRect);
+            }
+            GUILayout.EndHorizontal();
+
+            float buttonWidth = Mathf.Max(205, (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - 80) / 2f);
+
+            if (m_settings == null)
+            {
+                m_settings = GaiaUtils.GetGaiaSettings();
+            }
+
+            if (oldPublicationType != m_buildConfig.m_publicationType)
+            {
+                //when using terrain loading, sync the setting with what is set up in the terrain loader manager for loading addressables.
+                if (GaiaUtils.HasDynamicLoadedTerrains())
+                {
+                    TerrainLoaderManager.Instance.TerrainSceneStorage.m_useAddressables = m_buildConfig.m_publicationType == PublicationType.Addressables;
+                    if (!TerrainLoaderManager.Instance.TerrainSceneStorage.m_useAddressables)
+                    {
+                        if (EditorUtility.DisplayDialog("Add Terrain Scenes back to Build Settings?", "You switched off the Addressable System and you are using Terrain Loading for this scene - Do you want to add the Terrain Scenes back to the Unity Build Settings? This is required for loading Terrains without the Addressable System. \r\n\r\n You can also add all Terrain Scenes to the Build Settings later from Gaia Runtime > Terrain Loader Manager", "Add Terrain Scenes", "Don't add Terrain Scenes"))
+                        {
+                            GaiaSessionManager.AddTerrainScenesToBuildSettings(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes);
+                        }
+                    }
+                    else
+                    {
+                        GaiaSessionManager.RemoveTerrainScenesFromBuildSettings(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes);
+                        Debug.Log("Removed Gaia Terrain Scenes from the build settings - those scenes will now be loaded as addressables instead.");
+                    }
+                }
+            }
+
+            switch (m_buildConfig.m_publicationType)
+            {
+                case PublicationType.Addressables:
+                        //set initialize flag if publication type was just set to addressables
+                        DrawAddressablePublicationType(helpEnabled, oldPublicationType != m_buildConfig.m_publicationType);
+                    break;
+                case PublicationType.RegularBuild:
+                        DrawRegularBuildPublicationType(helpEnabled);
+                    break;
+            }
+        }
+
+        private void DrawRegularBuildPublicationType(bool helpEnabled)
+        {
+            bool currentGUIState = GUI.enabled;
+            m_editorUtils.Heading("RegularBuild");
+            m_editorUtils.InlineHelp("RegularBuild", helpEnabled);
+
+            float buttonWidth = Mathf.Max(350, (EditorGUIUtility.currentViewWidth / 2f) * 0.9f);
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.BeginVertical();
+                {
+                    if (m_editorUtils.Button("AddScenesToBuildSettings", GUILayout.MaxWidth(buttonWidth)))
+                    {
+                        foreach (SceneBuildEntry sbe in m_buildConfig.m_sceneBuildEntries)
+                        {
+                            if (sbe.m_masterScene != null)
+                            {
+                                if (sbe.m_masterScene.name != EditorSceneManager.GetActiveScene().name)
+                                {
+                                    EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sbe.m_masterScene));
+                                }
+
+                                GaiaSessionManager gaiaSessionManager = GaiaSessionManager.GetSessionManager(false);
+                                if (gaiaSessionManager != null)
+                                {
+                                    if (GaiaUtils.HasDynamicLoadedTerrains())
+                                    {
+                                        if (gaiaSessionManager != null)
+                                        {
+                                            GaiaSessionManager.AddTerrainScenesToBuildSettings(TerrainLoaderManager.TerrainScenes, true);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        GaiaSessionManager.AddSceneToBuildSettings(gaiaSessionManager.gameObject.scene.path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (m_editorUtils.Button("AddServerScenesToBuildSettings", GUILayout.MaxWidth(buttonWidth)))
+                    {
+                        foreach (SceneBuildEntry sbe in m_buildConfig.m_sceneBuildEntries)
+                        {
+                            if (sbe.m_serverScene != null)
+                            {
+                                GaiaSessionManager.AddSceneToBuildSettings(AssetDatabase.GetAssetPath(sbe.m_serverScene));
+                            }
+                        }
+                    }
+                    if (m_editorUtils.Button("ClearSceneListInBuildSettings", GUILayout.MaxWidth(buttonWidth)))
+                    {
+                        if (EditorUtility.DisplayDialog("Clear all scenes in build settings?", $"Do you really want to remove all {EditorBuildSettings.scenes.Length} from the Editor Build Settings? If you are not sure, please open the Build Settings Window first to review the scene list before clearing.", "Clear All Scenes", "Cancel"))
+                        {
+                            EditorBuildSettings.scenes = new EditorBuildSettingsScene[0];
+                        }
+                    }
+                }
+                GUILayout.EndVertical();
+            }
+            GUILayout.FlexibleSpace();
+            if (m_editorUtils.Button("OpenBuildSettingsWindow", GUILayout.MaxWidth(buttonWidth), GUILayout.MaxHeight((EditorGUIUtility.singleLineHeight * 3) + 7)))
+            {
+                EditorApplication.ExecuteMenuItem("File/Build Settings...");
+            }
+            GUILayout.EndHorizontal();
+        }
+        private void DrawAddressablePublicationType(bool helpEnabled, bool initialize = false)
+        {
+            m_editorUtils.Heading("AddressableConfiguration");
+            bool currentGUIState = GUI.enabled;
+#if PW_ADDRESSABLES
+            EditorGUI.BeginChangeCheck();
+            {
+                if (initialize)
+                {
+                    //update the mode across the groups if addressables get switched on for the first time
+                    UpdateAddressableModeInGroups();
+
+                    if (!PWAddressables.HasConfig())
+                    {
+                        if (SessionManager != null && SessionManager.gameObject != null)
+                        {
+                            if (SessionManager.gameObject.scene.path != "")
+                            {
+                                SceneAsset sceneAsset = (SceneAsset)AssetDatabase.LoadAssetAtPath(SessionManager.gameObject.scene.path, typeof(SceneAsset));
+                                if (!m_buildConfig.m_sceneBuildEntries.Exists(x => x.m_masterScene == sceneAsset))
+                                {
+                                    m_buildConfig.m_sceneBuildEntries.Add(new SceneBuildEntry() { m_masterScene = sceneAsset });
+                                }
+                            }
+                        }
+                    }
+                }
+                if (PWAddressables.DoSettingsExist())
+                {
+                    AddressableMode oldMode = m_addressableConfig.m_addressableMode;
+                    m_addressableConfig.m_addressableIncludeImpostors = m_editorUtils.Toggle("AddressablesIncludeImpostors", m_addressableConfig.m_addressableIncludeImpostors, helpEnabled);
+                    m_addressableConfig.m_addressableIncludeServerScene = m_editorUtils.Toggle("AddressablesIncludeServerSideScene", m_addressableConfig.m_addressableIncludeServerScene, helpEnabled);
+                    m_addressableConfig.m_addressableMode = (AddressableMode)m_editorUtils.EnumPopup("AddressableMode", m_addressableConfig.m_addressableMode, helpEnabled);
+                    if (oldMode != m_addressableConfig.m_addressableMode)
+                    {
+                        UpdateAddressableModeInGroups();
+                    }
+                    if (m_addressableConfig.m_addressableMode == AddressableMode.Server)
+                    {
+                        m_addressableConfig.m_addressableServerURL = m_editorUtils.DelayedTextField("AddressableServerURL", m_addressableConfig.m_addressableServerURL, helpEnabled);
+                        m_addressableConfig.m_currentAddressableBinFile = m_editorUtils.ObjectField("CurrentAddressableBinFile", m_addressableConfig.m_currentAddressableBinFile, typeof(UnityEngine.Object), false, helpEnabled);
+                        PWAddressables.SetServerURL(m_addressableConfig.m_addressableServerURL);
+                        PWAddressables.BuildRemoteCatalog = m_editorUtils.Toggle("AddressableRemoteCatalog", PWAddressables.BuildRemoteCatalog, helpEnabled);
+                    }
+
+                    float buttonWidth2 = (EditorGUIUtility.currentViewWidth / 2.3f);
+
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (PWAddressables.HasConfig())
+                    {
+                        if (GUILayout.Button(m_editorUtils.GetContent("UpdateAddressablesConfig"), GUILayout.Width(buttonWidth2 - 22)))
+                        {
+                            //No scene files, no work to do
+                            if (m_buildConfig.m_sceneBuildEntries.Count == 0 || m_buildConfig.m_sceneBuildEntries.Where(x => x.m_masterScene != null).Count() == 0)
+                            {
+                                EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("NoAddressableSceneFiles"), m_editorUtils.GetTextValue("NoAddressableSceneFilesText"), m_editorUtils.GetTextValue("OK"));
+                                return;
+                            }
+                            else
+                            {
+                                if (EditorUtility.DisplayDialog("Update Addressable Configuration?", "Do you want to update the addressable configuration? This will add any additional assets that were introduced since the config was last created. When you then build the addressable bundles, this will create a new bundle with the additional content.", "Update Config", "Cancel"))
+                                {
+                                    StartAddressableConfig(true);
+                                    m_buildConfig.AddBuildHistoryEntry(BuildLogCategory.UpdatedAddressableConfig, "All", GaiaUtils.GetUnixTimestamp());
+                                    PWAddressables.OpenAddressableSettingsWindow();
+                                }
+                            }
+                        }
+                        if (GUILayout.Button(m_removeConfigContent, m_smallButtonStyle, GUILayout.Width(19), GUILayout.Height(19)))
+                        {
+                            if (EditorUtility.DisplayDialog("Delete Addressable Configuration?", "Do you want to delete the addressable configuration? This will remove any addressable group created by Gaia. You can then create the addressable configuration from scratch again based on the assets that are currently used in your scene. Note that if you intend to do an update to an already published world, removing and redoing the configuration will result in a larger download then just updating the config.", "Remove Config", "Cancel"))
+                            {
+                                PWAddressables.RemoveAllPWGroups();
+                                m_addressableConfig.m_terrainAssetGroupAssociations.Clear();
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        if (GUILayout.Button(m_editorUtils.GetContent("AddressablesConfig"), GUILayout.Width(buttonWidth2)))
+                        {
+                            //No scene files, no work to do
+                            if (m_buildConfig.m_sceneBuildEntries.Count == 0 || m_buildConfig.m_sceneBuildEntries.Where(x => x.m_masterScene != null).Count() == 0)
+                            {
+                                EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("NoAddressableSceneFiles"), m_editorUtils.GetTextValue("NoAddressableSceneFilesText"), m_editorUtils.GetTextValue("OK"));
+                                return;
+                            }
+                            else
+                            {
+                                if (EditorUtility.DisplayDialog("Create Addressable Configuration?", "Do you want to create the addressable configuration now? This will collect all the assets currently in use on your terrains. You can later still update or re-create this configuration from scratch.", "Create Config", "Cancel"))
+                                {
+                                    StartAddressableConfig(false);
+                                    m_buildConfig.AddBuildHistoryEntry(BuildLogCategory.CreatedAddressableConfig, "All", GaiaUtils.GetUnixTimestamp());
+                                    PWAddressables.OpenAddressableSettingsWindow();
+                                }
+                            }
+                        }
+                    }
+                    GUILayout.FlexibleSpace();
+                    if (m_addressableConfig.m_currentAddressableBinFile == null || m_addressableConfig.m_addressableMode == AddressableMode.Local)
+                    {
+                        if (GUILayout.Button(m_editorUtils.GetContent("AddressablesBuild"), GUILayout.Width(buttonWidth2)))
+                        {
+                            if (EditorUtility.DisplayDialog("Start Addressable Build?", "Do you want to start the addressable build now? This will create asset bundles for publishing your world based on the current addressable configuration.", "Start Build", "Cancel"))
+                            {
+                                StartAddressableBuild();
+                                OpenAddressableBuildPath();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (GUILayout.Button(m_editorUtils.GetContent("UpdateAddressablesBuild"), GUILayout.Width(buttonWidth2)))
+                        {
+                            if (EditorUtility.DisplayDialog("Update Addressable Build?", "Do you want to update the addressable build? This will compare the current state of the scene with the referenced .bin file and will create updated versions of the asset bundles where needed.", "Update Build", "Cancel"))
+                            {
+                                UpdateAddressableBuild();
+                                OpenAddressableBuildPath();
+                            }
+                        }
+
+                    }
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button(m_editorUtils.GetContent("OpenAddressablesConfigWindow"), GUILayout.Width(buttonWidth2)))
+                    {
+                        PWAddressables.OpenAddressableSettingsWindow();
+                    }
+                    GUILayout.FlexibleSpace();
+
+                    GUIContent openFolderContent = new GUIContent();
+
+                    if (m_addressableConfig.m_addressableMode == AddressableMode.Local)
+                    {
+                        openFolderContent = m_editorUtils.GetContent("OpenAddressablesLocalDataFolder");
+                    }
+                    else
+                    {
+                        openFolderContent = m_editorUtils.GetContent("OpenAddressablesServerDataFolder");
+                    }
+
+                    if (GUILayout.Button(openFolderContent, GUILayout.Width(buttonWidth2)))
+                    {
+                        OpenAddressableBuildPath();
+                    }
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("AddressablesRequireConfig"), MessageType.Info);
+                    if (GUILayout.Button(m_editorUtils.GetContent("CreateAddressableConfig")))
+                    {
+                        PWAddressables.CreateSettings();
+                        m_addressableConfig.m_addressableMode = AddressableMode.Server;
+                        PWAddressables.BuildRemoteCatalog = true;
+                        if (GaiaUtils.HasDynamicLoadedTerrains())
+                        {
+                            TerrainLoaderManager.Instance.TerrainSceneStorage.m_useAddressables = true;
+                            if (TerrainLoaderManager.Instance.TerrainSceneStorage.m_useAddressables)
+                            {
+                                GaiaSessionManager.RemoveTerrainScenesFromBuildSettings(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes);
+                                Debug.Log("Removed Gaia Terrain Scenes from the build settings - those scenes will now be loaded as addressables instead.");
+                            }
+                        }
+                    }
+                }
+                
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(m_addressableConfig);
+                AssetDatabase.SaveAssets();
+            }
+
+
+            m_buildHistoryFoldedOut = m_editorUtils.Foldout(m_buildHistoryFoldedOut, "BuildHistory");
+            if (m_buildHistoryFoldedOut)
+            {
+
+                EditorGUI.indentLevel++;
+                int deletionIndex = -99;
+                for (int i = 0; i < m_buildConfig.m_buildHistory.Count; i++)
+                {
+                    BuildLogEntry buildEntry = m_buildConfig.m_buildHistory[i];
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(buildEntry.m_sceneName, GUILayout.Width(200));
+                    m_editorUtils.Label(buildEntry.m_category.ToString(), GUILayout.Width(120));
+                    m_editorUtils.Label(new GUIContent(GaiaUtils.UnixTimeStampToDateTime(buildEntry.m_timestamp).ToString()), GUILayout.Width(150));
+                    if (m_editorUtils.Button("DeleteBuildEntry", GUILayout.Width(100)))
+                    {
+                        deletionIndex = i;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+
+                if (deletionIndex != -99)
+                {
+                    if (EditorUtility.DisplayDialog("Delete Entry?", "Do you really want to remove this entry from the build history log?", "Yes", "Cancel"))
+                    {
+                        m_buildConfig.m_buildHistory.RemoveAt(deletionIndex);
+                        EditorUtility.SetDirty(m_buildConfig);
+                        AssetDatabase.SaveAssets();
+                    }
+                }
+
+                if (m_buildConfig.m_buildHistory.Count == 0)
+                {
+                    GUI.enabled = false;
+                }
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(15);
+                if (m_editorUtils.Button("DeleteAllBuildEntries", GUILayout.Width(150)))
+                {
+                    if (EditorUtility.DisplayDialog("Delete Build History?", "Do you really want to remove all entries from the build history log?", "Yes", "Cancel"))
+                    {
+                        m_buildConfig.m_buildHistory.Clear();
+                        EditorUtility.SetDirty(m_buildConfig);
+                        AssetDatabase.SaveAssets();
+                    }
+                }
+                GUILayout.EndHorizontal();
+                GUI.enabled = currentGUIState;
+                EditorGUI.indentLevel--;
+            }
+
+#else
+            EditorGUILayout.HelpBox(m_editorUtils.GetTextValue("AddressablesRequirePackage"), MessageType.Info);
+#endif
+        }
+
+        private void UpdateAddressableBuild()
+        {
+            UpdateAddressableModeInGroups();
+            PWAddressables.UpdateExistingBuild(m_addressableConfig.m_currentAddressableBinFile);
+            m_buildConfig.AddBuildHistoryEntry(BuildLogCategory.AddressableBundles, "All", GaiaUtils.GetUnixTimestamp());
+        }
+
+        private void StartAddressableBuild()
+        {
+            UpdateAddressableModeInGroups();
+            PWAddressables.StartNewBuild();
+            string contentStatePath = PWAddressables.GetContentStateDataPath();
+            if (!string.IsNullOrEmpty(contentStatePath))
+            {
+                m_addressableConfig.m_currentAddressableBinFile = AssetDatabase.LoadAssetAtPath(contentStatePath, typeof(UnityEngine.Object));
+            }
+            m_buildConfig.AddBuildHistoryEntry(BuildLogCategory.AddressableBundles, "All", GaiaUtils.GetUnixTimestamp());
+        }
+
+        private void OpenAddressableBuildPath()
+        {
+#if PW_ADDRESSABLES
+            if (m_addressableConfig == null)
+            {
+                m_addressableConfig = GaiaUtils.GetOrCreateAddressableConfig();
+            }
+
+            string path = "";
+
+            if (m_addressableConfig.m_addressableMode == AddressableMode.Local)
+            {
+                path = Application.dataPath.Replace("Assets", "") + PWAddressables.GetLocalBuildPath();
+            }
+            else
+            {
+                path = Application.dataPath.Replace("Assets", "") + PWAddressables.GetRemoteBuildPath();
+            }
+            OpenInFileBrowser.Open(path);
+#endif
+        }
+
+        private void StartAddressableConfig(bool isUpdate)
+        {
+#if PW_ADDRESSABLES
+            if (m_buildConfig == null)
+            {
+                m_buildConfig = GaiaUtils.GetOrCreateBuildConfig();
+            }
+
+            if (string.IsNullOrEmpty(EditorSceneManager.GetActiveScene().path))
+            {
+                bool scenesSaved = false;
+
+                if (EditorUtility.DisplayDialog(m_editorUtils.GetTextValue("SceneNotSavedYetTitle"), m_editorUtils.GetTextValue("AddressableConfigSceneNotSavedYetText"), m_editorUtils.GetTextValue("SaveNow"), m_editorUtils.GetTextValue("Cancel")))
+                {
+                    string suggestedPath = GaiaDirectories.GetSessionSubFolderPath(SessionManager.m_session, true);
+                    string sceneTargetPath = EditorUtility.SaveFilePanel("Save Scene As...", suggestedPath, "New Gaia Scene", "unity");
+                    if (!string.IsNullOrEmpty(sceneTargetPath))
+                    {
+                        EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), GaiaDirectories.GetPathStartingAtAssetsFolder(sceneTargetPath));
+                        scenesSaved = true;
+                    }
+                    else
+                    {
+                        scenesSaved = false;
+                    }
+                }
+                else
+                {
+                    return;
+                }
+                //Did the user actually save the scene after the prompt?
+                if (!scenesSaved)
+                {
+                    return;
+                }
+            }
+
+            PWAddressables.m_isUpdate = isUpdate;
+
+            //Clear the existing data, if not an update run.
+            if (!isUpdate)
+            {
+                m_addressableConfig.m_terrainAssetGroupAssociations.Clear();
+                //Remove the terrain scenes from build settings - will produce warnings otherwise if we try to set up the scenes as addressables after!
+                if (GaiaUtils.HasDynamicLoadedTerrains())
+                {
+                    GaiaSessionManager.RemoveTerrainScenesFromBuildSettings(TerrainLoaderManager.Instance.TerrainSceneStorage.m_terrainScenes);
+                }
+                //Need to remove all previously created groups first - they could be filled with unused assets etc.
+                PWAddressables.RemoveAllPWGroups();
+            }
+
+            //Create the PWDefault group and set this as the official "Default" group for the configuration - this group will "collect" addressables added by unity e.g. the built in shaders. 
+            //In this way we can make sure those contents end up in the final addressable build and are not added under a different, unknown default group
+            PWAddressables.AddPWDefaultGroupIfNotExists();
+
+            foreach (SceneBuildEntry sbe in m_buildConfig.m_sceneBuildEntries)
+            {
+                EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sbe.m_masterScene),OpenSceneMode.Single);
+
+                Scene masterScene = SceneManager.GetSceneByName(sbe.m_masterScene.name);
+
+                if (masterScene == null)
+                {
+                    Debug.LogError($"Could not load scene '{sbe.m_masterScene.name}' for processing in the addressable configuration. Please make sure it is a saved scene that can be opened in the Editor.");
+                    continue;
+                }
+
+                if (!isUpdate)
+                {
+                    //Do the main scene first
+                    PWAddressables.AddSceneAsGroup(SessionManager.gameObject.scene.name, masterScene.path);
+
+                    //Server scene, if selected & exists
+                    if (m_addressableConfig.m_addressableIncludeServerScene && sbe.m_serverScene != null)
+                    {
+                        string serverScenePath = AssetDatabase.GetAssetPath(sbe.m_serverScene);
+                        if (!string.IsNullOrEmpty(serverScenePath))
+                        {
+                            PWAddressables.AddSceneAsGroup(sbe.m_serverScene.name, serverScenePath);
+                        }
+                    }
+
+                    foreach (TerrainScene terrainScene in TerrainLoaderManager.TerrainScenes)
+                    {
+                        PWAddressables.AddSceneAsGroup(masterScene.name + "-" + terrainScene.GetTerrainName(), terrainScene.m_scenePath);
+                        if (m_addressableConfig.m_addressableIncludeImpostors && !string.IsNullOrEmpty(terrainScene.m_impostorScenePath))
+                        {
+                            PWAddressables.AddSceneAsGroup(terrainScene.GetImpostorName(), terrainScene.m_impostorScenePath);
+                        }
+                    }
+                }
+
+                string sharedGroupName = PWAddressables.CreateSharedGroupName(masterScene); 
+
+                if (GaiaUtils.HasDynamicLoadedTerrains())
+                {
+                    Action<Terrain> act = (t) => PWAddressables.AddTerrainAssets(t, sharedGroupName);
+                    GaiaUtils.CallFunctionOnDynamicLoadedTerrains(act, false, null, "Collecting Terrain Assets as Addressables...");
+                }
+                else
+                {
+                    foreach (Terrain t in Terrain.activeTerrains)
+                    {
+                        PWAddressables.AddTerrainAssets(t, sharedGroupName);
+                    }
+                }
+            }
+
+            UpdateAddressableModeInGroups();
+
+            //find all content pack configurations and configure them for centralized loading
+            string[] allConfigGUIDs = AssetDatabase.FindAssets("t:PWAddressableContentPackConfig");
+            foreach (string guid in allConfigGUIDs)
+            {
+                PWAddressableContentPackConfig config = (PWAddressableContentPackConfig)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(PWAddressableContentPackConfig));
+                if (config != null)
+                {
+                    PWAddressables.AddContentPackConfig(config);
+                }
+            }
+
+            PWAddressables.ClearEmptyGroups();
+
+            EditorUtility.SetDirty(m_buildConfig);
+            AssetDatabase.SaveAssets();
+#endif
+        }
+
+        private void UpdateAddressableModeInGroups()
+        {
+#if PW_ADDRESSABLES
+            if (m_addressableConfig == null)
+            {
+                m_addressableConfig = GaiaUtils.GetOrCreateAddressableConfig();
+            }
+            if (m_addressableConfig.m_addressableMode == AddressableMode.Server)
+            {
+                PWAddressables.SwitchToRemote();
+            }
+            else
+            {
+                PWAddressables.SwitchToLocal();
+            }
+#endif
         }
 
         private void AddSelectedBiomeToWorldDesigner()
@@ -2050,6 +3037,7 @@ namespace Gaia
                             {
                                 sceneCamera.layerCullDistances = sclc.m_profile.m_layerDistances;
                             }
+                            sclc.ApplyToGameCamera();
                         }
                     }
                 }
@@ -2083,6 +3071,14 @@ namespace Gaia
             }
             finally
             {
+
+                //Set lighting after terrain creation
+#if HDPipeline
+                        GaiaHDRPPipelineUtils.SetDefaultHDRPLighting(m_settings.m_pipelineProfile);
+#else
+                GaiaLighting.SetDefaultAmbientLight(m_settings.m_gaiaLightingProfile);
+#endif
+
                 ProgressBar.Clear(ProgressBarPriority.CreateSceneTools);
                 m_terrainCreationRunning = false;
                 GaiaSessionManager.OnWorldCreated -= CreateToolsAfterWorld;
@@ -2120,6 +3116,7 @@ namespace Gaia
 
         private void AdvancedPanelRuntime(bool helpEnabled)
         {
+            bool currentGUIState = GUI.enabled;
             if (m_editorUtils.ButtonAutoIndent("Add Character"))
             {
 
@@ -2149,10 +3146,30 @@ namespace Gaia
             {
                 Selection.activeGameObject = CreateWater(m_settings);
             }
+#if GAIA_PRO_PRESENT && HDPipeline && UNITY_2021_2_OR_NEWER
+            if (m_editorUtils.ButtonAutoIndent("Add HDRP Time Of Day"))
+            {
+                if (EditorUtility.DisplayDialog("Add HDRP Time of Day Preview?", "This will add a preview version of the upcoming Time of Day / Procedural Worlds Sky for Gaia.\r\n\r\nThis will remove the current lighting setup! Please do not use this without having a backup of your scene! \r\n\r\nContinue?", "Continue", "Abort"))
+                {
+                    if (GaiaUtils.CheckIfSceneProfileExists(out SceneProfile sceneProfile))
+                    {
+                        GaiaLighting.SetLightingToNoneState(sceneProfile, true);
+                    }
+                    ProceduralWorlds.HDRPTOD.HDRPTimeOfDay.CreateTimeOfDay(GaiaUtils.GetRuntimeSceneObject());
+                }
+            }
+#else
+            GUI.enabled = false;
+            if (m_editorUtils.ButtonAutoIndent("Add HDRP Time Of Day Inactive"))
+            {
+            }
+            GUI.enabled = currentGUIState;
+#endif
         }
 
         private void AdvancedPanelTools(bool helpEnabled)
         {
+            bool currentGUIState = GUI.enabled;
             m_editorUtils.Heading("BiomesAndSpawners");
             GUILayout.BeginHorizontal();
             {
@@ -2207,10 +3224,17 @@ namespace Gaia
                 m_advancedTabSpawnersList.DoList(listRect);
             }
             m_editorUtils.Heading("CreateShowTools");
+
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = false;
+#endif
             if (m_editorUtils.ButtonAutoIndent("Gaia 1 Stamp Converter"))
             {
                 ShowGaiaStampConverter();
             }
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = currentGUIState;
+#endif
 
             if (m_editorUtils.ButtonAutoIndent("Location Manager"))
             {
@@ -2218,7 +3242,6 @@ namespace Gaia
             }
 
 #if !GAIA_PRO_PRESENT
-            bool currentGUIState = GUI.enabled;
             GUI.enabled = false;
 #endif
             if (m_editorUtils.ButtonAutoIndent("Mask Map Exporter"))
@@ -2233,7 +3256,9 @@ namespace Gaia
             {
                 GaiaEditorUtils.ShowResourceHelperWindow(GaiaResourceHelperOperation.CopyResources, position.position + new Vector2(50, 50));
             }
-
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = false;
+#endif
             if (m_editorUtils.ButtonAutoIndent("Scanner"))
             {
                 Selection.activeGameObject = Scanner.CreateScanner();
@@ -2242,6 +3267,9 @@ namespace Gaia
                     SceneView.lastActiveSceneView.LookAt(Selection.activeGameObject.transform.position);
                 }
             }
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = currentGUIState;
+#endif
 
             if (m_editorUtils.ButtonAutoIndent("Session Manager"))
             {
@@ -2270,13 +3298,16 @@ namespace Gaia
                     ShowStamper();
                 }
 
-                
-            }
 
+            }
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = false;
+#endif
             if (m_editorUtils.ButtonAutoIndent("Terrain Mesh Export"))
             {
                 ShowTerrainObjExporter();
             }
+
 
             if (m_editorUtils.ButtonAutoIndent("Terrain Stitcher"))
             {
@@ -2285,6 +3316,9 @@ namespace Gaia
                 terrainStitcher.position = new Rect(position.position + new Vector2(50, 50), new Vector2(300, 200));
                 terrainStitcher.minSize = new Vector2(300, 200);
             }
+#if !GAIA_MESH_PRESENT
+            GUI.enabled = currentGUIState;
+#endif
 
         }
 
@@ -2668,7 +3702,7 @@ namespace Gaia
             }
             EditorGUI.indentLevel--;
         }
-        #endregion
+#endregion
 
 
         void OnInspectorUpdate()
@@ -2680,7 +3714,7 @@ namespace Gaia
         }
 
 
-        #region On GUI
+#region On GUI
         void OnGUI()
         {
             m_editorUtils.Initialize(); // Do not remove this!
@@ -2754,8 +3788,14 @@ namespace Gaia
             m_editorUtils.GUIHeader(true, "", "", "Gaia Pro");
             m_editorUtils.GUINewsHeader(true, new URLParameters() { m_product = "Gaia Pro" });
 #else
+#if GAIA_MESH_PRESENT
             m_editorUtils.GUIHeader();
-            m_editorUtils.GUINewsHeader(true, new URLParameters() { m_product = "Gaia"});
+            m_editorUtils.GUINewsHeader(true, new URLParameters() { m_product = "Gaia" });
+#else
+            m_editorUtils.GUIHeader(true, "", "", "Gaia ML");
+            m_editorUtils.GUINewsHeader(true, new URLParameters() { m_product = "Gaia ML" });
+           
+#endif
 #endif
 
             GUILayout.Space(4);
@@ -2776,6 +3816,12 @@ namespace Gaia
             else
             {
                 EditorApplication.update -= EditorPipelineUpdate;
+            }
+
+            if (m_settings.m_shaderReimportRestartRequired)
+            {
+                this.Close();
+                EditorApplication.OpenProject(System.Environment.CurrentDirectory);
             }
 
         }
@@ -2800,7 +3846,7 @@ namespace Gaia
             WorldCreationSettings wcs = GetCurrentWorldCreationSettings();
 
             GaiaSessionManager.GetTerrainUpdateGrids(ref wcs, ref oldBounds, ref oldTerrainGrid, ref newTerrainGrid);
-            if (TerrainHelper.GetActiveTerrainCount()>0)
+            if (TerrainHelper.GetActiveTerrainCount() > 0)
             {
                 offset += wcs.m_centerOffset;
             }
@@ -2898,7 +3944,7 @@ namespace Gaia
 
             Handles.color = Color.red;
             Handles.DrawWireCube(oldBounds.center, oldBounds.size);
-            
+
             if (m_oldTerrainLabelStyle == null)
             {
                 m_oldTerrainLabelStyle = new GUIStyle(GUI.skin.label);
@@ -2943,8 +3989,8 @@ namespace Gaia
                 Rect textRect = new Rect(new Vector2(10f, scaledScreenHeight - EditorGUIUtility.singleLineHeight * 2f - 2f), new Vector2(scaledScreenWidth - 20, EditorGUIUtility.singleLineHeight * 1.5f));
                 EditorGUI.DrawRect(textRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
             }
-            
-            Rect rect = new Rect(new Vector2(15f, scaledScreenHeight + 20f), new Vector2(scaledScreenWidth -30f, EditorGUIUtility.singleLineHeight));
+
+            Rect rect = new Rect(new Vector2(15f, scaledScreenHeight + 20f), new Vector2(scaledScreenWidth - 30f, EditorGUIUtility.singleLineHeight));
             rect.y -= EditorGUIUtility.singleLineHeight * 2f;
             rect.y -= EditorGUIUtility.singleLineHeight;
             GaiaUtils.GUITextWithShadow(rect, "The green boxes represent new terrains that will be created by the Gaia Manager.", m_newTerrainLabelStyle, m_sceneViewShadowStyle);
@@ -2968,11 +4014,11 @@ namespace Gaia
                     Rect backgroundRect = new Rect(scaledScreenWidth - 235, scaledScreenHeight - 185, 225, 100);
                     EditorGUI.DrawRect(backgroundRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
 
-                    m_oldTerrainGridOffsetZ = EditorGUI.IntSlider(sliderRect, m_oldTerrainGridOffsetZ, 0, wcs.m_zTiles - 1);  
+                    m_oldTerrainGridOffsetZ = EditorGUI.IntSlider(sliderRect, m_oldTerrainGridOffsetZ, 0, wcs.m_zTiles - 1);
                     GaiaUtils.GUITextWithShadow(labelRect, m_editorUtils.GetContent("OldTerrainsGridOffsetZ"), m_sceneViewToggleStyle, m_sceneViewShadowStyle);
                     labelRect.y -= EditorGUIUtility.singleLineHeight;
                     sliderRect.y -= EditorGUIUtility.singleLineHeight;
-                    m_oldTerrainGridOffsetX = EditorGUI.IntSlider(sliderRect, m_oldTerrainGridOffsetX, 0, wcs.m_zTiles - 1); 
+                    m_oldTerrainGridOffsetX = EditorGUI.IntSlider(sliderRect, m_oldTerrainGridOffsetX, 0, wcs.m_zTiles - 1);
                     GaiaUtils.GUITextWithShadow(labelRect, m_editorUtils.GetContent("OldTerrainsGridOffsetX"), m_sceneViewToggleStyle, m_sceneViewShadowStyle);
                 }
                 else
@@ -2998,7 +4044,7 @@ namespace Gaia
                 checkboxRect.y -= EditorGUIUtility.singleLineHeight;
                 labelRect.y -= EditorGUIUtility.singleLineHeight;
 
-               
+
 
 
 
@@ -3053,7 +4099,7 @@ namespace Gaia
             //    }
             //}
             Handles.EndGUI();
-   
+
         }
 
         internal void UpdateAllSpawnersList()
@@ -3134,194 +4180,194 @@ namespace Gaia
 
         }
 
-//        private bool ExtrasSettingsEnabled(Rect rect, bool helpEnabled)
-//        {
-//            EditorGUI.BeginChangeCheck();
+        //        private bool ExtrasSettingsEnabled(Rect rect, bool helpEnabled)
+        //        {
+        //            EditorGUI.BeginChangeCheck();
 
-//            Rect labelRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, EditorGUIUtility.labelWidth, rect.height);
-//            Rect fieldRect = new Rect(labelRect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - labelRect.width - EditorGUIUtility.labelWidth, rect.height);
-//            Rect buttonRect = labelRect;
+        //            Rect labelRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, EditorGUIUtility.labelWidth, rect.height);
+        //            Rect fieldRect = new Rect(labelRect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - labelRect.width - EditorGUIUtility.labelWidth, rect.height);
+        //            Rect buttonRect = labelRect;
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Controller"));
-//            m_settings.m_currentController = (GaiaConstants.EnvironmentControllerType)EditorGUI.EnumPopup(fieldRect, m_settings.m_currentController);
-//            switch (m_settings.m_currentController)
-//            {
-//                case GaiaConstants.EnvironmentControllerType.FirstPerson:
-//                    m_settings.m_currentPlayerPrefabName = "FPSController";
-//                    break;
-//                case GaiaConstants.EnvironmentControllerType.ThirdPerson:
-//                    m_settings.m_currentPlayerPrefabName = "ThirdPersonController";
-//                    break;
-//                case GaiaConstants.EnvironmentControllerType.FlyingCamera:
-//                    m_settings.m_currentPlayerPrefabName = "FlyCam";
-//                    break;
-//                case GaiaConstants.EnvironmentControllerType.Custom:
-//                    labelRect.x += 12;
-//                    labelRect.y += EditorGUIUtility.singleLineHeight;
-//                    fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                    EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("CustomPlayer"));
-//                    m_settings.m_customPlayerObject = (GameObject)EditorGUI.ObjectField(fieldRect, m_settings.m_customPlayerObject, typeof(GameObject), true);
-//                    labelRect.y += EditorGUIUtility.singleLineHeight;
-//                    fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                    EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("CustomCamera"));
-//                    m_settings.m_customPlayerCamera = (Camera)EditorGUI.ObjectField(fieldRect, m_settings.m_customPlayerCamera, typeof(Camera), true);
-//                    labelRect.x -= 12;
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Controller"));
+        //            m_settings.m_currentController = (GaiaConstants.EnvironmentControllerType)EditorGUI.EnumPopup(fieldRect, m_settings.m_currentController);
+        //            switch (m_settings.m_currentController)
+        //            {
+        //                case GaiaConstants.EnvironmentControllerType.FirstPerson:
+        //                    m_settings.m_currentPlayerPrefabName = "FPSController";
+        //                    break;
+        //                case GaiaConstants.EnvironmentControllerType.ThirdPerson:
+        //                    m_settings.m_currentPlayerPrefabName = "ThirdPersonController";
+        //                    break;
+        //                case GaiaConstants.EnvironmentControllerType.FlyingCamera:
+        //                    m_settings.m_currentPlayerPrefabName = "FlyCam";
+        //                    break;
+        //                case GaiaConstants.EnvironmentControllerType.Custom:
+        //                    labelRect.x += 12;
+        //                    labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                    fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                    EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("CustomPlayer"));
+        //                    m_settings.m_customPlayerObject = (GameObject)EditorGUI.ObjectField(fieldRect, m_settings.m_customPlayerObject, typeof(GameObject), true);
+        //                    labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                    fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                    EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("CustomCamera"));
+        //                    m_settings.m_customPlayerCamera = (Camera)EditorGUI.ObjectField(fieldRect, m_settings.m_customPlayerCamera, typeof(Camera), true);
+        //                    labelRect.x -= 12;
 
-//                    break;
-//                case GaiaConstants.EnvironmentControllerType.XRController:
-//#if GAIA_XR
-//                    m_settings.m_currentPlayerPrefabName = "XRController";
-//#else
-//                    EditorUtility.DisplayDialog("XR Support not enabled", "The XR Controller is a default player for Virtual / Augmented Reality projects. Please open the Setup Panel in the Gaia Manager Standard Tab to enable XR Support in order to use the XR Player Controller. Please also make sure you have the Unity XR Interaction Toolkit package installed before doing so.", "OK");
-//                    m_settings.m_currentController = GaiaConstants.EnvironmentControllerType.FlyingCamera;
-//#endif
-//                    break;
+        //                    break;
+        //                case GaiaConstants.EnvironmentControllerType.XRController:
+        //#if GAIA_XR
+        //                    m_settings.m_currentPlayerPrefabName = "XRController";
+        //#else
+        //                    EditorUtility.DisplayDialog("XR Support not enabled", "The XR Controller is a default player for Virtual / Augmented Reality projects. Please open the Setup Panel in the Gaia Manager Standard Tab to enable XR Support in order to use the XR Player Controller. Please also make sure you have the Unity XR Interaction Toolkit package installed before doing so.", "OK");
+        //                    m_settings.m_currentController = GaiaConstants.EnvironmentControllerType.FlyingCamera;
+        //#endif
+        //                    break;
 
-//            }
+        //            }
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            //Skies
+        //            //Skies
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Skies"));
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Skies"));
 
-//            GaiaLightingProfile lightingProfile = m_settings.m_gaiaLightingProfile;
+        //            GaiaLightingProfile lightingProfile = m_settings.m_gaiaLightingProfile;
 
-//            //Building up a value array of incrementing ints of the size of the lighting profile values array, this array will then match the displayed string selection in the popup
-//            int[] lightingProfileValuesIndices = Enumerable
-//                                .Repeat(0, (int)((lightingProfile.m_lightingProfiles.Count() - 1) / 1) + 1)
-//                                .Select((tr, ti) => tr + (1 * ti))
-//                                .ToArray();
-//            string[] profileNames = lightingProfile.m_lightingProfiles.Select(x => x.m_typeOfLighting).ToArray();
+        //            //Building up a value array of incrementing ints of the size of the lighting profile values array, this array will then match the displayed string selection in the popup
+        //            int[] lightingProfileValuesIndices = Enumerable
+        //                                .Repeat(0, (int)((lightingProfile.m_lightingProfiles.Count() - 1) / 1) + 1)
+        //                                .Select((tr, ti) => tr + (1 * ti))
+        //                                .ToArray();
+        //            string[] profileNames = lightingProfile.m_lightingProfiles.Select(x => x.m_typeOfLighting).ToArray();
 
-//            //Injecting the "None" option
-//            lightingProfileValuesIndices = GaiaUtils.AddElementToArray(lightingProfileValuesIndices, -99);
-//            profileNames = GaiaUtils.AddElementToArray(profileNames, "None");
+        //            //Injecting the "None" option
+        //            lightingProfileValuesIndices = GaiaUtils.AddElementToArray(lightingProfileValuesIndices, -99);
+        //            profileNames = GaiaUtils.AddElementToArray(profileNames, "None");
 
-//            lightingProfile.m_selectedLightingProfileValuesIndex = EditorGUI.IntPopup(fieldRect, lightingProfile.m_selectedLightingProfileValuesIndex, profileNames, lightingProfileValuesIndices);
-//#if !GAIA_PRO_PRESENT
-//            if (lightingProfile.m_selectedLightingProfileValuesIndex > 0 && lightingProfile.m_selectedLightingProfileValuesIndex < lightingProfile.m_lightingProfiles.Count)
-//            {
-//                if (lightingProfile.m_lightingProfiles[lightingProfile.m_selectedLightingProfileValuesIndex].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
-//                {
-//                    labelRect.y += EditorGUIUtility.singleLineHeight * 1.5f;
-//                    fieldRect.y += EditorGUIUtility.singleLineHeight * 1.5f;
-//                    EditorGUI.HelpBox(new Rect(labelRect.position, new Vector2(labelRect.width + fieldRect.width, EditorGUIUtility.singleLineHeight * 3f)), m_editorUtils.GetTextValue("GaiaProLightingProfileInfo"), MessageType.Info);
-//                    labelRect.y += EditorGUIUtility.singleLineHeight * 2.5f;
-//                    fieldRect.y += EditorGUIUtility.singleLineHeight * 2.5f;
-//                }
-//            }
-//#endif
+        //            lightingProfile.m_selectedLightingProfileValuesIndex = EditorGUI.IntPopup(fieldRect, lightingProfile.m_selectedLightingProfileValuesIndex, profileNames, lightingProfileValuesIndices);
+        //#if !GAIA_PRO_PRESENT
+        //            if (lightingProfile.m_selectedLightingProfileValuesIndex > 0 && lightingProfile.m_selectedLightingProfileValuesIndex < lightingProfile.m_lightingProfiles.Count)
+        //            {
+        //                if (lightingProfile.m_lightingProfiles[lightingProfile.m_selectedLightingProfileValuesIndex].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
+        //                {
+        //                    labelRect.y += EditorGUIUtility.singleLineHeight * 1.5f;
+        //                    fieldRect.y += EditorGUIUtility.singleLineHeight * 1.5f;
+        //                    EditorGUI.HelpBox(new Rect(labelRect.position, new Vector2(labelRect.width + fieldRect.width, EditorGUIUtility.singleLineHeight * 3f)), m_editorUtils.GetTextValue("GaiaProLightingProfileInfo"), MessageType.Info);
+        //                    labelRect.y += EditorGUIUtility.singleLineHeight * 2.5f;
+        //                    fieldRect.y += EditorGUIUtility.singleLineHeight * 2.5f;
+        //                }
+        //            }
+        //#endif
 
-//            if (lightingProfile.m_selectedLightingProfileValuesIndex != -99)
-//            {
-//#if UNITY_POST_PROCESSING_STACK_V2
-//                labelRect.y += EditorGUIUtility.singleLineHeight;
-//                fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("PostProcessing"));
-//                m_settings.m_enablePostProcessing = EditorGUI.Toggle(fieldRect, m_settings.m_enablePostProcessing);
-//#endif
-//                labelRect.y += EditorGUIUtility.singleLineHeight;
-//                fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("QuickBakeLighting"));
-//                m_settings.m_quickBakeLighting = EditorGUI.Toggle(fieldRect, m_settings.m_quickBakeLighting);
-//            }
+        //            if (lightingProfile.m_selectedLightingProfileValuesIndex != -99)
+        //            {
+        //#if UNITY_POST_PROCESSING_STACK_V2
+        //                labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("PostProcessing"));
+        //                m_settings.m_enablePostProcessing = EditorGUI.Toggle(fieldRect, m_settings.m_enablePostProcessing);
+        //#endif
+        //                labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("QuickBakeLighting"));
+        //                m_settings.m_quickBakeLighting = EditorGUI.Toggle(fieldRect, m_settings.m_quickBakeLighting);
+        //            }
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
 
 
-//            //Water
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Water"));
-//            if (newProfileListIndex > m_settings.m_gaiaWaterProfile.m_waterProfiles.Count)
-//            {
-//                newProfileListIndex = 0;
-//            }
-//            m_profileList.Clear();
-//            if (m_settings.m_gaiaWaterProfile.m_waterProfiles.Count > 0)
-//            {
-//                foreach (GaiaWaterProfileValues profile in m_settings.m_gaiaWaterProfile.m_waterProfiles)
-//                {
-//                    m_profileList.Add(profile.m_typeOfWater);
-//                }
-//            }
-//            m_profileList.Add("None");
-//            newProfileListIndex = EditorGUI.Popup(fieldRect, newProfileListIndex, m_profileList.ToArray());
+        //            //Water
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Water"));
+        //            if (newProfileListIndex > m_settings.m_gaiaWaterProfile.m_waterProfiles.Count)
+        //            {
+        //                newProfileListIndex = 0;
+        //            }
+        //            m_profileList.Clear();
+        //            if (m_settings.m_gaiaWaterProfile.m_waterProfiles.Count > 0)
+        //            {
+        //                foreach (GaiaWaterProfileValues profile in m_settings.m_gaiaWaterProfile.m_waterProfiles)
+        //                {
+        //                    m_profileList.Add(profile.m_typeOfWater);
+        //                }
+        //            }
+        //            m_profileList.Add("None");
+        //            newProfileListIndex = EditorGUI.Popup(fieldRect, newProfileListIndex, m_profileList.ToArray());
 
-//            if (m_settings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex != newProfileListIndex)
-//            {
-//                m_settings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex = newProfileListIndex;
-//            }
-//            if (m_profileList[newProfileListIndex] != "None")
-//            {
-//                labelRect.y += EditorGUIUtility.singleLineHeight;
-//                fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("UnderwaterEffects"));
-//                m_settings.m_enableUnderwaterEffects = EditorGUI.Toggle(fieldRect, m_settings.m_enableUnderwaterEffects);
-//            }
+        //            if (m_settings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex != newProfileListIndex)
+        //            {
+        //                m_settings.m_gaiaWaterProfile.m_selectedWaterProfileValuesIndex = newProfileListIndex;
+        //            }
+        //            if (m_profileList[newProfileListIndex] != "None")
+        //            {
+        //                labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("UnderwaterEffects"));
+        //                m_settings.m_enableUnderwaterEffects = EditorGUI.Toggle(fieldRect, m_settings.m_enableUnderwaterEffects);
+        //            }
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            //Wind
+        //            //Wind
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Wind"));
-//            m_settings.m_createWind = EditorGUI.Toggle(fieldRect, m_settings.m_createWind);
-//            if (m_settings.m_createWind)
-//            {
-//                labelRect.y += EditorGUIUtility.singleLineHeight;
-//                fieldRect.y += EditorGUIUtility.singleLineHeight;
-//                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("WindType"));
-//                m_settings.m_windType = (GaiaConstants.GaiaGlobalWindType)EditorGUI.EnumPopup(fieldRect, m_settings.m_windType);
-//            }
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Wind"));
+        //            m_settings.m_createWind = EditorGUI.Toggle(fieldRect, m_settings.m_createWind);
+        //            if (m_settings.m_createWind)
+        //            {
+        //                labelRect.y += EditorGUIUtility.singleLineHeight;
+        //                fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //                EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("WindType"));
+        //                m_settings.m_windType = (GaiaConstants.GaiaGlobalWindType)EditorGUI.EnumPopup(fieldRect, m_settings.m_windType);
+        //            }
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("AmbientAudio"));
-//            m_settings.m_enableAmbientAudio = EditorGUI.Toggle(fieldRect, m_settings.m_enableAmbientAudio);
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("AmbientAudio"));
+        //            m_settings.m_enableAmbientAudio = EditorGUI.Toggle(fieldRect, m_settings.m_enableAmbientAudio);
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Screenshotter"));
-//            m_settings.m_createScreenShotter = EditorGUI.Toggle(fieldRect, m_settings.m_createScreenShotter);
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("Screenshotter"));
+        //            m_settings.m_createScreenShotter = EditorGUI.Toggle(fieldRect, m_settings.m_createScreenShotter);
 
-//            labelRect.y += EditorGUIUtility.singleLineHeight;
-//            fieldRect.y += EditorGUIUtility.singleLineHeight;
+        //            labelRect.y += EditorGUIUtility.singleLineHeight;
+        //            fieldRect.y += EditorGUIUtility.singleLineHeight;
 
-//            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("LocationManager"));
-//            m_settings.m_enableLocationManager = EditorGUI.Toggle(fieldRect, m_settings.m_enableLocationManager);
+        //            EditorGUI.LabelField(labelRect, m_editorUtils.GetContent("LocationManager"));
+        //            m_settings.m_enableLocationManager = EditorGUI.Toggle(fieldRect, m_settings.m_enableLocationManager);
 
-//            //m_heightmapResolution = (GaiaConstants.HeightmapResolution)m_editorUtils.EnumPopup("Heightmap Resolution", m_heightmapResolution, helpEnabled);
-//            //m_controlTextureResolution = (GaiaConstants.TerrainTextureResolution)m_editorUtils.EnumPopup("Control Texture Resolution", m_controlTextureResolution, helpEnabled);
-//            //m_basemapResolution = (GaiaConstants.TerrainTextureResolution)m_editorUtils.EnumPopup("Basemap Resolution", m_basemapResolution, helpEnabled);
-//            //m_detailResolutionPerPatch = m_editorUtils.IntField("Detail Resolution Per Patch", m_detailResolutionPerPatch, helpEnabled);
-//            //m_detailResolution = m_editorUtils.IntField("Detail Resolution", m_detailResolution, helpEnabled);
+        //            //m_heightmapResolution = (GaiaConstants.HeightmapResolution)m_editorUtils.EnumPopup("Heightmap Resolution", m_heightmapResolution, helpEnabled);
+        //            //m_controlTextureResolution = (GaiaConstants.TerrainTextureResolution)m_editorUtils.EnumPopup("Control Texture Resolution", m_controlTextureResolution, helpEnabled);
+        //            //m_basemapResolution = (GaiaConstants.TerrainTextureResolution)m_editorUtils.EnumPopup("Basemap Resolution", m_basemapResolution, helpEnabled);
+        //            //m_detailResolutionPerPatch = m_editorUtils.IntField("Detail Resolution Per Patch", m_detailResolutionPerPatch, helpEnabled);
+        //            //m_detailResolution = m_editorUtils.IntField("Detail Resolution", m_detailResolution, helpEnabled);
 
-//            bool changeCheckTriggered = false;
+        //            bool changeCheckTriggered = false;
 
-//            if (EditorGUI.EndChangeCheck())
-//            {
-//                EditorUtility.SetDirty(m_settings.m_gaiaLightingProfile);
-//                m_settings.m_gaiaLightingProfile.m_enableAmbientAudio = m_settings.m_enableAmbientAudio;
-//                m_settings.m_gaiaLightingProfile.m_enablePostProcessing = m_settings.m_enablePostProcessing;
+        //            if (EditorGUI.EndChangeCheck())
+        //            {
+        //                EditorUtility.SetDirty(m_settings.m_gaiaLightingProfile);
+        //                m_settings.m_gaiaLightingProfile.m_enableAmbientAudio = m_settings.m_enableAmbientAudio;
+        //                m_settings.m_gaiaLightingProfile.m_enablePostProcessing = m_settings.m_enablePostProcessing;
 
-//                EditorUtility.SetDirty(m_settings.m_gaiaWaterProfile);
-//                m_settings.m_gaiaWaterProfile.m_supportUnderwaterEffects = m_settings.m_enableUnderwaterEffects;
+        //                EditorUtility.SetDirty(m_settings.m_gaiaWaterProfile);
+        //                m_settings.m_gaiaWaterProfile.m_supportUnderwaterEffects = m_settings.m_enableUnderwaterEffects;
 
-//                changeCheckTriggered = true;
-//            }
+        //                changeCheckTriggered = true;
+        //            }
 
-//            return changeCheckTriggered;
-//        }
+        //            return changeCheckTriggered;
+        //        }
 
         /// <summary>
         /// Editor Update
@@ -3344,9 +4390,9 @@ namespace Gaia
             }
         }
 
-        #endregion
+#endregion
 
-        #region Gaia Main Function Calls
+#region Gaia Main Function Calls
         /// <summary>
         /// Create and returns a defaults asset
         /// </summary>
@@ -3478,7 +4524,7 @@ namespace Gaia
             }
 
             GaiaSessionManager.CreateOrUpdateWorld(worldCreationSettings, true, isUpdate);
-            
+
 #if GAIA_PRO_PRESENT
             if (SessionManager != null)
             {
@@ -4115,9 +5161,9 @@ namespace Gaia
 
         //    return m_settings.m_currentGameObjectResources.CreateClusteredGameObjectSpawner(GetRangeFromTerrain());
         //}
-        #endregion
+#endregion
 
-        #region Create Step 2 (Player, water, sky etc)
+#region Create Step 2 (Player, water, sky etc)
 
         /// <summary>
         /// Create a scene exporter object
@@ -4226,17 +5272,6 @@ namespace Gaia
 
         public static void CreateGaiaExtras(GaiaSettings gaiaSettings, List<string> waterList, int selectedWater)
         {
-#if HDPipeline && !GAIA_EXPERIMENTAL
-            if (m_settings.m_gaiaLightingProfile.m_selectedLightingProfileValuesIndex != -99)
-            {
-                if (m_settings.m_gaiaLightingProfile.m_lightingProfiles[m_settings.m_gaiaLightingProfile.m_selectedLightingProfileValuesIndex].m_profileType == GaiaConstants.GaiaLightingProfileType.ProceduralWorldsSky)
-                {
-                    EditorUtility.DisplayDialog("Not Yet Supported", GaiaConstants.HDRPPWSkyExperimental + "\r\n\r\n Please choose a different sky type for the runtime creation.", "Ok");
-                    return;
-                }
-            }
-#endif
-
             bool restoreLoadingRange = false;
 #if GAIA_PRO_PRESENT
             //Check if the center terrain is loaded in when we are in dynamic loaded terrain mode
@@ -4279,7 +5314,7 @@ namespace Gaia
                             }
                         }
 
-                        if (m_settings.m_quickBakeLighting)
+                        if (m_settings.m_quickBakeLighting && GaiaGlobal.Instance.SceneProfile.m_selectedLightingProfileValuesIndex != -99)
                         {
                             textValue += m_editorUtils.GetTextValue("AddQuickBakeLighting");
                         }
@@ -4338,12 +5373,15 @@ namespace Gaia
                     }
                 }
 
-                SceneProfile sceneProfile = GaiaGlobal.Instance.SceneProfile;
-                GameObject playerGO = null;
-                if (gaiaSettings.m_currentController != GaiaConstants.EnvironmentControllerType.None)
+                if (GaiaGlobal.Instance == null)
                 {
+                    GaiaUtils.GetRuntimeSceneObject();
+                }
 
-                    if (gaiaSettings.m_currentController == GaiaConstants.EnvironmentControllerType.Custom)
+                SceneProfile sceneProfile = GaiaGlobal.Instance.SceneProfile;
+
+                GameObject playerGO = null;
+                if (gaiaSettings.m_currentController == GaiaConstants.EnvironmentControllerType.Custom)
                     {
                         playerGO = GaiaSceneManagement.CreatePlayer(gaiaSettings, gaiaSettings.m_instantiateCustomControllers, "Custom", false, gaiaSettings.m_customPlayerObject, gaiaSettings.m_customPlayerCamera);
                     }
@@ -4351,8 +5389,6 @@ namespace Gaia
                     {
                         playerGO = GaiaSceneManagement.CreatePlayer(gaiaSettings, gaiaSettings.m_instantiateCustomControllers);
                     }
-
-                }
                 if (gaiaSettings.m_createWind)
                 {
                     CreateWindZone(gaiaSettings);
@@ -4363,20 +5399,42 @@ namespace Gaia
                 }
 
                 //Create Lighting
+                if (sceneProfile.m_selectedLightingProfileValuesIndex != -99)
+                {
+                    if (gaiaSettings.m_gaiaLightingProfile.m_lightingProfiles[sceneProfile.m_selectedLightingProfileValuesIndex].m_typeOfLighting != "None")
+                    {
+                        sceneProfile.m_lightSystemMode = GaiaConstants.GlobalSystemMode.Gaia;
+                    }
+                }
                 CreateSky(gaiaSettings);
 
                 //Create Water
+                if (sceneProfile.m_selectedWaterProfileValuesIndex < gaiaSettings.m_gaiaWaterProfile.m_waterProfiles.Count)
+                {
+                    if (gaiaSettings.m_gaiaWaterProfile.m_waterProfiles[sceneProfile.m_selectedWaterProfileValuesIndex].m_typeOfWater != "None")
+                    {
+                        sceneProfile.m_waterSystemMode = GaiaConstants.GlobalSystemMode.Gaia;
+                    }
+                }
                 CreateWater(gaiaSettings);
+
+
                 if (gaiaSettings.m_currentController == GaiaConstants.EnvironmentControllerType.XRController)
                 {
                     GaiaWater.SetXRWaterReflectionState(sceneProfile, false);
                 }
-
                 if (gaiaSettings.m_createScreenShotter)
                 {
                     CreateScreenShotter(gaiaSettings);
                 }
-
+                else
+                {
+                    ScreenShotter screenshotter = FindObjectOfType<ScreenShotter>();
+                    if (screenshotter != null)
+                    {
+                        DestroyImmediate(screenshotter.gameObject);
+                    }
+                }
                 if (gaiaSettings.m_enableLocationManager)
                 {
                     LocationManagerEditor.AddLocationSystem();
@@ -4386,7 +5444,7 @@ namespace Gaia
                     LocationManagerEditor.RemoveLocationSystem();
                 }
 
-                if (gaiaSettings.m_quickBakeLighting)
+                if (gaiaSettings.m_quickBakeLighting && sceneProfile.m_selectedLightingProfileValuesIndex != -99)
                 {
                     if (GaiaUtils.CheckIfSceneProfileExists())
                     {
@@ -4560,9 +5618,9 @@ namespace Gaia
             return shotterObj;
         }
 
-        #endregion
+#endregion
 
-        #region Setup Tab Functions
+#region Setup Tab Functions
 
         /// <summary>
         /// Setup panel settings
@@ -4586,6 +5644,10 @@ namespace Gaia
             m_editorUtils.Panel("NewsSettings", DrawNewsSettings, false);
             m_editorUtils.Panel("RenderSettings", DrawRenderSettings, m_renderPipelineDefaultStatus);
             m_editorUtils.Panel("XRSettings", DrawXRSettings, false);
+            if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.Windows)
+            {
+                m_editorUtils.Panel("TDRInfo", DrawTDRInfo, false);
+            }
             GUI.enabled = originalGUIState;
         }
 
@@ -4676,6 +5738,14 @@ namespace Gaia
 #endif
         }
 
+        private void DrawTDRInfo(bool helpEnabled)
+        {
+            m_editorUtils.Text("TDRInfoText");
+            m_editorUtils.Link("TDRGeneralInfo");
+            m_editorUtils.Link("TDRHowToChange");
+            m_editorUtils.Link("TDRCanopyLink");
+        }
+
         private void DrawRenderSettings(bool helpEnabled)
         {
             bool currentGUIState = GUI.enabled;
@@ -4692,6 +5762,16 @@ namespace Gaia
                 EditorGUILayout.HelpBox("Post Processing V2 is not installed in this project, please install Post Processing from the package manager. You can find out more about the post processing package for the built-in pipeline by following the link below.", MessageType.Warning);
                 m_editorUtils.Link("PostProcessingLink");
                 GUILayout.Space(5f);
+            }
+#endif
+
+
+#if HDPipeline || UPPipeline
+            if (!EditorPrefs.HasKey("UnityEditor.ShaderGraph.VariantLimit") || EditorPrefs.GetInt("UnityEditor.ShaderGraph.VariantLimit") < 256)
+            {
+                statusAllOK = false;
+                EditorGUILayout.HelpBox("The shader installation process requires the shader variant limit to be set to 256 or higher in the preferences. Changing this setting requires a restart and a reimport of the shader folders to be applied, please follow the instructions in the link below to fix this issue.", MessageType.Error);
+                m_editorUtils.Link("ShaderVariantLimitLink");
             }
 #endif
 
@@ -4797,25 +5877,25 @@ namespace Gaia
                                     tier3.renderingPath = RenderingPath.DeferredShading;
                                     EditorGraphicsSettings.SetTierSettings(EditorUserBuildSettings.selectedBuildTargetGroup, GraphicsTier.Tier3, tier3);
 #if UNITY_2020_1_OR_NEWER
-                                LightingSettings currentLightingSettings = new LightingSettings();
-                                if (!Lightmapping.TryGetLightingSettings(out currentLightingSettings))
-                                {
-                                    GaiaLighting.CreateLightingSettingsAsset();
-                                    Lightmapping.lightingSettings.lightmapper = LightingSettings.Lightmapper.ProgressiveGPU;
-                                    Lightmapping.lightingSettings.realtimeGI = true;
-                                    Lightmapping.lightingSettings.bakedGI = true;
-                                    Lightmapping.lightingSettings.indirectResolution = 2f;
-                                    Lightmapping.lightingSettings.lightmapResolution = 40f;
-                                    Lightmapping.lightingSettings.indirectScale = 2f;
-                                    if (Lightmapping.lightingSettings.autoGenerate == true)
+                                    LightingSettings currentLightingSettings = new LightingSettings();
+                                    if (!Lightmapping.TryGetLightingSettings(out currentLightingSettings))
                                     {
-                                        Lightmapping.lightingSettings.autoGenerate = false;
+                                        GaiaLighting.CreateLightingSettingsAsset();
+                                        Lightmapping.lightingSettings.lightmapper = LightingSettings.Lightmapper.ProgressiveGPU;
+                                        Lightmapping.lightingSettings.realtimeGI = true;
+                                        Lightmapping.lightingSettings.bakedGI = false;
+                                        Lightmapping.lightingSettings.indirectResolution = 2f;
+                                        Lightmapping.lightingSettings.lightmapResolution = 40f;
+                                        Lightmapping.lightingSettings.indirectScale = 2f;
+                                        if (Lightmapping.lightingSettings.autoGenerate == true)
+                                        {
+                                            Lightmapping.lightingSettings.autoGenerate = false;
+                                        }
                                     }
-                                }
 #else
                                     LightmapEditorSettings.lightmapper = LightmapEditorSettings.Lightmapper.ProgressiveGPU;
                                     Lightmapping.realtimeGI = true;
-                                    Lightmapping.bakedGI = true;
+                                    Lightmapping.bakedGI = false;
                                     LightmapEditorSettings.realtimeResolution = 2f;
                                     LightmapEditorSettings.bakeResolution = 40f;
                                     Lightmapping.indirectOutputScale = 2f;
@@ -5036,14 +6116,6 @@ namespace Gaia
 
                 GUILayout.Space(5f);
 
-                //m_editorUtils.Heading("PackagesThatWillBeInstalled");
-
-                //if (!enablePackageButton)
-                //{
-                //    EditorGUILayout.HelpBox("Shader Installation is not yet supported on this version of Unity.", MessageType.Info);
-                //    GUI.enabled = false;
-                //}
-
                 GUI.backgroundColor = Color.red;
 
                 if (EditorApplication.isCompiling)
@@ -5137,8 +6209,6 @@ namespace Gaia
         /// System info settings
         /// </summary>
         /// <param name="helpEnabled"></param>
-        private bool m_copySettingsToClipboard = false;
-        
         private void SystemInfoSettingsEnabled(bool helpEnabled)
         {
             StringBuilder clipStringBuilder = null;
@@ -5420,12 +6490,27 @@ namespace Gaia
             string[] materialGUIDs = AssetDatabase.FindAssets("t:Material", new string[1] { GaiaDirectories.GetGaiaDirectory() });
             List<Material> collectedMaterials = new List<Material>();
             //Iterate through the guids, load the material, if it still uses a "migratable" shader then there is an issue with the shader installation
-            foreach (string guid in materialGUIDs)
+            if (migratableShaderNames != null && migratableShaderNames.Count > 0)
             {
-                Material mat = (Material)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(Material));
-                if (migratableShaderNames.Contains(mat.shader.name))
+                foreach (string guid in materialGUIDs)
                 {
-                    return false;
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+
+                    //Skip all materials whose asset path ends in "shadergraph" - those are materials embedded in a shadergraph object
+                    if (path.EndsWith("shadergraph"))
+                    {
+                        continue;
+                    }
+
+                    Material mat = (Material)AssetDatabase.LoadAssetAtPath(path, typeof(Material));
+                    if (mat != null && mat.shader != null)
+                    {
+                        if (migratableShaderNames.Contains(mat.shader.name))
+                        {
+                            Debug.Log($"Gaia found one updatable material: {mat.name} with the shader {mat.shader.name} could be migrated to the correct pipeline.");
+                            return false;
+                        }
+                    }
                 }
             }
 
@@ -5563,114 +6648,235 @@ namespace Gaia
         /// <param name="forceMaintenanceRun">If the maintenance should be forced (will run without performing any checks) </param>
         private void DoMaintenance(bool forceMaintenanceRun = false)
         {
+
             //Only Perform maintenance if:
+            //- not during runtime
             //- not in dev environment
             //- token exists
             //Always execute if it is a forced Maintenance Run
-            if ((!System.IO.Directory.Exists(GaiaUtils.GetAssetPath("Dev Utilities")) && File.Exists(GaiaDirectories.GetSettingsDirectory() + "\\" + GaiaConstants.maintenanceTokenFilename)) || forceMaintenanceRun)
-            {
-                //Do not ask this if it was forced & also do not ask if permission was already given / denied
-                string prefString = "PWShowNews" + PWApp.CONF.NameSpace;
-                if (!forceMaintenanceRun && !EditorPrefs.HasKey(prefString))
-                {
-                    if (EditorUtility.DisplayDialog("Install / Update detected", "It looks like you are opening the Gaia Manager the first time after an update or the initial installation. Do you allow Gaia to display news and special offers in the Gaia Manager? It will fetch the latest news once per day from the procedural worlds website. This feature can be turned on and off in the Setup tab of the Gaia Manager anytime.", "Yes, allow News", "No thanks"))
-                    {
-                        EditorPrefs.SetBool(prefString, true);
-                    }
-                }
 
-                if (EditorPrefs.HasKey("VerifySavingAssets"))
+            if (Application.isPlaying)
+            {
+                return;
+            }
+            if (!m_settings.m_shaderReimportRestartRequired && ((!System.IO.Directory.Exists(GaiaUtils.GetAssetPath("Dev Utilities")) && File.Exists(GaiaDirectories.GetSettingsDirectory() + "\\" + GaiaConstants.maintenanceTokenFilename))) || forceMaintenanceRun)
+            {
+
+                if (m_settings.m_forceShaderReimport)
                 {
-                    if (EditorPrefs.GetBool("VerifySavingAssets"))
+                    string floraPath = GaiaDirectories.GetFloraShaderPath();
+                    if (floraPath != null)
                     {
-                        if (EditorUtility.DisplayDialog("Verify Savings Assets detected", "It looks like you are using the setting 'Verify Saving Assets' in the Editor Preferences. This setting will prompt you on every (!) asset change to ask you if you want to save the asset or not. This makes it very hard to use Gaia as it creates a lot of assets during the Terrain Creation process. Do you want to deactivate this setting now? (Recommended)", "Yes, deactivate it", "No thanks"))
+                        AssetDatabase.ImportAsset(floraPath, ImportAssetOptions.ImportRecursive);
+                    }
+                    AssetDatabase.ImportAsset(GaiaDirectories.GetGaiaShaderPath(), ImportAssetOptions.ImportRecursive);
+                    m_settings.m_forceShaderReimport = false;
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+
+                    //If we are in here, the entire maintenance was performed already, only the shader reimport was missing. We can remove the token now & exit.
+                    RemoveMaintenanceToken();
+                }
+                else
+                {
+                    //Do not ask this if it was forced & also do not ask if permission was already given / denied
+                    string prefString = "PWShowNews" + PWApp.CONF.NameSpace;
+                    if (!forceMaintenanceRun && !EditorPrefs.HasKey(prefString))
+                    {
+                        if (EditorUtility.DisplayDialog("Install / Update detected", "It looks like you are opening the Gaia Manager the first time after an update or the initial installation. Do you allow Gaia to display news and special offers in the Gaia Manager? It will fetch the latest news once per day from the procedural worlds website. This feature can be turned on and off in the Setup tab of the Gaia Manager anytime.", "Yes, allow News", "No thanks"))
                         {
-                            EditorPrefs.SetBool("VerifySavingAssets", false);
+                            EditorPrefs.SetBool(prefString, true);
                         }
                     }
-                }
 
-                //Do not ask this if it was forced
-                if (!forceMaintenanceRun)
-                {
-                    if (EditorUtility.DisplayDialog("Install / Update detected", "The Gaia Manager will now perform a few maintenance tasks to set up Gaia correctly. Do you want to visit a webpage with Gaia tutorials while this process is running?", "Yes, open website", "No thanks"))
+                    //Get rid off the "Verify Saving Assets" setting - this displays a popup every time (!) Unity saves an asset - near impossible to work with this setting enabled
+                    if (EditorPrefs.HasKey("VerifySavingAssets"))
                     {
-                        Application.OpenURL("https://www.procedural-worlds.com/support/tutorials");
+                        if (EditorPrefs.GetBool("VerifySavingAssets"))
+                        {
+                            if (EditorUtility.DisplayDialog("Verify Savings Assets detected", "It looks like you are using the setting 'Verify Saving Assets' in the Editor Preferences. This setting will prompt you on every (!) asset change to ask you if you want to save the asset or not. This makes it very hard to use Gaia as it creates a lot of assets during the Terrain Creation process. Do you want to deactivate this setting now? (Recommended)", "Yes, deactivate it", "No thanks"))
+                            {
+                                EditorPrefs.SetBool("VerifySavingAssets", false);
+                            }
+                        }
                     }
-                }
 
-                //Get Maintenance Profile
-                GaiaMaintenanceProfile maintenanceProfile = (GaiaMaintenanceProfile)PWCommon5.AssetUtils.GetAssetScriptableObject("Gaia Maintenance Profile");
-
-                if (maintenanceProfile == null)
-                {
-                    Debug.LogWarning("Could not find Gaia Maintenance Profile, maintenance tasks will be skipped.");
-                    return;
-                }
-
-                List<string> paths = new List<string>();
-                for (int i = 0; i < maintenanceProfile.meshColliderPrefabPaths.Length; i++)
-                {
-                    string path = GaiaDirectories.GetGaiaDirectory() + maintenanceProfile.meshColliderPrefabPaths[i];
-                    if (Directory.Exists(path))
+                    //Make the user aware of the TDR registry settings when running windows
+                    if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.Windows)
                     {
-                        paths.Add(path);
+                        if (!EditorPrefs.GetBool("GaiaTDRSettingsInfoShown"))
+                        {
+                            if (EditorUtility.DisplayDialog("TDR Registry Settings Information", "Gaia makes heavy use of processing workloads on your GPU. Some windows users can experience issues with the 'Timeout detection and recovery (TDR)' feature of windows while Gaia is operating. This is not exclusive to Gaia or Unity and can happen in any application that processes workloads on the GPU. If you run into this issue in Unity you will get an error popup that starts with 'Failed to present D3D11 swapchain...'. A potential fix for this problem can be to alter the delays until TDR becomes active or even deactivate it altogether. If you run into this issue, please see in the 'Standard -> 1. Setup Project' Panel in the Gaia Manager for more information.\r\n\r\nDo you want to deactivate this message? If yes, it will never appear again, if no it will be displayed again when you install / update Gaia. ", "Deactivate this Message", "Keep Message"))
+                            {
+                                EditorPrefs.SetBool("GaiaTDRSettingsInfoShown", true);
+                            }
+                        }
                     }
-                }
 
-                string[] allPrefabGuids = AssetDatabase.FindAssets("t:Prefab", paths.ToArray());
-                List<string> allPrefabPaths = new List<string>();
+                    //Settings that require an editor restart
+                    //Check for input setting, and potentially change it with restart
+                    bool restartRequired = CheckForInputManagerSettings();
 
-                int currentGUID = 0;
-                foreach (string prefabGUID in allPrefabGuids)
-                {
-                    EditorUtility.DisplayProgressBar(m_editorUtils.GetTextValue("MaintenanceProgressMeshTitle"), String.Format(m_editorUtils.GetTextValue("MaintenanceProgressMeshText"), currentGUID, allPrefabGuids.Length), (float)currentGUID / (float)allPrefabGuids.Length);
-                    string prefabPath = AssetDatabase.GUIDToAssetPath(prefabGUID);
-                    allPrefabPaths.Add(prefabPath);
-                }
 
-                //Perform layer fix
-                GaiaUtils.FixPrefabLayers(allPrefabPaths);
-
-                //Read default biome presets
-                GaiaUtils.ResetBiomePresets();
-
-                List<string> directories = new List<string>(Directory.EnumerateDirectories(Application.dataPath, ".", SearchOption.AllDirectories));
-                bool changesMade = false;
-                foreach (string directory in directories)
-                {
-                    //Deletion Tasks
-                    foreach (DeletionTask deletionTask in maintenanceProfile.m_deletionTasks)
+                    if (!EditorPrefs.HasKey("UnityEditor.ShaderGraph.VariantLimit") || EditorPrefs.GetInt("UnityEditor.ShaderGraph.VariantLimit") < 256)
                     {
-                        if (PerformDeletionTask(directory, deletionTask))
+                        if (EditorUtility.DisplayDialog("Increase Shader Graph Variant Limit", "The shader graph variant limit is set below 256 for this machine in the unity preferences. Gaia needs the limit to be increased to 256 or higher for certain features to work correctly.\r\n\r\nThis is required for Gaia to work correctly in HDRP / URP!\r\n\r\nChanging this setting will trigger a restart of the Unity Editor at the end of the install process. Do you want to increase the limit to 256 now? (Recommended)", "Yes, set to 256", "No thanks"))
+                        {
+                            EditorPrefs.SetInt("UnityEditor.ShaderGraph.VariantLimit", 256);
+                            m_settings.m_forceShaderReimport = true;
+                            EditorUtility.SetDirty(m_settings);
+                            AssetDatabase.SaveAssets();
+                            restartRequired = true;
+                        }
+                    }
+
+
+                    //Do not ask this if it was forced
+                    if (!forceMaintenanceRun)
+                    {
+                        string message = "Gaia is installing, this will take around 5 minutes.\r\n\r\nIn the meantime you can register with Canopy to receive FREE stamp packs for the Gaia stamper.\r\n\r\nCanopy is our new community site for all Procedural Worlds Tools with support forums, knowledge base library, tutorials, and much more. Care to take a look?";
+                        string URL = "https://canopy.procedural-worlds.com/?utm_source=";
+#if !GAIA_MESH_PRESENT
+                        message = "Gaia ML is installing and this will take around 5 minutes.\r\n\r\nIn the meantime, please take a moment to see what's new with Gaia ML on Canopy. Canopy contains Forums for support, a Library full of tutorials and documentation, as well as a host of other useful information.\r\n\r\nYou can also optionally upgrade to a Canopy subscription to get the full power of Gaia Pro 2021, or use our new toolbox to get a framerate boost of up to 500%, or to access a trove of content that grows every week.";
+                        URL = "https://canopy.procedural-worlds.com/forums/forum/41-ai-gamedev-toolkit/?utm_source=";
+#endif
+
+                        if (EditorUtility.DisplayDialog("Gaia Installer", message , "Yes, visit Canopy website!", "No thanks"))
+                        {
+                            string version = "Gaia";
+#if GAIA_MESH_PRESENT
+#if GAIA_PRO_PRESENT
+                            version += "Pro";
+#endif
+#else
+                            version += "ML";
+#endif
+                            version += "v" + PWApp.CONF.MajorVersion + PWApp.CONF.MinorVersion + PWApp.CONF.PatchVersion;
+
+                            Application.OpenURL(URL + version + "&utm_medium=UnityEditor&utm_campaign=Canopy");
+                        }
+                    }
+                    
+                    //Get Maintenance Profile
+                    GaiaMaintenanceProfile maintenanceProfile = (GaiaMaintenanceProfile)PWCommon5.AssetUtils.GetAssetScriptableObject("Gaia Maintenance Profile");
+
+                    if (maintenanceProfile == null)
+                    {
+                        Debug.LogWarning("Could not find Gaia Maintenance Profile, maintenance tasks will be skipped.");
+                        return;
+                    }
+
+                    List<string> paths = new List<string>();
+                    for (int i = 0; i < maintenanceProfile.meshColliderPrefabPaths.Length; i++)
+                    {
+                        string path = GaiaDirectories.GetGaiaDirectory() + maintenanceProfile.meshColliderPrefabPaths[i];
+                        if (Directory.Exists(path))
+                        {
+                            paths.Add(path);
+                        }
+                    }
+
+                    string[] allPrefabGuids = AssetDatabase.FindAssets("t:Prefab", paths.ToArray());
+                    List<string> allPrefabPaths = new List<string>();
+
+                    int currentGUID = 0;
+                    foreach (string prefabGUID in allPrefabGuids)
+                    {
+                        EditorUtility.DisplayProgressBar(m_editorUtils.GetTextValue("MaintenanceProgressMeshTitle"), String.Format(m_editorUtils.GetTextValue("MaintenanceProgressMeshText"), currentGUID, allPrefabGuids.Length), (float)currentGUID / (float)allPrefabGuids.Length);
+                        string prefabPath = AssetDatabase.GUIDToAssetPath(prefabGUID);
+                        allPrefabPaths.Add(prefabPath);
+                    }
+
+                    //Perform layer fix
+                    GaiaUtils.FixPrefabLayers(allPrefabPaths);
+
+                    //Read default biome presets
+                    GaiaUtils.ResetBiomePresets();
+
+                    //Do a full scan for biome presets outside the Gaia folder, and prompt the user to add them to the Gaia Manager if they want to
+                    GaiaEditorUtils.SearchAndAddBiomePresets();
+
+                    List<string> directories = new List<string>(Directory.EnumerateDirectories(Application.dataPath, ".", SearchOption.AllDirectories));
+                    bool changesMade = false;
+                    foreach (string directory in directories)
+                    {
+                        //Deletion Tasks
+                        foreach (DeletionTask deletionTask in maintenanceProfile.m_deletionTasks)
+                        {
+                            if (PerformDeletionTask(directory, deletionTask))
+                            {
+                                changesMade = true;
+                            }
+                        }
+                    }
+
+                    //Rename Tasks
+                    foreach (RenameTask renameTask in maintenanceProfile.m_renameTasks)
+                    {
+                        if (PerformRenameTask(renameTask))
                         {
                             changesMade = true;
                         }
                     }
-                }
 
-                //Rename Tasks
-                foreach (RenameTask renameTask in maintenanceProfile.m_renameTasks)
-                {
-                    if (PerformRenameTask(renameTask))
+                    if (changesMade)
                     {
-                        changesMade = true;
+                        AssetDatabase.Refresh();
+                    }
+
+                    if (restartRequired == true)
+                    {
+
+                        if (!m_settings.m_forceShaderReimport)
+                        {
+                            EditorUtility.DisplayDialog("Restart Required", "Gaia will now restart the unity editor due to the changed settings. The installation will be completed after the restart.", "OK");
+                            RemoveMaintenanceToken();
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog("Restart Required", "Gaia will now restart the unity editor due to the changed settings. The installation process will continue when you open the Gaia Manager again after the restart.", "OK");
+                            m_settings.m_shaderReimportRestartRequired = true;
+                            EditorUtility.SetDirty(m_settings);
+                            AssetDatabase.SaveAssets();
+                        }
+                    }
+                    else
+                    {
+                        //Maintenance done, remove token (if not in dev env)
+                        RemoveMaintenanceToken();
                     }
                 }
-
-                if (changesMade)
-                {
-                    AssetDatabase.Refresh();
-                }
             }
+        }
 
-            //Maintenance done, remove token (if not in dev env)
+        private void RemoveMaintenanceToken()
+        {
             if (!System.IO.Directory.Exists(GaiaUtils.GetAssetPath("Dev Utilities")))
             {
                 FileUtil.DeleteFileOrDirectory(GaiaDirectories.GetSettingsDirectory() + "\\" + GaiaConstants.maintenanceTokenFilename);
                 FileUtil.DeleteFileOrDirectory(GaiaDirectories.GetSettingsDirectory() + "\\" + GaiaConstants.maintenanceTokenFilename + ".meta");
                 AssetDatabase.Refresh();
             }
+        }
+
+        private bool CheckForInputManagerSettings()
+        {
+            var ProjectSettingsSO =
+             new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
+            if (ProjectSettingsSO != null)
+            {
+                SerializedProperty inputProp = ProjectSettingsSO.FindProperty("activeInputHandler");
+                if (inputProp.intValue == 1) //1 means new Input system only!
+                {
+                    if (EditorUtility.DisplayDialog("Change Input Handling?", "The project settings in the unity editor currently only allow the Input System Package for Player Input - the Gaia Player Controllers require the Input Manager to be activated as well. Do you want to activate the Input Manager for this project? (This will restart the Unity Editor at the end of the install process.)\r\n\r\nIf you do not activate the Input Manager, you will see error messages in the console when trying to use one of the Gaia Player Controllers. You can change the Active Input Handling any time via the Project Settings -> Player -> Active Input Handling.", "Activate Input Manager", "Do no changes"))
+                    {
+                        inputProp.intValue = 2;
+                        ProjectSettingsSO.ApplyModifiedProperties();
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -5894,9 +7100,9 @@ namespace Gaia
             return materials;
         }
 
-        #endregion
+#endregion
 
-        #region System Helpers
+#region System Helpers
 
         /// <summary>
         /// Display a button that takes editor indentation into account
@@ -5938,7 +7144,7 @@ namespace Gaia
             return Mathf.Clamp(newSize, 32f, m_settings.m_currentDefaults.m_size);
         }
 
-        #region Helper methods
+#region Helper methods
 
         /// <summary>
         /// Get the asset path of the first thing that matches the name
@@ -5982,7 +7188,7 @@ namespace Gaia
             return null;
         }
 
-        #endregion
+#endregion
 
         bool ClickableHeaderCustomStyle(GUIContent content, GUIStyle style, GUILayoutOption[] options = null)
         {
@@ -6172,9 +7378,9 @@ namespace Gaia
 
         }
 
-        #endregion
+#endregion
 
-        #region GAIA eXtensions GX
+#region GAIA eXtensions GX
         public static List<Type> GetTypesInNamespace(string nameSpace)
         {
             List<Type> gaiaTypes = new List<Type>();
@@ -6219,9 +7425,9 @@ namespace Gaia
             }
         }
 
-        #endregion
+#endregion
 
-        #region Commented out tooltips
+#region Commented out tooltips
         ///// <summary>
         ///// The tooltips
         ///// </summary>
@@ -6260,6 +7466,6 @@ namespace Gaia
         //    { "Show Shore Exporter", "Shows shore exporter. Exports a mask of your terrain shoreline." },
         //    { "Show Extension Exporter", "Shows extension exporter. Use extensions to save resource and spawner configurations for later use via the GX tab." },
         //};
-        #endregion
+#endregion
     }
 }

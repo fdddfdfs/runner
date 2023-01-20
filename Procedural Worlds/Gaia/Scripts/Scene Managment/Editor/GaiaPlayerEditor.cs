@@ -147,6 +147,9 @@ namespace Gaia
                         case GaiaConstants.EnvironmentControllerType.Car:
                             GaiaSceneManagement.CreatePlayer(m_gaiaSettings,m_profile.m_instantiateCustomControllers, GaiaConstants.m_carPlayerPrefabName, m_profile.m_spawnPlayerAtCurrentLocation, null, null, true);
                             break;
+                        case GaiaConstants.EnvironmentControllerType.None:
+                            GaiaSceneManagement.CreatePlayer(m_gaiaSettings,m_profile.m_instantiateCustomControllers, "None", m_profile.m_spawnPlayerAtCurrentLocation, null, null, true);
+                            break;
                         case GaiaConstants.EnvironmentControllerType.XRController:
                         {
 #if GAIA_XR
@@ -159,7 +162,7 @@ namespace Gaia
                             m_gaiaSettings.m_currentController = GaiaConstants.EnvironmentControllerType.FlyingCamera;
 #endif
                         }
-                            break;
+                        break;
 
                     }
 

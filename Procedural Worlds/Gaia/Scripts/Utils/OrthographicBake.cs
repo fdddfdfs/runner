@@ -23,7 +23,7 @@ namespace Gaia
         public static GaiaSettings m_gaiaSettings;
         private static List<Light> m_deactivatedLights = new List<Light>();
         private static GameObject m_bakeDirectionalLight;
-        internal static int m_HDLODBiasOverride = 1;
+        public static int m_HDLODBiasOverride = 1;
 
         public static Camera CreateOrthoCam(Vector3 position, float nearClipping, float farClipping, float size, LayerMask cullingMask)
         {
@@ -86,6 +86,8 @@ namespace Gaia
             hdData.renderingPathCustomFrameSettingsOverrideMask.mask[0] = true;
             hdData.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.LODBiasMode] = true;
             hdData.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.LODBias] = true;
+            hdData.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.PlanarProbe] = true;
+            hdData.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.ReflectionProbe] = true;
 #endif
 
             m_orthoCamera = cam;
@@ -194,7 +196,10 @@ namespace Gaia
         {
             foreach (Light light in m_deactivatedLights)
             {
-                light.enabled = true;
+                if (light != null)
+                {
+                    light.enabled = true;
+                }
             }
         }
 
@@ -227,6 +232,18 @@ namespace Gaia
             light.type = LightType.Directional;
             light.transform.rotation = Quaternion.Euler(90, 0, 0);
             light.intensity = intensity;
+#if HDPipeline
+            HDAdditionalLightData lightData = light.GetComponent<HDAdditionalLightData>();
+            if (lightData == null)
+            {
+                lightData = light.gameObject.AddComponent<HDAdditionalLightData>();
+            }
+            if (lightData != null)
+            {
+                lightData.lightUnit = LightUnit.Lux;
+                lightData.intensity = intensity;
+            }
+#endif
             light.color = color;
 
         }

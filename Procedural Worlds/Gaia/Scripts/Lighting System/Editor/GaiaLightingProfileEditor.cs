@@ -427,13 +427,13 @@ namespace Gaia
                         }
                         else if (RenderSettings.ambientMode == AmbientMode.Flat)
                         {
-                            m_profileValues.m_skyAmbient = m_editorUtils.ColorField("SkyAmbient", m_profileValues.m_skyAmbient);
+                            m_profileValues.m_skyAmbient = EditorGUILayout.ColorField(new GUIContent(m_editorUtils.GetTextValue("SkyAmbient"), m_editorUtils.GetTooltip("SkyAmbient")), m_profileValues.m_skyAmbient, true, false, true);
                         }
                         else if (RenderSettings.ambientMode == AmbientMode.Trilight)
                         {
-                            m_profileValues.m_skyAmbient = m_editorUtils.ColorField("SkyAmbient", m_profileValues.m_skyAmbient);
-                            m_profileValues.m_equatorAmbient = m_editorUtils.ColorField("EquatorAmbient", m_profileValues.m_equatorAmbient);
-                            m_profileValues.m_groundAmbient = m_editorUtils.ColorField("GroundAmbient", m_profileValues.m_groundAmbient);
+                            m_profileValues.m_skyAmbient = EditorGUILayout.ColorField(new GUIContent(m_editorUtils.GetTextValue("SkyAmbient"), m_editorUtils.GetTooltip("SkyAmbient")), m_profileValues.m_skyAmbient, true, false, true);
+                            m_profileValues.m_equatorAmbient = EditorGUILayout.ColorField(new GUIContent(m_editorUtils.GetTextValue("EquatorAmbient"), m_editorUtils.GetTooltip("EquatorAmbient")), m_profileValues.m_equatorAmbient, true, false, true);
+                            m_profileValues.m_groundAmbient = EditorGUILayout.ColorField(new GUIContent(m_editorUtils.GetTextValue("GroundAmbient"), m_editorUtils.GetTooltip("GroundAmbient")), m_profileValues.m_groundAmbient, true, false, true);
                         }
                         GUILayout.Space(20f);
                     }

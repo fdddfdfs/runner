@@ -135,11 +135,19 @@ namespace Gaia
                     else
                     {
                         m_profile.m_fogDensity = m_editorUtils.Slider("FogDensity", m_profile.m_fogDensity, 0f, 1f, helpEnabled);
+                        if (m_profile.m_fogDensity < 0f)
+                        {
+                            m_profile.m_fogDensity = 0f;
+                        }
                     }
                 }
                 else
                 {
-                    m_profile.m_fogDistance = m_editorUtils.FloatField("FogEndDistance", m_profile.m_fogDistance, helpEnabled);
+                    m_profile.m_hdrpFogDistance = m_editorUtils.FloatField("FogEndDistance", m_profile.m_hdrpFogDistance, helpEnabled);
+                    if (m_profile.m_hdrpFogDistance < 0.01f)
+                    {
+                        m_profile.m_hdrpFogDistance = 0.01f;
+                    }
                 }
             }
             EditorGUILayout.Space();

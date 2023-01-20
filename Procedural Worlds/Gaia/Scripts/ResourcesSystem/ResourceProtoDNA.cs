@@ -4,9 +4,14 @@ using UnityEngine;
 namespace Gaia
 {
     /// <summary>
-    /// determines how the scale is set when a tree
+    /// determines how the scale is set when a tree is being spawned
     /// </summary>
     public enum SpawnScale { Fixed, Fitness, Random, FitnessRandomized }
+
+    /// <summary>
+    /// determines how the y-offset is being applied when an object is not spawned based on terrain height.
+    /// </summary>
+    public enum YOffsetBasedOn { TerrainHeight, SeaLevel, Custom}
 
     /// <summary>
     /// Used to control how the terrain world proptotypes work

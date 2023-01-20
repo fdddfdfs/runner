@@ -77,6 +77,7 @@ namespace Gaia
 
         private void OnDisable()
         {
+            SceneView.duringSceneGui -= DuringSceneGUI;
 #if GAIA_PRO_PRESENT
             m_maskMapExport.TerrainLoader.m_isSelected = false;
 #endif
@@ -85,6 +86,7 @@ namespace Gaia
 
         private void OnEnable()
         {
+            SceneView.duringSceneGui += DuringSceneGUI;
             m_maskMapExport = (MaskMapExport)target;
             //Init editor utils
             if (m_editorUtils == null)
@@ -863,7 +865,7 @@ namespace Gaia
 
         }
 
-        private void OnSceneGUI()
+        private void DuringSceneGUI(SceneView obj)
         {
             // dont render preview if this isnt a repaint. losing performance if we do
             if (Event.current.type != EventType.Repaint)

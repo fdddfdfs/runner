@@ -8,14 +8,14 @@ public static class Prefs
     private const string VectorYKey = "Y";
     private const string VectorZKey = "Z";
 
-    public static void LoadVariable(out int variable, string key, int defaultValue)
+    public static int LoadVariable(string key, int defaultValue)
     {
-        variable = PlayerPrefs.HasKey(key) ? PlayerPrefs.GetInt(key) : defaultValue;
+        return PlayerPrefs.HasKey(key) ? PlayerPrefs.GetInt(key) : defaultValue;
     }
 
-    public static void LoadVariable(out float variable, string key, float defaultValue)
+    public static float LoadVariable(string key, float defaultValue)
     {
-        variable = PlayerPrefs.HasKey(key) ? PlayerPrefs.GetFloat(key) : defaultValue;
+        return PlayerPrefs.HasKey(key) ? PlayerPrefs.GetFloat(key) : defaultValue;
     }
 
     public static void SaveVariable(int variable, string key)
@@ -26,6 +26,22 @@ public static class Prefs
     public static void SaveVariable(float variable, string key)
     {
         PlayerPrefs.SetFloat(key, variable);
+    }
+
+    public static void SaveVariable<T>(T variable, string key)
+    {
+        if (variable is int valueInt)
+        {
+            SaveVariable(valueInt, key);
+        }
+        else if (variable is float valueFloat)
+        {
+            SaveVariable(valueFloat, key);
+        }
+        else
+        {
+            throw new Exception($"Cannot save variable with type: {typeof(T)}");
+        }
     }
 
     public static void SaveArray(int[] array, string key)

@@ -495,7 +495,7 @@ namespace Gaia
         /// <param name="Name"></param>
         /// <param name="buttonLabel"></param>
         /// <param name="OnClicked"></param>
-        public static void CreateColorField(ref PhotoModeUIHelper runtimeUI, Transform parent, string Name, Color currentColor, UnityAction OnClicked, bool useTooltip = false, string tooltipID = "")
+        public static void CreateColorField(ref PhotoModeUIHelper runtimeUI, Transform parent, string Name, Color currentColor, bool hdr, UnityAction OnClicked, bool useTooltip = false, string tooltipID = "")
         {
             m_isSettingValues = true;
             if (runtimeUI != null)
@@ -521,7 +521,7 @@ namespace Gaia
             runtimeUI.SetImageVisability(false);
             runtimeUI.SetHeaderVisible(false);
             runtimeUI.SetColorPreviewImageVisable(true);
-            runtimeUI.SetColorPreviewImage(currentColor);
+            runtimeUI.SetColorPreviewImage(currentColor, hdr);
             runtimeUI.SetColorPreviewOnClicked(OnClicked);
             runtimeUI.SetVectorVisable(false);
             m_isSettingValues = false;
@@ -937,6 +937,28 @@ namespace Gaia
         #endregion
         #region Utils
 
+        /// <summary>
+        /// Converts vector 4 into a color this is useful when using HDR colors
+        /// RGB = color
+        /// A = HDR intensity
+        /// </summary>
+        /// <param name="vector4"></param>
+        /// <returns></returns>
+        public static Color ConvertVector4ToColor(Vector4 vector4)
+        {
+            return new Color(vector4.x, vector4.y, vector4.z, vector4.w);
+        }
+        /// <summary>
+        /// Converts vector 4 into a color this is useful when using HDR colors
+        /// RGB = color
+        /// A = HDR intensity
+        /// </summary>
+        /// <param name="vector4"></param>
+        /// <returns></returns>
+        public static Vector4 ConvertColorToVector4(Color color)
+        {
+            return new Vector4(color.r, color.g, color.b, color.a);
+        }
         /// <summary>
         /// Function used to set the slider value of UI and input field
         /// The input field will only be set is the user is using the slider

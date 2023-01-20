@@ -50,6 +50,8 @@ namespace Gaia
 
         [Tooltip("Rotate the object to the terrain normal. Allows natural slope following. Great for things like trees to give them a little more variation in your scene.")]
         public bool m_rotateToSlope = false;
+        [Tooltip("Align the forward vector of the prefab to point away from the slope - can be used to control rotation according to the slope.")]
+        public bool m_alignForwardVectorToSlope = false;
         [Tooltip("Should the Y-Offset be applied in the direction of the terrain slope rather than straight upwards")]
         public bool m_yOffsetToSlope = false;
 
@@ -96,7 +98,8 @@ namespace Gaia
         //Just a control flag to store if this instance is folded out
         [HideInInspector]
         public bool m_foldedOut;
-
+        public YOffsetBasedOn m_yOffsetBasedOn = YOffsetBasedOn.TerrainHeight;
+        public float m_customOffset = 0f;
     }
 
     [System.Serializable]

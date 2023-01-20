@@ -79,6 +79,8 @@ public class PW_General_MaterialEditor : ShaderGUI
 	MaterialProperty _PW_SF_WIND;
 	MaterialProperty _PW_SF_WORLDMAP;
 	MaterialProperty _ALPHATEST;
+	//Flora 
+	MaterialProperty _PW_SF_FLORA_INDIRECT;
 
 	private bool AlphaTest_Toggle;
 	private bool PW_WorldMap_Toggle;
@@ -86,6 +88,8 @@ public class PW_General_MaterialEditor : ShaderGUI
 	private bool PW_SSS_Toggle;
 	private bool PW_Wind_Toggle;
 	private bool PW_Billboard_Toggle;
+	//Flora
+	private bool PW_Flora_Indirect_Toggle;
 
 	//HDRP properties and features
 	private MaterialProperty _DiffusionProfile;
@@ -179,7 +183,7 @@ public class PW_General_MaterialEditor : ShaderGUI
 	}
 
 	//-------------------------------------------------------------------------
-	private void GetShaderType( Shader i_shader )
+	private void  GetShaderType( Shader i_shader )
 	{
 		switch ( i_shader.name )
 		{
@@ -187,7 +191,7 @@ public class PW_General_MaterialEditor : ShaderGUI
     		shaderType = GAIA_SHADER_TYPE.FORWARD;
 			break;
 
-		case "PWS/PW_General_URP":
+		case "Shader Graphs/PW_General_ShaderGraph_URP":
     		shaderType = GAIA_SHADER_TYPE.URP;
 			break;
 
@@ -223,7 +227,7 @@ public class PW_General_MaterialEditor : ShaderGUI
 		PW_WorldMap_Toggle = targetMat.IsKeywordEnabled("_PW_SF_WORLDMAP_ON");
 		PW_SSS_Toggle = targetMat.IsKeywordEnabled("_PW_SF_SSS_ON");
 		AlphaTest_Toggle = targetMat.IsKeywordEnabled("_ALPHATEST_ON");
-
+		
 		if (targetMat.IsKeywordEnabled("_PW_SF_BILLBOARD_ON"))
 		{
 			pwShaderMode.floatValue = (int) PW_SHADER_MODE.VEGETATION_BILLBOARD;
@@ -233,6 +237,10 @@ public class PW_General_MaterialEditor : ShaderGUI
 		{
 			PW_Billboard_Toggle = false;
 		}
+		
+		//Flora
+		PW_Flora_Indirect_Toggle = targetMat.IsKeywordEnabled("_PW_SF_FLORA_INDIRECT_ON");
+		
 	}
 	 // -----------------------------------------------------------------------
 	 void SetShaderModeProperties( PW_SHADER_MODE i_shadermode)
@@ -304,6 +312,9 @@ public class PW_General_MaterialEditor : ShaderGUI
 		
 		//HDRP
 		SetShaderFeature ( targetMat, DoubleSidedEnable_Toggle, "_DOUBLESIDED_ON");
+		
+		//Flora
+		SetShaderFeature ( targetMat, PW_Flora_Indirect_Toggle, "_PW_SF_FLORA_INDIRECT_ON");
 	}
 
 	 private void SetShaderKeywordsToggles()
@@ -317,6 +328,9 @@ public class PW_General_MaterialEditor : ShaderGUI
 		 
 		 //HDRP
 		 if(_DoubleSidedEnable != null) _DoubleSidedEnable.floatValue = Convert.ToInt16(DoubleSidedEnable_Toggle);
+		 
+		 //Flora
+		 _PW_SF_FLORA_INDIRECT.floatValue = Convert.ToInt16(PW_Flora_Indirect_Toggle);
 	 }
 
 	//-------------------------------------------------------------------------
@@ -390,6 +404,9 @@ public class PW_General_MaterialEditor : ShaderGUI
 		_PW_SF_WIND = FindProperty("_PW_SF_WIND", props);
 		_PW_SF_WORLDMAP = FindProperty("_PW_SF_WORLDMAP", props);
 		_ALPHATEST = FindProperty("_ALPHATEST", props);
+		
+		//Flora
+		_PW_SF_FLORA_INDIRECT = FindProperty("_PW_SF_FLORA_INDIRECT", props);
 		
 		//HDRP
 		_DiffusionProfile = FindPropertySafe("_DiffusionProfile", props, targetMat);
@@ -558,6 +575,12 @@ public class PW_General_MaterialEditor : ShaderGUI
         SetShaderModeProperties((PW_SHADER_MODE)(int)pwShaderMode.floatValue);
 	}
 
+	private void FloraGUI()
+	{
+		Header ( "Flora options:" );
+		Toggle ( ref PW_Flora_Indirect_Toggle,  "enabled" );
+	}
+
 	//=====================================================================
 	public override void OnGUI ( MaterialEditor i_materialEditor, MaterialProperty[] i_properties )
 	{
@@ -584,8 +607,20 @@ public class PW_General_MaterialEditor : ShaderGUI
 		}
 
 		WindGUI();
+		
 		WorldMapGUI();
 
+		if ( 
+			shaderType == GAIA_SHADER_TYPE.URP 
+		    || shaderType == GAIA_SHADER_TYPE.HDRP 
+		    || shaderType == GAIA_SHADER_TYPE.HDRP_FOLIAGE
+		    || shaderType == GAIA_SHADER_TYPE.DEFERRED
+		    || shaderType == GAIA_SHADER_TYPE.FORWARD
+			)
+		{
+			FloraGUI();
+		}
+		
 		SetShaderKeywordsToggles();
 
 		SetShaderId(i_properties);

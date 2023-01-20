@@ -36,9 +36,9 @@ namespace Gaia
         [HideInInspector]
         public string m_normalFileName; //Used for re-association
         [Tooltip("The width over which the image will stretch on the terrain’s surface.")]
-        public float m_sizeX = 10;
+        public float m_sizeX = 8;
         [Tooltip("The height over which the image will stretch on the terrain’s surface.")]
-        public float m_sizeY = 10;
+        public float m_sizeY = 8;
         [Tooltip("How far from the terrain’s anchor point the tiling will start.")]
         public float m_offsetX = 0;
         [Tooltip("How far from the terrain’s anchor point the tiling will start.")]

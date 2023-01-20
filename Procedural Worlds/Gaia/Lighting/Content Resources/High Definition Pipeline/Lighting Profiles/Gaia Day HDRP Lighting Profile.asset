@@ -318,7 +318,7 @@ MonoBehaviour:
   m_AdvancedMode: 0
   quality:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   enable:
     m_OverrideState: 1
     m_Value: 1
@@ -329,15 +329,15 @@ MonoBehaviour:
     max: 0.5
   m_RaySteps:
     m_OverrideState: 1
-    m_Value: 64
+    m_Value: 32
     min: 16
     max: 128
   m_FullResolutionSS:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   m_FilterRadius:
     m_OverrideState: 1
-    m_Value: 5
+    m_Value: 3
     min: 2
     max: 8
   rayTracing:
@@ -367,7 +367,7 @@ MonoBehaviour:
     min: 0.01
   m_ClampValue:
     m_OverrideState: 1
-    m_Value: 0.8
+    m_Value: 0.5
     min: 0.001
     max: 10
   m_FullResolution:
@@ -383,10 +383,10 @@ MonoBehaviour:
     m_Value: 1
   m_HalfResolutionDenoiser:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   m_DenoiserRadius:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 0.75
     min: 0.001
     max: 1
   m_SecondDenoiserPass:
@@ -648,10 +648,10 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 1
   enabled:
-    m_OverrideState: 0
-    m_Value: 1
+    m_OverrideState: 1
+    m_Value: 0
   usedAlgorithm:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   rayTracing:
     m_OverrideState: 0
@@ -822,21 +822,21 @@ MonoBehaviour:
   m_AdvancedMode: 0
   indirectDiffuseLightingMultiplier:
     m_OverrideState: 1
-    m_Value: 1.4
+    m_Value: 1.3
     min: 0
   indirectDiffuseLightingLayers:
     m_OverrideState: 0
     m_Value: 255
   reflectionLightingMultiplier:
-    m_OverrideState: 0
-    m_Value: 1
+    m_OverrideState: 1
+    m_Value: 0.9
     min: 0
   reflectionLightingLayers:
     m_OverrideState: 0
     m_Value: 255
   reflectionProbeIntensityMultiplier:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.75
     min: 0
 --- !u!114 &114721276873653350
 MonoBehaviour:
@@ -982,10 +982,10 @@ MonoBehaviour:
   active: 0
   m_AdvancedMode: 0
   enable:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   opacity:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
     min: 0
     max: 1
@@ -1001,57 +1001,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56b145d2b9ee1ac4f846968484e7485a, type: 3}
   m_Name: ContactShadows
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   m_AdvancedMode: 0
   quality:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   enable:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   length:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.15
     min: 0
     max: 1
   opacity:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
     min: 0
     max: 1
   distanceScaleFactor:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.5
     min: 0
     max: 1
   maxDistance:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 50
     min: 0
   minDistance:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
     min: 0
   fadeDistance:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 5
     min: 0
   fadeInDistance:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
     min: 0
   rayBias:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.2
     min: 0
     max: 1
   thicknessScale:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.15
     min: 0.02
     max: 1
   m_SampleCount:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 10
     min: 4
     max: 64
@@ -1109,20 +1109,20 @@ MonoBehaviour:
     min: 0
   baseHeight:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 100
   maximumHeight:
     m_OverrideState: 1
     m_Value: 1000
   meanFreePath:
     m_OverrideState: 1
-    m_Value: 1100
+    m_Value: 850
     min: 1
   enableVolumetricFog:
     m_OverrideState: 1
     m_Value: 1
   albedo:
     m_OverrideState: 1
-    m_Value: {r: 0.3400833, g: 0.46488935, b: 0.4629392, a: 1}
+    m_Value: {r: 0.735264, g: 0.864, b: 0.859977, a: 1}
     hdr: 0
     showAlpha: 1
     showEyeDropper: 1
@@ -1133,14 +1133,14 @@ MonoBehaviour:
     max: 1
   depthExtent:
     m_OverrideState: 1
-    m_Value: 400
+    m_Value: 150
     min: 0.1
   denoisingMode:
     m_OverrideState: 0
     m_Value: 2
   anisotropy:
     m_OverrideState: 1
-    m_Value: 0.635
+    m_Value: 0.75
     min: -1
     max: 1
   sliceDistributionUniformity:

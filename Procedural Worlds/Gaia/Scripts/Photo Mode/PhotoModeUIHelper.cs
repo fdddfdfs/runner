@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+#if GAIA_PRO_PRESENT
+using ProceduralWorlds.HDRPTOD;
+#endif
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -439,13 +442,22 @@ namespace Gaia
         #endregion
         #region Color Picker
 
-        public void SetColorPreviewImage(Color color)
+        public void SetColorPreviewImage(Color color, bool hdr = false)
         {
             if (m_colorPreviewButton != null)
             {
+                Color newColor = color;
+                if (hdr)
+                {
+                    if (color.a != 0f && color.a > 1f || color.a < 0f)
+                    {
+                        newColor *= color.a;
+                    }
+                }
+                newColor.a = 1f;
                 ColorBlock colorBlock = m_colorPreviewButton.colors;
-                colorBlock.selectedColor = color;
-                colorBlock.normalColor = color;
+                colorBlock.selectedColor = newColor;
+                colorBlock.normalColor = newColor;
                 m_colorPreviewButton.colors = colorBlock;
             }
         }
@@ -586,6 +598,18 @@ namespace Gaia
         public void SetIsUsingSlider()
         {
             m_isUsingSlider = true;
+        }
+        /// <summary>
+        /// Used to sync the label with the hdrp time of day
+        /// </summary>
+        public void SyncHDRPTimeOfDay()
+        {
+#if HDPipeline && UNITY_2021_2_OR_NEWER && GAIA_PRO_PRESENT
+            if (HDRPTimeOfDayAPI.GetTimeOfDay())
+            {
+                SetInput(HDRPTimeOfDayAPI.GetCurrentTime().ToString());
+            }
+#endif
         }
 
         #endregion
