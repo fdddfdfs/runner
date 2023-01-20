@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public sealed class ResurrectMenu : MonoBehaviour
 {
     private const int BuyBackPrice = 1000;
+    
     private const int SkipTime = 3;
     
     [SerializeField] private GameObject _menu;
