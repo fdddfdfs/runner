@@ -39,9 +39,9 @@ public sealed class UpgradeItem : MonoBehaviour
 
             Stats.Money.Value -= price;
             increaseLevel.Invoke();
-            
+
             Instantiate(_firstLevel, _firstLevel.transform.parent);
-            _price.text = CalculateUpgradePrice(currentLevel).ToString();
+            _price.text = CalculateUpgradePrice(level + 1).ToString();
         });
     }
 

@@ -13,8 +13,8 @@ public class StatsMenu : MonoBehaviour
 
         if (state)
         {
-            _balance.text = Stats.Money.ToString();
-            _record.text = Stats.Record.ToString();
+            _balance.text = Stats.Money.Value.ToString();
+            _record.text = Stats.Record.Value.ToString();
         }
     }
 }
