@@ -134,7 +134,8 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 
     private static float GetSizeZ(GameObject obstacle)
     {
-        float sizeZ = obstacle.GetComponent<BoxCollider>().size.z;
+        var colliders = obstacle.GetComponentsInChildren<BoxCollider>();
+        float sizeZ = colliders.Sum(collider => collider.size.z);
         return sizeZ > EmptyFieldSizeZ ? sizeZ : EmptyFieldSizeZ;
     }
 }
