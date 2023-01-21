@@ -1,4 +1,4 @@
-﻿public sealed class Stats
+﻿public static class Stats
 {
     public const int MaxLevel = 10;
     
@@ -10,19 +10,19 @@
     
     public static Stat HighJumpLevel { get; } = new(nameof(HighJumpLevel), StartLevel);
     
-    public static Stat MagnetLevel = new(nameof(MagnetLevel), StartLevel);
+    public static Stat MagnetLevel { get; } = new(nameof(MagnetLevel), StartLevel);
     
-    public static Stat DoubleMoneyLevel = new(nameof(DoubleMoneyLevel), StartLevel);
+    public static Stat DoubleMoneyLevel { get; } = new(nameof(DoubleMoneyLevel), StartLevel);
     
-    public static Stat ImmuneLevel = new(nameof(ImmuneLevel), StartLevel);
+    public static Stat ImmuneLevel { get; } = new(nameof(ImmuneLevel), StartLevel);
     
-    public static Stat FlyLevel = new(nameof(FlyLevel), StartLevel);
+    public static Stat FlyLevel { get; } = new(nameof(FlyLevel), StartLevel);
     
-    public static Stat BoardCount = new(nameof(BoardCount), StartBoardsCount);
+    public static Stat BoardCount { get; } = new(nameof(BoardCount), StartBoardsCount);
     
-    public static Stat BoardLevel = new(nameof(BoardLevel), StartLevel);
+    public static Stat BoardLevel { get; } = new(nameof(BoardLevel), StartLevel);
     
-    public static Stat DoubleScoreLevel = new(nameof(DoubleScoreLevel), StartLevel);
+    public static Stat DoubleScoreLevel { get; } = new(nameof(DoubleScoreLevel), StartLevel);
     
-    public static Stat Record = new(nameof(Record), 0);
+    public static Stat Record { get; } = new(nameof(Record), 0);
 }

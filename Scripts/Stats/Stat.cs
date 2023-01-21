@@ -1,7 +1,8 @@
-﻿public class Stat
+﻿public sealed class Stat
 {
+    private readonly string _key;
+
     private int _value;
-    private string _key;
 
     public int Value
     {
@@ -9,7 +10,7 @@
         set
         {
             _value = value;
-            Prefs.SaveVariable(_value, nameof(_key));
+            Prefs.SaveVariable(_value, _key);
         }
     }
 
@@ -19,7 +20,7 @@
         LoadValue(defaultValue);
     }
 
-    public void LoadValue(int defaultValue)
+    private void LoadValue(int defaultValue)
     {
         _value = Prefs.LoadVariable(_key, defaultValue);
     }
