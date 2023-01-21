@@ -1,21 +1,23 @@
 ﻿using System.Collections;
+using System.Threading;
 using StarterAssets;
+using UnityEditor.VersionControl;
 using UnityEngine;
+using Task = System.Threading.Tasks.Task;
 
 public abstract class ActivatableItem : Item
 {
-    private WaitForSeconds _waiter;
     private ActiveItemsUI _activeItemsUI;
-
-    private static Coroutine _activateRoutine;
-    private static bool _isActive;
+    
+    private bool _isActive;
+    private CancellationTokenSource _cancellationTokenSource;
     
     public void Init(ActiveItemsUI activeItemsUI, Run run)
     {
         base.Init(run);
-
-        _waiter = new WaitForSeconds(ActiveTime);
+        
         _activeItemsUI = activeItemsUI;
+        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
     }
 
     public override void PickupItem(ThirdPersonController player)
@@ -24,12 +26,17 @@ public abstract class ActivatableItem : Item
 
         if (_isActive)
         {
-            Coroutines.StopRoutine(_activateRoutine);
-            Deactivate();
+            _cancellationTokenSource.Cancel();
+        }
+
+        if (_cancellationTokenSource.IsCancellationRequested)
+        {
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
         }
 
         _activeItemsUI.ShowNewItemEffect(ActiveItemType, ActiveTime);
-        _activateRoutine = Coroutines.StartRoutine(ActivateItem());
+        ActivateTime();
     }
 
     protected abstract float ActiveTime { get; }
@@ -39,13 +46,13 @@ public abstract class ActivatableItem : Item
     protected abstract void Activate();
 
     protected abstract void Deactivate();
-    
-    private IEnumerator ActivateItem()
+
+    private async void ActivateTime()
     {
         _isActive = true;
         Activate();
-        
-        yield return _waiter;
+
+        await Task.Delay((int)ActiveTime * 1000, _run.EndRunToken).ContinueWith(GlobalCancellationToken.EmptyTask);
 
         Deactivate();
         _isActive = false;

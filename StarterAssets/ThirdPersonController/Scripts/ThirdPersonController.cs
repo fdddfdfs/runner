@@ -125,6 +125,8 @@ namespace StarterAssets
         public Dictionary<Type, HorizontalMoveRestriction> HorizontalMoveRestrictions { get; private set; }
 
         public PlayerAnimator PlayerAnimator { get; private set; }
+        
+        public PlayerStateMachine PlayerStateMachine { get; private set; }
 
         public bool IsRoll { get; private set; }
 
@@ -243,7 +245,7 @@ namespace StarterAssets
                     typeof(FlyGravity),
                     new FlyGravity(
                         Gravity,
-                        JumpHeight * 10,
+                        JumpHeight * 5,
                         SprintSpeed,
                         this,
                         _map,
@@ -255,7 +257,7 @@ namespace StarterAssets
                     typeof(SpringGravity),
                     new SpringGravity(
                         Gravity / 2,
-                        JumpHeight * 20,
+                        JumpHeight * 7,
                         SprintSpeed,
                         this,
                         _playerRunInput,
@@ -273,6 +275,8 @@ namespace StarterAssets
                 { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
                 { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
+
+            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI);
         }
 
         private void FixedUpdate()
@@ -302,9 +306,9 @@ namespace StarterAssets
 
         private void BoardActive()
         {
-            if (_playerRunInput.IsBoardPressed && _hittable.GetType() != typeof(ImmuneHittable))
+            if (_playerRunInput.IsBoardPressed && _hittable is PlayerHittable)
             {
-                _board.Activate();
+                PlayerStateMachine.ChangeState(typeof(BoardState));
             }
         }
 

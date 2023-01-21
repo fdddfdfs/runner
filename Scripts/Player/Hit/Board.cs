@@ -37,10 +37,8 @@ public sealed class Board : IHittable
             _isActive = false;
         }
         
-        _activeItemsUI.ShowNewItemEffect(ItemType.Board, ActiveTime);
         _activeRoutine = Coroutines.StartRoutine(Activated());
         _player.ChangeHittable(this);
-        _playerAnimator.ChangeAnimator(typeof(PlayerBoardAnimator));
     }
     
     public bool Hit(HitType hitType)
@@ -75,16 +73,13 @@ public sealed class Board : IHittable
 
     private void Deactivate()
     {
-        _player.ChangeHittable(_player.Hittables[typeof(PlayerHittable)]);
-        _activeItemsUI.HideEffect(ItemType.Board);
+        _player.PlayerStateMachine.ChangeStateSafely(typeof(BoardState), typeof(RunState));
 
         if (_isRecovery)
         {
             Coroutines.StopRoutine(_recoveryRoutine);
             _isRecovery = false;
         }
-        
-        _playerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     private IEnumerator Activated()

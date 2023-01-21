@@ -16,7 +16,7 @@ public abstract class Item : MonoBehaviour
     private BoxCollider _boxCollider;
     private bool _isAutoShowing;
 
-    private Run _run;
+    protected Run _run;
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isDeactivating;
 
@@ -79,6 +79,7 @@ public abstract class Item : MonoBehaviour
         
         if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
         {
+            _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
         }
         

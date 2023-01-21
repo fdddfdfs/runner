@@ -1,11 +1,12 @@
 ﻿using System;
 using StarterAssets;
+using UnityEngine;
 
 public sealed class Fly : ActivatableItem
 {
     private static ThirdPersonController _player;
     
-    public static int Weight => 10;
+    public static int Weight => 5;
     
     protected override float ActiveTime => 10;
 
@@ -26,13 +27,10 @@ public sealed class Fly : ActivatableItem
         }
 
         flyGravity.SetGravityLength(ActiveTime);
-        _player.ChangeGravitable(flyGravity);
-        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
+        _player.PlayerStateMachine.ChangeState(typeof(FlyState));
     }
 
     protected override void Deactivate()
     {
-        _player.ChangeGravitable(_player.Gravitables[typeof(DefaultGravity)]);
-        _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 }

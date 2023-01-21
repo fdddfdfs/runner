@@ -12,6 +12,7 @@ public sealed class FlyGravity : IGravitable
     
     private float _verticalVelocity;
     private float _length;
+    private float _currentTime;
 
     public FlyGravity(
         float gravity,
@@ -48,16 +49,17 @@ public sealed class FlyGravity : IGravitable
         _verticalVelocity = Mathf.Sqrt(_flyHeight * -2f * _gravity);
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
         _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
-        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
     }
 
     public void LeaveGravity()
     {
-        _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+        _currentTime = 0;
     }
 
     public float VerticalVelocity(bool isGrounded)
     {
+        _currentTime += Time.deltaTime;
+        
         if (_verticalVelocity > 0)
         {
             _playerAnimator.ChangeAnimationBool(AnimationType.Jump, true);
@@ -67,11 +69,20 @@ public sealed class FlyGravity : IGravitable
             if (_verticalVelocity < 0)
                 _verticalVelocity = 0;
         }
-        else
+        else if(_currentTime < _length)
         {
             _playerAnimator.ChangeAnimationBool(AnimationType.Jump, false);
         }
-        
+        else if(!isGrounded)
+        {
+            _playerAnimator.ChangeAnimationBool(AnimationType.Fall, true);
+            _verticalVelocity += _gravity * Time.fixedDeltaTime;
+        }
+        else
+        {
+            _player.PlayerStateMachine.ChangeState(typeof(RunState));
+        }
+
         return _verticalVelocity;
     }
 }

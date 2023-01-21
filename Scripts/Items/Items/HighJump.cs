@@ -2,7 +2,7 @@
 
 public sealed class HighJump : ActivatableItem
 {
-    public static int Weight => 1;
+    public static int Weight => 5;
     
     private const float Multiplayer = 3;
     
