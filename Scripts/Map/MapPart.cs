@@ -18,7 +18,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private readonly Transform _player;
     private readonly TBlockInfo _startBlock;
     private readonly bool _haveStartBlock;
-
+    private readonly float _nextBlockDistancePercentToHide;
+    
     private TBlock _firstBlock;
     private float _lastBlockPosition;
     private float _firstBlockPosition;
@@ -32,13 +33,18 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
     }
 
-    protected MapPart(IEnumerable<TBlockInfo> blocksInfo, Transform player, bool haveStartBlock = false)
+    protected MapPart(
+        IEnumerable<TBlockInfo> blocksInfo,
+        Transform player,
+        bool haveStartBlock = false,
+        float nextBlockDistancePercentToHide = 0)
     {
         // TODO: change it to false when make more SO
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
         _blocksPositions = new Queue<TBlock>();
         _player = player;
         _haveStartBlock = haveStartBlock;
+        _nextBlockDistancePercentToHide = nextBlockDistancePercentToHide;
     }
     
     public void CheckToHideBlock()
@@ -46,7 +52,10 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         if (!_firstBlock) return;
             
     
-        if (_player.transform.position.z > _firstBlockPosition + _firstBlock.BlockSize)
+        if (_player.transform.position.z >
+            _firstBlockPosition + 
+            _firstBlock.BlockSize +
+            _blocksPositions.Peek().BlockSize * _nextBlockDistancePercentToHide)
         {
             HideCurrentBlock();
         }

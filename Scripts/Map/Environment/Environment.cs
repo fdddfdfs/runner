@@ -3,10 +3,12 @@ using UnityEngine;
 
 public sealed class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock>
 {
+    private const float NextBlockDistancePercentToHide = 0.2f;
+    
     private readonly List<EnvironmentBlockInfo> _environmentBlocks;
     
     public Environment(List<EnvironmentBlockInfo> environmentBlocks, Transform player)
-        : base(environmentBlocks, player)
+        : base(environmentBlocks, player, false, NextBlockDistancePercentToHide)
     {
         _environmentBlocks = environmentBlocks;
     }
