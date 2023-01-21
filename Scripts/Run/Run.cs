@@ -25,6 +25,9 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void StartRun()
     {
+        _endRunTokenSource?.Dispose();
+        _endRunTokenSource = new CancellationTokenSource();
+        
         foreach (IRunnable runnable in _runnables)
         {
             runnable.StartRun();
@@ -34,8 +37,6 @@ public sealed class Run : MonoBehaviour, IRunnable
         
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-
-        _endRunTokenSource = new CancellationTokenSource();
     }
 
     public void Lose()

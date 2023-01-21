@@ -18,13 +18,14 @@ public sealed class PlayerFlyAnimator : PlayerVisualAnimator
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>
         {
             { AnimationType.Land, new EmptyBoolAnimation() },
-            { AnimationType.Jump, new VisualTakeoffAnimation(_visual)}
+            { AnimationType.Jump, new VisualTakeoffAnimation(_visual)},
+            { AnimationType.Fall, new VisualFallAnimation(_visual)},
         };
 
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
             { AnimationType.Speed, new VisualMoveAnimation(_visual) },
-            { AnimationType.HorizontalRun, new VisualZMoveAnimation(_visual) }
+            { AnimationType.HorizontalRun, new VisualZMoveAnimation(_visual) },
         };
     }
 }

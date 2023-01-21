@@ -232,7 +232,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 16
+  m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &53667650
 PrefabInstance:
@@ -344,10 +344,10 @@ MonoBehaviour:
   m_trackingType: 3
   m_focusOffset: 0
   m_sourceCamera: {fileID: 53667651}
-  m_targetObject: {fileID: 0}
+  m_targetObject: {fileID: 8184915048430977952}
   m_targetLayer:
     serializedVersion: 2
-    m_Bits: 3585
+    m_Bits: 4033
   m_maxFocusDistance: 100
   m_actualFocusDistance: 1
   m_dofAperture: 8
@@ -414,6 +414,20 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &53667656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 53667652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 397b8755dd13e9f4c906f334207c0dc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_gaiaUI: {fileID: 0}
+  m_gaiaCreatedControllers: []
 --- !u!1 &88403892
 GameObject:
   m_ObjectHideFlags: 0
@@ -655,7 +669,7 @@ Transform:
   m_Children:
   - {fileID: 640441783}
   m_Father: {fileID: 0}
-  m_RootOrder: 18
+  m_RootOrder: 15
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &182280983
 GameObject:
@@ -1054,274 +1068,6 @@ MonoBehaviour:
   blendDistance: 0
   weight: 1
   priority: 0
---- !u!114 &253392968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 61587e20dbbff7b4f8b950ee8040aea4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ProfileVersion: None
-  m_reimportHDRPShader: 0
-  m_savedFromScene: 
-  m_gaiaTimeOfDay:
-    m_todStartingType: 0
-    m_todEnabled: 0
-    m_todDayTimeScale: 0
-    m_todHour: 0
-    m_todMinutes: 0
-  m_gaiaWeather:
-    m_season: 0
-    m_windDirection: 0
-  m_lodBias: 2
-  m_kelvinTexture: {fileID: 0}
-  m_lightSystemMode: 0
-  m_thirdPartyLightObject: {fileID: 0}
-  DefaultLightingSet: 0
-  m_lightingMultiSceneLightingSupport: 1
-  m_lightingUpdateInRealtime: 0
-  m_selectedLightingProfileValuesIndex: 0
-  m_profileType: 1
-  m_renamingProfile: 0
-  m_lightingEditSettings: 0
-  m_lightingBakeMode: 1
-  m_lightmappingMode: 2
-  m_masterSkyboxMaterial: {fileID: 0}
-  m_lightingProfiles: []
-  m_parentObjects: 1
-  m_hideProcessVolume: 1
-  m_enablePostProcessing: 1
-  m_enableAmbientAudio: 1
-  m_enableFog: 1
-  m_antiAliasingMode: 4
-  m_AAJitterSpread: 0.55
-  m_AAStationaryBlending: 0.95
-  m_AAMotionBlending: 0.9
-  m_AASharpness: 0.25
-  m_antiAliasingTAAStrength: 0.7
-  m_cameraDithering: 1
-  m_cameraAperture: 16
-  m_usePhysicalCamera: 0
-  m_cameraSensorSize: {x: 70.41, y: 52.63}
-  m_cameraFocalLength: 50
-  m_globalReflectionProbe: 1
-  m_isUserProfileSet: 0
-  m_enableAutoDOF: 1
-  m_dofLayerDetection:
-    serializedVersion: 2
-    m_Bits: 1
-  m_depthOfFieldFocusDistance: 50
-  m_reflectionProbeData:
-    reflectionProbeMode: 1
-    reflectionProbeRefresh: 0
-    reflectionCubemapCompression: 2
-    reflectionProbeTimeSlicingMode: 1
-    reflectionProbesPerRow: 5
-    reflectionProbeOffset: 1.8
-    reflectionProbeClipPlaneDistance: 1000
-    reflectionProbeBlendDistance: 5
-    reflectionprobeCullingMask:
-      serializedVersion: 2
-      m_Bits: 1
-    reflectionProbeShadowDistance: 100
-    reflectionProbeResolution: 2
-    lightProbesPerRow: 50
-    lightProbeSpawnRadius: 25
-    seaLevel: 50
-    filterMode: 1
-  m_waterSystemMode: 0
-  m_thirdPartyWaterObject: {fileID: 0}
-  DefaultWaterSet: 0
-  m_waterMultiSceneLightingSupport: 1
-  m_waterRenamingProfile: 0
-  m_waterUpdateInRealtime: 0
-  m_allowMSAA: 0
-  m_useHDR: 0
-  m_enableDisabeHeightFeature: 1
-  m_disableHeight: 100
-  m_selectedProfile: Deep Blue Ocean
-  m_interval: 0.25
-  m_useCustomRenderDistance: 0
-  m_enableLayerDistances: 0
-  m_customRenderDistance: 500
-  m_customRenderDistances:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
-  m_reflectionSettingsData:
-    m_disableSkyboxReflections: 0
-    m_enableReflections: 1
-    m_ResolutionMultiplier: 1
-    m_ClipPlaneOffset: 0
-    m_ReflectLayers:
-      serializedVersion: 2
-      m_Bits: 4294967295
-    m_Shadows: 0
-    m_enableRenderDistance: 0
-    m_enableRenderDistances: 0
-    m_customRenderDistance: 500
-    m_customRenderDistances:
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    m_textureResolution: 512
-  m_waterEditSettings: 0
-  m_selectedWaterProfileValuesIndex: 0
-  m_autoRefresh: 1
-  m_ignoreSceneConditions: 1
-  m_refreshRate: 0.5
-  m_autoUpdateMode: 0
-  m_useCastics: 1
-  m_mainCausticLight: {fileID: 0}
-  m_causticFramePerSecond: 24
-  m_causticSize: 15
-  InfiniteMode: 1
-  m_waterPrefab: {fileID: 0}
-  m_underwaterParticles: {fileID: 0}
-  m_underwaterHorizonPrefab: {fileID: 0}
-  m_hdPlanarReflections: {fileID: 0}
-  m_transitionFXPrefab: {fileID: 0}
-  m_waterProfiles: []
-  m_activeWaterMaterial: {fileID: 0}
-  m_enableWaterMeshQuality: 0
-  m_waterMeshQuality: 2
-  m_meshType: 0
-  m_customWaterMesh: {fileID: 0}
-  m_zSize: 1000
-  m_xSize: 1000
-  m_customMeshQuality: 100
-  m_enableReflections: 1
-  m_savedWaterRenderDistances: []
-  m_savedWaterRenderDistance: 0
-  m_extraWaterRenderDistance: 0
-  m_disaleSkyboxReflection: 0
-  m_disablePixelLights: 1
-  m_reflectionResolution: 6
-  m_verifiedHDRPReflections: 0
-  m_textureResolution: 512
-  m_clipPlaneOffset: 40
-  m_reflectedLayers:
-    serializedVersion: 2
-    m_Bits: 1
-  m_hdrpReflectionIntensity: 1
-  m_enableOceanFoam: 1
-  m_enableBeachFoam: 1
-  m_enableGPUInstancing: 1
-  m_autoWindControlOnWater: 1
-  m_supportUnderwaterEffects: 1
-  m_supportUnderwaterPostProcessing: 1
-  m_supportUnderwaterFog: 1
-  m_supportUnderwaterParticles: 1
-  m_reflectShadowsHDRP: 0
-  m_roughReflectionsHDRP: 0
-  m_controllerType: 1
-  m_setupPostFX: 1
-  m_spawnPlayerAtCurrentLocation: 1
-  m_instantiateCustomControllers: 0
-  m_customPlayer: {fileID: 0}
-  m_customCamera: {fileID: 0}
-  m_enableLayerCulling: 1
-  m_cullingProfile: {fileID: 0}
-  m_sunLight: {fileID: 0}
-  m_moonLight: {fileID: 0}
-  m_terrainCullingEnabled: 1
-  m_terrainLoaderLoadMode: 0
-  m_terrainLoaderMinRefreshDistance: 0
-  m_terrainLoaderMaxRefreshDistance: 0
-  m_terrainLoaderMinRefreshMS: 0
-  m_terrainLoaderMaxRefreshMS: 0
-  m_terrainLoaderFollowTransform: 0
-  m_terrainLoaderLoadingBoundsRegular:
-    m_Center:
-      x: 0
-      y: 0
-      z: 0
-    m_Extents:
-      x: 0
-      y: 0
-      z: 0
-  m_terrainLoaderLoadingBoundsImpostor:
-    m_Center:
-      x: 0
-      y: 0
-      z: 0
-    m_Extents:
-      x: 0
-      y: 0
-      z: 0
-  m_terrainLoaderLoadingBoundsCollider:
-    m_Center:
-      x: 0
-      y: 0
-      z: 0
-    m_Extents:
-      x: 0
-      y: 0
-      z: 0
-  m_terrainLoaderDataInitialized: 0
 --- !u!1 &257345774
 GameObject:
   m_ObjectHideFlags: 0
@@ -1371,7 +1117,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 15
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &272269897
 GameObject:
@@ -1429,7 +1175,7 @@ GameObject:
   m_Component:
   - component: {fileID: 316202414}
   m_Layer: 5
-  m_Name: Header
+  m_Name: StatsMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2114,8 +1860,8 @@ MonoBehaviour:
   m_terrainLoadingTresholdMS: 100
   m_lastTerrainLoadedTimeStamp: 0
   m_trackLoadingProgressTimeOut: 10000
-  m_terrainSceneStorage: {fileID: 0}
-  m_lastUsedGUID: 
+  m_terrainSceneStorage: {fileID: 11400000, guid: 71345d4a4e69dc4469cd5a84cbc95809, type: 2}
+  m_lastUsedGUID: 71345d4a4e69dc4469cd5a84cbc95809
 --- !u!1 &445209659
 GameObject:
   m_ObjectHideFlags: 0
@@ -2165,14 +1911,14 @@ MonoBehaviour:
   _startLevelBlock: {fileID: 11400000, guid: 701ee843c7b2686408ea0eb210f11729, type: 2}
   _environmentBlockInfos:
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
-  - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
+  - {fileID: 11400000, guid: c5cf20c6fc3a62043808aa672125fd6a, type: 2}
   _roadBlockInfos:
   - {fileID: 11400000, guid: 68cc3c92c39a54849bf49124f84b142a, type: 2}
   _player: {fileID: 8853364875125725466}
   _factories: {fileID: 1288113285}
   _runProgress: {fileID: 272269898}
   _needSpawnLevel: 1
-  _needSpawnEnvironment: 1
+  _needSpawnEnvironment: 0
 --- !u!4 &445209661
 Transform:
   m_ObjectHideFlags: 0
@@ -2680,13 +2426,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 684864042}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_Father: {fileID: 1928741162}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
 GameObject:
@@ -3382,7 +3128,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.00006150129}
+  m_AnchoredPosition: {x: 0, y: 0.000401828}
   m_SizeDelta: {x: 0, y: 1013}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &941321395
@@ -3693,13 +3439,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1061024079}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 14
+  m_Father: {fileID: 1928741162}
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1099190017
 GameObject:
@@ -4549,7 +4295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 223176b09fd283c4da4828330e326a50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_sceneProfile: {fileID: 253392968}
+  m_sceneProfile: {fileID: 1821204010}
   m_mainCamera: {fileID: 53667651}
   m_globalCanvas: {fileID: 0}
   WaterMaterial: {fileID: 0}
@@ -4734,7 +4480,7 @@ Transform:
   - {fileID: 589711868}
   - {fileID: 1665589761}
   m_Father: {fileID: 0}
-  m_RootOrder: 19
+  m_RootOrder: 16
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1306159499
 GameObject:
@@ -5238,6 +4984,53 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &1506715072
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1506715074}
+  - component: {fileID: 1506715073}
+  m_Layer: 0
+  m_Name: StatsMenu
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1506715073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1506715072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7bab756140245e9bb1c117f2a9293e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _menu: {fileID: 316202413}
+  _balance: {fileID: 1608522754}
+  _record: {fileID: 1972141208}
+--- !u!4 &1506715074
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1506715072}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1928741162}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1510192906
 GameObject:
   m_ObjectHideFlags: 0
@@ -6466,6 +6259,274 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1789772710}
   m_CullTransparentMesh: 1
+--- !u!114 &1821204010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61587e20dbbff7b4f8b950ee8040aea4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ProfileVersion: None
+  m_reimportHDRPShader: 0
+  m_savedFromScene: 
+  m_gaiaTimeOfDay:
+    m_todStartingType: 0
+    m_todEnabled: 0
+    m_todDayTimeScale: 0
+    m_todHour: 0
+    m_todMinutes: 0
+  m_gaiaWeather:
+    m_season: 0
+    m_windDirection: 0
+  m_lodBias: 2
+  m_kelvinTexture: {fileID: 0}
+  m_lightSystemMode: 0
+  m_thirdPartyLightObject: {fileID: 0}
+  DefaultLightingSet: 0
+  m_lightingMultiSceneLightingSupport: 1
+  m_lightingUpdateInRealtime: 0
+  m_selectedLightingProfileValuesIndex: 0
+  m_profileType: 1
+  m_renamingProfile: 0
+  m_lightingEditSettings: 0
+  m_lightingBakeMode: 1
+  m_lightmappingMode: 2
+  m_masterSkyboxMaterial: {fileID: 0}
+  m_lightingProfiles: []
+  m_parentObjects: 1
+  m_hideProcessVolume: 1
+  m_enablePostProcessing: 1
+  m_enableAmbientAudio: 1
+  m_enableFog: 1
+  m_antiAliasingMode: 4
+  m_AAJitterSpread: 0.55
+  m_AAStationaryBlending: 0.95
+  m_AAMotionBlending: 0.9
+  m_AASharpness: 0.25
+  m_antiAliasingTAAStrength: 0.7
+  m_cameraDithering: 1
+  m_cameraAperture: 16
+  m_usePhysicalCamera: 0
+  m_cameraSensorSize: {x: 70.41, y: 52.63}
+  m_cameraFocalLength: 50
+  m_globalReflectionProbe: 1
+  m_isUserProfileSet: 0
+  m_enableAutoDOF: 1
+  m_dofLayerDetection:
+    serializedVersion: 2
+    m_Bits: 1
+  m_depthOfFieldFocusDistance: 50
+  m_reflectionProbeData:
+    reflectionProbeMode: 1
+    reflectionProbeRefresh: 0
+    reflectionCubemapCompression: 2
+    reflectionProbeTimeSlicingMode: 1
+    reflectionProbesPerRow: 5
+    reflectionProbeOffset: 1.8
+    reflectionProbeClipPlaneDistance: 1000
+    reflectionProbeBlendDistance: 5
+    reflectionprobeCullingMask:
+      serializedVersion: 2
+      m_Bits: 1
+    reflectionProbeShadowDistance: 100
+    reflectionProbeResolution: 2
+    lightProbesPerRow: 50
+    lightProbeSpawnRadius: 25
+    seaLevel: 50
+    filterMode: 1
+  m_waterSystemMode: 0
+  m_thirdPartyWaterObject: {fileID: 0}
+  DefaultWaterSet: 0
+  m_waterMultiSceneLightingSupport: 1
+  m_waterRenamingProfile: 0
+  m_waterUpdateInRealtime: 0
+  m_allowMSAA: 0
+  m_useHDR: 0
+  m_enableDisabeHeightFeature: 1
+  m_disableHeight: 100
+  m_selectedProfile: Deep Blue Ocean
+  m_interval: 0.25
+  m_useCustomRenderDistance: 0
+  m_enableLayerDistances: 0
+  m_customRenderDistance: 500
+  m_customRenderDistances:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  m_reflectionSettingsData:
+    m_disableSkyboxReflections: 0
+    m_enableReflections: 1
+    m_ResolutionMultiplier: 1
+    m_ClipPlaneOffset: 0
+    m_ReflectLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    m_Shadows: 0
+    m_enableRenderDistance: 0
+    m_enableRenderDistances: 0
+    m_customRenderDistance: 500
+    m_customRenderDistances:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    m_textureResolution: 512
+  m_waterEditSettings: 0
+  m_selectedWaterProfileValuesIndex: 0
+  m_autoRefresh: 1
+  m_ignoreSceneConditions: 1
+  m_refreshRate: 0.5
+  m_autoUpdateMode: 0
+  m_useCastics: 1
+  m_mainCausticLight: {fileID: 0}
+  m_causticFramePerSecond: 24
+  m_causticSize: 15
+  InfiniteMode: 1
+  m_waterPrefab: {fileID: 0}
+  m_underwaterParticles: {fileID: 0}
+  m_underwaterHorizonPrefab: {fileID: 0}
+  m_hdPlanarReflections: {fileID: 0}
+  m_transitionFXPrefab: {fileID: 0}
+  m_waterProfiles: []
+  m_activeWaterMaterial: {fileID: 0}
+  m_enableWaterMeshQuality: 0
+  m_waterMeshQuality: 2
+  m_meshType: 0
+  m_customWaterMesh: {fileID: 0}
+  m_zSize: 1000
+  m_xSize: 1000
+  m_customMeshQuality: 100
+  m_enableReflections: 1
+  m_savedWaterRenderDistances: []
+  m_savedWaterRenderDistance: 0
+  m_extraWaterRenderDistance: 0
+  m_disaleSkyboxReflection: 0
+  m_disablePixelLights: 1
+  m_reflectionResolution: 6
+  m_verifiedHDRPReflections: 0
+  m_textureResolution: 512
+  m_clipPlaneOffset: 40
+  m_reflectedLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  m_hdrpReflectionIntensity: 1
+  m_enableOceanFoam: 1
+  m_enableBeachFoam: 1
+  m_enableGPUInstancing: 1
+  m_autoWindControlOnWater: 1
+  m_supportUnderwaterEffects: 1
+  m_supportUnderwaterPostProcessing: 1
+  m_supportUnderwaterFog: 1
+  m_supportUnderwaterParticles: 1
+  m_reflectShadowsHDRP: 0
+  m_roughReflectionsHDRP: 0
+  m_controllerType: 1
+  m_setupPostFX: 1
+  m_spawnPlayerAtCurrentLocation: 1
+  m_instantiateCustomControllers: 0
+  m_customPlayer: {fileID: 0}
+  m_customCamera: {fileID: 0}
+  m_enableLayerCulling: 1
+  m_cullingProfile: {fileID: 0}
+  m_sunLight: {fileID: 0}
+  m_moonLight: {fileID: 0}
+  m_terrainCullingEnabled: 1
+  m_terrainLoaderLoadMode: 0
+  m_terrainLoaderMinRefreshDistance: 0
+  m_terrainLoaderMaxRefreshDistance: 0
+  m_terrainLoaderMinRefreshMS: 0
+  m_terrainLoaderMaxRefreshMS: 0
+  m_terrainLoaderFollowTransform: 0
+  m_terrainLoaderLoadingBoundsRegular:
+    m_Center:
+      x: 0
+      y: 0
+      z: 0
+    m_Extents:
+      x: 0
+      y: 0
+      z: 0
+  m_terrainLoaderLoadingBoundsImpostor:
+    m_Center:
+      x: 0
+      y: 0
+      z: 0
+    m_Extents:
+      x: 0
+      y: 0
+      z: 0
+  m_terrainLoaderLoadingBoundsCollider:
+    m_Center:
+      x: 0
+      y: 0
+      z: 0
+    m_Extents:
+      x: 0
+      y: 0
+      z: 0
+  m_terrainLoaderDataInitialized: 0
 --- !u!1 &1855225057
 GameObject:
   m_ObjectHideFlags: 0
@@ -6512,13 +6573,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1855225057}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 13
+  m_Father: {fileID: 1928741162}
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1871536759
 GameObject:
@@ -6672,6 +6733,42 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8853364875125725466}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1928741161
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1928741162}
+  m_Layer: 0
+  m_Name: Menus
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1928741162
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928741161}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 684864044}
+  - {fileID: 2023377998}
+  - {fileID: 1855225059}
+  - {fileID: 1061024081}
+  - {fileID: 1506715074}
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1971206020
 GameObject:
@@ -6887,7 +6984,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 20
+  m_RootOrder: 17
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2023377996
 GameObject:
@@ -6920,6 +7017,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _startText: {fileID: 1669029988}
   _upgradeMenu: {fileID: 684864043}
+  _statsMenu: {fileID: 1506715073}
   _run: {fileID: 257345775}
 --- !u!4 &2023377998
 Transform:
@@ -6928,13 +7026,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2023377996}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 12
+  m_Father: {fileID: 1928741162}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!21 &2036045124
 Material:
@@ -7401,7 +7499,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 17
+  m_RootOrder: 14
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &36508868343733927
 Transform:
