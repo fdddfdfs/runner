@@ -59,7 +59,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         _money = 0;
         _moneyText.text = _money.ToString(CultureInfo.InvariantCulture);
         _score = 0;
-        _scoreText.text = _score.ToString(CultureInfo.InvariantCulture);
+        _scoreText.text = ((int)_score).ToString(CultureInfo.InvariantCulture);
         
         ChangeMenuVisible(true);
         
@@ -68,8 +68,6 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void EndRun()
     {
-        Stats.Money.Value += _money;
-
         ChangeMenuVisible(false);
         
         _money = 0;

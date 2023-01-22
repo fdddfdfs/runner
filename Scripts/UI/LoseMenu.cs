@@ -14,16 +14,12 @@ public sealed class LoseMenu : MonoBehaviour
 
     public void ShowLoseMenu(int score, int money)
     {
+        _run.ApplyLoseResults();
+        
         ChangeMenuVisible(true);
         _score.text = score.ToString();
         _money.text = $"+{money.ToString()}";
 
-        Stat record = Stats.Record;
-        if (record.Value < score)
-        {
-            record.Value = score;
-        }
-        
         _restart.onClick.AddListener(() =>
         {
             ChangeMenuVisible(false);

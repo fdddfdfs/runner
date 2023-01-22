@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class PauseController : MonoBehaviour, IPauseable
 {
-    [SerializeField] private GameObject _pauseMenu;
+    [SerializeField] private PauseMenu _pauseMenu;
     [SerializeField] private List<GameObject> _pauseableObjects;
 
     private List<IPauseable> _pausables;
@@ -47,14 +47,18 @@ public sealed class PauseController : MonoBehaviour, IPauseable
         if (_isPause)
         {
             UnPause();
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
         }
         else
         {
             Pause();
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
 
         _isPause = !_isPause;
         
-        _pauseMenu.SetActive(_isPause);
+        _pauseMenu.ChangeMenuActive(_isPause);
     }
 }

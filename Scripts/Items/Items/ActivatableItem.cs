@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Threading;
 using StarterAssets;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using Task = System.Threading.Tasks.Task;
 

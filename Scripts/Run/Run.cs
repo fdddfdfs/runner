@@ -56,6 +56,17 @@ public sealed class Run : MonoBehaviour, IRunnable
         _loseMenu.ShowLoseMenu((int)_runProgress.Score, _runProgress.Money);
     }
 
+    public void ApplyLoseResults()
+    {
+        Stat record = Stats.Record;
+        if (record.Value < _runProgress.Score)
+        {
+            record.Value = (int)_runProgress.Score;
+        }
+        
+        Stats.Money.Value += _runProgress.Money;
+    }
+
     public void Resurrect()
     {
         Time.timeScale = 1;
