@@ -1,8 +1,12 @@
-﻿public sealed class Stat
+﻿using System;
+
+public sealed class Stat
 {
     private readonly string _key;
 
     private int _value;
+
+    public event Action<int> OnValueChanged;
 
     public int Value
     {
@@ -11,6 +15,7 @@
         {
             _value = value;
             Prefs.SaveVariable(_value, _key);
+            OnValueChanged?.Invoke(value);
         }
     }
 

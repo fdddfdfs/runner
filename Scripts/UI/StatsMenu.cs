@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 
 public class StatsMenu : MonoBehaviour
@@ -16,5 +17,22 @@ public class StatsMenu : MonoBehaviour
             _balance.text = Stats.Money.Value.ToString();
             _record.text = Stats.Record.Value.ToString();
         }
+    }
+
+    private void OnEnable()
+    {
+        Stats.Money.OnValueChanged += UpdateBalance;
+    }
+
+    private void OnDisable()
+    {
+        Stats.Money.OnValueChanged -= UpdateBalance;
+    }
+
+    private void UpdateBalance(int newValue)
+    {
+        if (!_menu.activeSelf) return;
+
+        _balance.text = newValue.ToString();
     }
 }
