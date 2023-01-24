@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock>
 {
-    private const float NextBlockDistancePercentToHide = 0.2f;
+    private const float NextBlockDistancePercentToHide = 0.5f;
     
     private readonly List<EnvironmentBlockInfo> _environmentBlocks;
     
