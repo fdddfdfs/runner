@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-public sealed class ActiveItemsUI : MonoBehaviour
+public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
 {
     [SerializeField] private List<ItemType> _itemTypes;
     [SerializeField] private List<Sprite> _itemSprites;
@@ -12,19 +12,6 @@ public sealed class ActiveItemsUI : MonoBehaviour
     private PoolMono<ActiveItem> _activeItems;
     private Dictionary<ItemType, Sprite> _items;
     private Dictionary<ItemType, ActiveItem> _currentlyActiveItems;
-
-    private void Awake()
-    {
-        _currentlyActiveItems = new Dictionary<ItemType, ActiveItem>();
-        
-        _items = new Dictionary<ItemType, Sprite>();
-        for (int i = 0; i < _itemTypes.Count; i++)
-        {
-            _items.Add(_itemTypes[i], _itemSprites[i]);
-        }
-
-        _activeItems = new GameObjectPoolMono<ActiveItem>(_prefab, _parent, true, 5);
-    }
 
     public void ShowNewItemEffect(ItemType itemType, float time)
     {
@@ -56,5 +43,28 @@ public sealed class ActiveItemsUI : MonoBehaviour
         item.ProgressImage.DOKill();
         item.gameObject.SetActive(false);
         _currentlyActiveItems.Remove(itemType);
+    }
+
+    public void StartRun() { }
+
+    public void EndRun()
+    {
+        foreach (ItemType itemType in _itemTypes)
+        {
+            HideEffect(itemType);
+        }
+    }
+    
+    private void Awake()
+    {
+        _currentlyActiveItems = new Dictionary<ItemType, ActiveItem>();
+        
+        _items = new Dictionary<ItemType, Sprite>();
+        for (var i = 0; i < _itemTypes.Count; i++)
+        {
+            _items.Add(_itemTypes[i], _itemSprites[i]);
+        }
+
+        _activeItems = new GameObjectPoolMono<ActiveItem>(_prefab, _parent, true, 5);
     }
 }

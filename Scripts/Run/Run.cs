@@ -11,7 +11,9 @@ public sealed class Run : MonoBehaviour, IRunnable
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private Map _map;
+    [SerializeField] private ActiveItemsUI _activeItemsUI;
     [SerializeField] private ResurrectMenu _resurrectMenu;
+    [SerializeField] private PauseController _pauseController;
     [SerializeField] private LoseMenu _loseMenu;
     [SerializeField] private MainMenu _mainMenu;
 
@@ -78,6 +80,9 @@ public sealed class Run : MonoBehaviour, IRunnable
         DOTween.KillAll();
         Coroutines.StopAllRoutines();
         Time.timeScale = 1;
+        
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
 
         foreach (IRunnable runnable in _runnables)
         {
@@ -105,7 +110,7 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     private void Awake()
     {
-        _runnables = new List<IRunnable> { _map, _player, _runProgress, _follower };
+        _runnables = new List<IRunnable> { _map, _player, _runProgress, _follower, _activeItemsUI, _pauseController };
     }
 
     private void OnDisable()
