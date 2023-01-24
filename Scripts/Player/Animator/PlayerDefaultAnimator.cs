@@ -6,6 +6,8 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
 {
     protected override string AnimatorResourceName => "DefaultAnimator";
 
+    private readonly DefaultHorizontalMoveAnimation _defaultHorizontalMoveAnimation;
+
     public PlayerDefaultAnimator(
         Animator playerAnimator,
         IReadOnlyDictionary<AnimationType, int> animationsID,
@@ -24,10 +26,18 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
             { AnimationType.Fall, new BoolAnimation(playerAnimator, animationsID[AnimationType.Fall]) },
         };
 
+        _defaultHorizontalMoveAnimation = new DefaultHorizontalMoveAnimation(player);
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
             { AnimationType.Speed, new FloatAnimation(playerAnimator, animationsID[AnimationType.Speed]) },
-            { AnimationType.HorizontalRun, new DefaultHorizontalMoveAnimation(player) }
+            { AnimationType.HorizontalRun, _defaultHorizontalMoveAnimation }
         };
+    }
+
+    public override void ExitAnimator()
+    {
+        base.ExitAnimator();
+        
+        _defaultHorizontalMoveAnimation.ForceSetFloat(0);
     }
 }
