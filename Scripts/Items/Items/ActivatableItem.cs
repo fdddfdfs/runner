@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Threading;
+﻿using System.Threading;
 using StarterAssets;
 using UnityEngine;
 using Task = System.Threading.Tasks.Task;
@@ -7,32 +6,19 @@ using Task = System.Threading.Tasks.Task;
 public abstract class ActivatableItem : Item
 {
     private ActiveItemsUI _activeItemsUI;
+    private ItemsActiveStates _itemsActiveStates;
     
-    private bool _isActive;
-    private CancellationTokenSource _cancellationTokenSource;
-    
-    public void Init(ActiveItemsUI activeItemsUI, Run run)
+    public void Init(ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
     {
         base.Init(run);
         
         _activeItemsUI = activeItemsUI;
-        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+        _itemsActiveStates = itemsActiveStates;
     }
 
     public override void PickupItem(ThirdPersonController player)
     {
         base.PickupItem(player);
-
-        if (_isActive)
-        {
-            _cancellationTokenSource.Cancel();
-        }
-
-        if (_cancellationTokenSource.IsCancellationRequested)
-        {
-            _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
-        }
 
         _activeItemsUI.ShowNewItemEffect(ActiveItemType, ActiveTime);
         ActivateTime();
@@ -48,12 +34,16 @@ public abstract class ActivatableItem : Item
 
     private async void ActivateTime()
     {
-        _isActive = true;
+        _itemsActiveStates.ActivateItem(ActiveItemType);
         Activate();
 
-        await Task.Delay((int)ActiveTime * 1000, _run.EndRunToken).ContinueWith(GlobalCancellationToken.EmptyTask);
+        CancellationToken token = _itemsActiveStates.GetTokenForItem(ActiveItemType);
 
+        await Task.Delay((int)ActiveTime * 1000, token).ContinueWith(GlobalCancellationToken.EmptyTask);
+
+        if (token.IsCancellationRequested) return;
+        
         Deactivate();
-        _isActive = false;
+        _itemsActiveStates.DeactivateItem(ActiveItemType);
     }
 }

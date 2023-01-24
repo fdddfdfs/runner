@@ -59,7 +59,7 @@ public sealed class Magnet : Item
             {
                 if (_overlappedColliders[i].TryGetComponent(out Money money))
                 {
-                    money.MoveToPlayer(player);
+                    money.MoveToPlayerAsync(player);
                 }
             }
 

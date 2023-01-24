@@ -9,9 +9,9 @@
     
     protected override ItemType ActiveItemType => ItemType.DoubleMoney;
     
-    public void Init(RunProgress runProgress, ActiveItemsUI activeItemsUI, Run run)
+    public void Init(RunProgress runProgress, ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
     {
-        base.Init(activeItemsUI, run);
+        base.Init(activeItemsUI, run, itemsActiveStates);
         
         _runProgress = runProgress;
     }
