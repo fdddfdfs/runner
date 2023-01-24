@@ -25,7 +25,7 @@ public sealed class Money : Item
         }
     };
 
-    public static int Weight => 10;
+    public static int Weight => 20;
 
     public void Init(RunProgress runProgress, Run run, bool isAutoShowing)
     {

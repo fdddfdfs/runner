@@ -4,7 +4,7 @@ public sealed class Immune : ActivatableItem
 {
     private static ThirdPersonController _player;
     
-    public static int Weight => 10;
+    public static int Weight => 1;
     
     protected override float ActiveTime => 10;
     
