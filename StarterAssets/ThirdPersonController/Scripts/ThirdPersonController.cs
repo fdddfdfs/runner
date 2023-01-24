@@ -306,9 +306,9 @@ namespace StarterAssets
 
         private void BoardActive()
         {
-            if (_playerRunInput.IsBoardPressed && _hittable is PlayerHittable)
+            if (_playerRunInput.IsBoardPressed)
             {
-                PlayerStateMachine.ChangeState(typeof(BoardState));
+                PlayerStateMachine.ChangeStateSafely(typeof(RunState),typeof(BoardState));
             }
         }
 
