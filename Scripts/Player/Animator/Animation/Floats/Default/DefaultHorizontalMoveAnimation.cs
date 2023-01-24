@@ -22,4 +22,9 @@ public sealed class DefaultHorizontalMoveAnimation : IFloatAnimation
         
         _player.transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
     }
+
+    public void ForceSetFloat(float value)
+    {
+        _player.transform.rotation = Quaternion.Euler(0.0f, value, 0.0f);
+    }
 }
