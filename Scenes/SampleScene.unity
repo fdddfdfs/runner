@@ -2181,7 +2181,7 @@ MonoBehaviour:
   _factories: {fileID: 1288113285}
   _runProgress: {fileID: 272269898}
   _needSpawnLevel: 1
-  _needSpawnEnvironment: 1
+  _needSpawnEnvironment: 0
 --- !u!4 &445209661
 Transform:
   m_ObjectHideFlags: 0
@@ -2291,7 +2291,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &589711868
 Transform:
   m_ObjectHideFlags: 0
@@ -3064,7 +3064,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &853501948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7360,8 +7360,8 @@ MonoBehaviour:
   m_customPlayer: {fileID: 0}
   m_customCamera: {fileID: 0}
   m_enableLayerCulling: 1
-  m_cullingProfile: {fileID: 0}
-  m_sunLight: {fileID: 0}
+  m_cullingProfile: {fileID: 11400000, guid: 734fc2e3b0454454ab44fec86e4b9b1f, type: 2}
+  m_sunLight: {fileID: 705507994}
   m_moonLight: {fileID: 0}
   m_terrainCullingEnabled: 1
   m_terrainLoaderLoadMode: 0
