@@ -8,6 +8,7 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _backToMenuButton;
     [SerializeField] private Run _run;
+    [SerializeField] private PauseController _pauseController;
     
     public void ChangeMenuActive(bool isActive)
     {
@@ -18,19 +19,19 @@ public class PauseMenu : MonoBehaviour
     {
         _restartButton.onClick.AddListener(() =>
         {
+            _pauseController.ChangePauseState();
+            
             _run.ApplyLoseResults();
             _run.EndRun();
             _run.StartRun();
-            ChangeMenuActive(false);
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
         });
         
         _backToMenuButton.onClick.AddListener(() =>
         {
+            _pauseController.ChangePauseState();
+            
             _run.ApplyLoseResults();
             _run.BackToMenu();
-            ChangeMenuActive(false);
         });
     }
 }
