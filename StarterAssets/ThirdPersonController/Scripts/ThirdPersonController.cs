@@ -176,6 +176,7 @@ namespace StarterAssets
 
         public void StartRun()
         {
+            PlayerStateMachine.StartRun();
             _playerRunInput.StartRun();
 
             _isPause = false;
@@ -187,6 +188,7 @@ namespace StarterAssets
 
         public void EndRun()
         {
+            PlayerStateMachine.EndRun();
             _playerRunInput.EndRun();
             
             Controller.Move(_startPosition - transform.localPosition);
