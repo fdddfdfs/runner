@@ -22,9 +22,10 @@ public sealed class PlayerAnimator
             { typeof(PlayerFlyAnimator), new PlayerFlyAnimator(playerAnimator, player) },
             { typeof(PlayerBoardAnimator), new PlayerBoardAnimator(playerAnimator, animationsID, player) },
             { typeof(PlayerImmuneAnimator), new PlayerImmuneAnimator(playerAnimator, animationsID, player) },
+            { typeof(PlayerIdleAnimator), new PlayerIdleAnimator(playerAnimator) },
         };
         
-        ChangeAnimator(typeof(PlayerDefaultAnimator));
+        ChangeAnimator(typeof(PlayerIdleAnimator));
     }
 
     public void ChangeAnimator(Type animatorType)
