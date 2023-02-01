@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
 
 namespace StarterAssets
@@ -15,6 +16,7 @@ namespace StarterAssets
         [SerializeField] private Follower _follower;
         [SerializeField] private Factories _factories;
         [SerializeField] private Transform _playerMesh;
+        [SerializeField] private InputActionAsset _inputActionAsset;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -96,7 +98,6 @@ namespace StarterAssets
         private float _terminalVelocity = 53.0f;
         
         private Animator _animator;
-        private StarterAssetsInputs _input;
         private GameObject _mainCamera;
 
         private IHittable _hittable;
@@ -202,7 +203,9 @@ namespace StarterAssets
 
         private void Awake()
         {
-            _playerRunInput = new PlayerRunInput();
+            InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
+            _playerRunInput = new PlayerRunInput(inputActionMap);
+            inputActionMap.Enable();
 
             _startPosition = transform.position;
             _isPause = true;
@@ -226,7 +229,6 @@ namespace StarterAssets
             TryGetComponent(out _animator);
             _animator.keepAnimatorControllerStateOnDisable = true;
             Controller = GetComponent<CharacterController>();
-            _input = GetComponent<StarterAssetsInputs>();
 
             PlayerAnimator = new PlayerAnimator(_animator, this);
 
@@ -341,9 +343,8 @@ namespace StarterAssets
             int dir = CheckForMovingX();
             
             Vector3 inputMove = new(dir, 0, _moveZ);
-            _input.sprint = true;
 
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            float targetSpeed = SprintSpeed;
 
             if (inputMove == Vector3.zero) targetSpeed = 0.0f;
 

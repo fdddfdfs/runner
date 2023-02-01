@@ -6,7 +6,7 @@ public sealed class Road : MapPart<RoadBlockInfo, RoadBlock>
     private readonly List<RoadBlockInfo> _roadBlockInfos;
     
     public Road(List<RoadBlockInfo> roadBlockInfos, Transform player)
-        : base(roadBlockInfos, player)
+        : base(roadBlockInfos, player, false, 0.2f)
     {
         _roadBlockInfos = roadBlockInfos;
     }

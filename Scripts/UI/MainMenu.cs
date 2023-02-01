@@ -1,5 +1,6 @@
 ﻿using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public sealed class MainMenu : MonoBehaviour
@@ -9,6 +10,9 @@ public sealed class MainMenu : MonoBehaviour
     [SerializeField] private StatsMenu _statsMenu;
     [SerializeField] private Run _run;
     [SerializeField] private Button _exit;
+    [SerializeField] private InputActionAsset _inputActionAsset;
+
+    private bool _isStartPressed;
 
     private bool _isRun;
 
@@ -27,13 +31,18 @@ public sealed class MainMenu : MonoBehaviour
         ShowMainMenu();
         
         _exit.onClick.AddListener(Application.Quit);
+
+        InputActionMap inputActionMap = _inputActionAsset.FindActionMap("UI", true);
+        inputActionMap.Enable();
+        inputActionMap["StartRace"].started += (_) => _isStartPressed = true;
+        inputActionMap["StartRace"].canceled += (_) => _isStartPressed = false;
     }
 
     private void Update()
     {
         if (_isRun) return;
         
-        if (Input.GetKeyDown(KeyCode.F))
+        if (_isStartPressed)
         {
             StartRun();
         }

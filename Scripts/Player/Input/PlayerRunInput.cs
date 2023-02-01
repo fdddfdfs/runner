@@ -73,7 +73,21 @@ public sealed class PlayerRunInput : IRunnable
             return true;
         }
     }
-
+    
+    public PlayerRunInput(InputActionMap inputActionMap)
+    {
+        inputActionMap["Left"].started += (_) => _isLeftPressed = true;
+        inputActionMap["Left"].canceled += (_) => _isLeftPressed = false;
+        inputActionMap["Right"].started += (_) => _isRightPressed = true;
+        inputActionMap["Right"].canceled += (_) => _isRightPressed = false;
+        inputActionMap["Jump"].started += (_) => _isJumpPressed = true;
+        inputActionMap["Jump"].canceled += (_) => _isJumpPressed = false;
+        inputActionMap["Roll"].started += (_) => _isRollPressed = true;
+        inputActionMap["Roll"].canceled += (_) => _isRollPressed = false;
+        inputActionMap["ActivateBoard"].started += (_) => _isBoardPressed = true;
+        inputActionMap["ActivateBoard"].canceled += (_) => _isBoardPressed = false;
+    }
+    
     public void Update()
     {
         if (!_isRun) return;
