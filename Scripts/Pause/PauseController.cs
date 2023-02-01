@@ -1,14 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
 {
     [SerializeField] private PauseMenu _pauseMenu;
     [SerializeField] private List<GameObject> _pauseableObjects;
+    [SerializeField] private InputActionAsset _inputActionAsset;
 
     private List<IPauseable> _pausables;
     private bool _isPause;
     private bool _isRun;
+    private bool _isPausePressed;
     
     public void Pause()
     {
@@ -53,12 +56,22 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
         {
             _pausables.Add(pauseableObject.GetComponent<IPauseable>());
         }
+
+        InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
+        inputActionMap["Pause"].started += (_) =>
+        {
+            if (_isRun)
+            {
+                _isPausePressed = true;
+            }
+        };
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && _isRun)
+        if (_isPausePressed && _isRun)
         {
+            _isPausePressed = false;
             ChangePauseState();
         }
     }

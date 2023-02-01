@@ -2171,10 +2171,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d9c4aa2812348f747a9872add0406215, type: 2}
   _startLevelBlock: {fileID: 11400000, guid: 701ee843c7b2686408ea0eb210f11729, type: 2}
   _environmentBlockInfos:
+  - {fileID: 11400000, guid: 3158a82d0222dd74bb512fa94c07c482, type: 2}
   - {fileID: 11400000, guid: 75be1df1dd8152a4a94cb6a23e6eb77c, type: 2}
-  - {fileID: 11400000, guid: 75be1df1dd8152a4a94cb6a23e6eb77c, type: 2}
-  - {fileID: 11400000, guid: 75be1df1dd8152a4a94cb6a23e6eb77c, type: 2}
-  - {fileID: 11400000, guid: 75be1df1dd8152a4a94cb6a23e6eb77c, type: 2}
+  - {fileID: 11400000, guid: eb34587e00f66244c8fa95bd8da235fc, type: 2}
+  - {fileID: 11400000, guid: c5cf20c6fc3a62043808aa672125fd6a, type: 2}
+  - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   _roadBlockInfos:
   - {fileID: 11400000, guid: 68cc3c92c39a54849bf49124f84b142a, type: 2}
   _mainMenuLocationPrefab: {fileID: 7193079524441553003, guid: bd5f1a42f252d2f47a421b0e8152f3e4, type: 3}
@@ -3066,7 +3067,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &853501948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5131,6 +5132,7 @@ MonoBehaviour:
   _pauseableObjects:
   - {fileID: 8184915048430977952}
   - {fileID: 445209659}
+  _inputActionAsset: {fileID: -944628639613478452, guid: a1592387a00dd784f9a733fee0165b7d, type: 3}
 --- !u!4 &1306159501
 Transform:
   m_ObjectHideFlags: 0
@@ -7078,7 +7080,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 327491353}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.016504854
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7133,7 +7135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61587e20dbbff7b4f8b950ee8040aea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ProfileVersion: None
+  ProfileVersion: 3.2.6
   m_reimportHDRPShader: 0
   m_savedFromScene: 
   m_gaiaTimeOfDay:
@@ -7296,7 +7298,7 @@ MonoBehaviour:
     - 0
     m_textureResolution: 512
   m_waterEditSettings: 0
-  m_selectedWaterProfileValuesIndex: 0
+  m_selectedWaterProfileValuesIndex: 1
   m_autoRefresh: 1
   m_ignoreSceneConditions: 1
   m_refreshRate: 0.5
