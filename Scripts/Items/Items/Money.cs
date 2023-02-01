@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using DG.Tweening;
 using StarterAssets;
@@ -31,11 +32,8 @@ public sealed class Money : Item
         base.PickupItem(player);
         
         _runProgress.AddMoney();
-
-        if (transform.localPosition != _startPosition)
-        {
-            transform.localPosition = _startPosition;
-        }
+        
+        transform.localPosition = _startPosition;
     }
 
     public async void MoveToPlayerAsync(ThirdPersonController player)
@@ -43,11 +41,17 @@ public sealed class Money : Item
         float currentTime = 0;
         Vector3 currentPosition = transform.position;
         Transform endTransform = player.transform;
+        CancellationToken token = _run.EndRunToken;
         while (currentTime < Speed)
         {
             transform.position = Vector3.Lerp(currentPosition, endTransform.position, currentTime / Speed);
             currentTime += Time.deltaTime;
             await Task.Yield();
+
+            if (token.IsCancellationRequested || _isPicked)
+            {
+                break;
+            }
         }
         
         PickupItem(player);

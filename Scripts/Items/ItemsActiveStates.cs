@@ -20,9 +20,10 @@ public class ItemsActiveStates
         }
 
         ActiveState activeState = _itemActiveStates[item];
-        if (activeState.IsActive)
+        if (activeState.IsActive || activeState.CancellationTokenSource.IsCancellationRequested)
         {
             activeState.CancellationTokenSource.Cancel();
+            activeState.CancellationTokenSource.Dispose();
             activeState.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
         }
 
