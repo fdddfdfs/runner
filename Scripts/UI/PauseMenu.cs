@@ -9,10 +9,15 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button _backToMenuButton;
     [SerializeField] private Run _run;
     [SerializeField] private PauseController _pauseController;
-    
+
     public void ChangeMenuActive(bool isActive)
     {
         _menu.SetActive(isActive);
+
+        if (isActive)
+        {
+            _restartButton.Select();
+        }
     }
 
     private void Awake()

@@ -19,6 +19,7 @@ public sealed class LoseMenu : MonoBehaviour
         ChangeMenuVisible(true);
         _score.text = score.ToString();
         _money.text = $"+{money.ToString()}";
+        _restart.Select();
 
         _restart.onClick.AddListener(() =>
         {

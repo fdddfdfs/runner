@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public sealed class UpgradeMenu : MonoBehaviour
 {
@@ -10,12 +11,19 @@ public sealed class UpgradeMenu : MonoBehaviour
     [SerializeField] private GameObject _upgradeItemPrefab;
     [SerializeField] private List<ItemType> _itemTypes;
     [SerializeField] private List<Sprite> _itemSprites;
+    [SerializeField] private ScrollRect _scrollRect;
     
     private Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)> _upgradeActions;
+    private UpgradeItem _firstUpgradeItem;
 
     public void ChangeMenuVisible(bool visible)
     {
         _menu.SetActive(visible);
+
+        if (visible && _firstUpgradeItem)
+        {
+            _firstUpgradeItem.SelectButton();
+        }
     }
 
     private void Start()
@@ -65,7 +73,21 @@ public sealed class UpgradeMenu : MonoBehaviour
                 itemInfo[_itemTypes[i]].name,
                 itemInfo[_itemTypes[i]].description,
                 _upgradeActions[_itemTypes[i]].getLevel,
-                _upgradeActions[_itemTypes[i]].increaseLevel);
+                _upgradeActions[_itemTypes[i]].increaseLevel,
+                i);
+
+            upgradeItem.OnSelect += SetVerticalPosition;
+
+            if (i == 0)
+            {
+                _firstUpgradeItem = upgradeItem;
+                _firstUpgradeItem.SelectButton();
+            }
         }
+    }
+
+    private void SetVerticalPosition(int index)
+    {
+        _scrollRect.verticalScrollbar.value = 1 - (float)index / (_itemTypes.Count - 1);
     }
 }

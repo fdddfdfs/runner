@@ -27,7 +27,7 @@ public sealed class MainMenu : MonoBehaviour
 
     private void Awake()
     {
-        _startText.text = "Press F to start run";
+        _startText.text = "Press F/Start to start run";
         ShowMainMenu();
         
         _exit.onClick.AddListener(Application.Quit);

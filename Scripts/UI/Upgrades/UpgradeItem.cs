@@ -1,5 +1,6 @@
 ﻿using System;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,7 +13,15 @@ public sealed class UpgradeItem : MonoBehaviour
     [SerializeField] private TMP_Text _price;
     [SerializeField] private Button _buy;
 
-    public void Init(Sprite itemSprite, string itemName, string itemDescription, Func<int> getLevel, Action increaseLevel)
+    public event Action<int> OnSelect;
+
+    public void Init(
+        Sprite itemSprite,
+        string itemName,
+        string itemDescription,
+        Func<int> getLevel,
+        Action increaseLevel,
+        int index)
     {
         _image.sprite = itemSprite;
         _name.text = itemName;
@@ -43,6 +52,13 @@ public sealed class UpgradeItem : MonoBehaviour
             Instantiate(_firstLevel, _firstLevel.transform.parent);
             _price.text = CalculateUpgradePrice(level + 1).ToString();
         });
+
+        _buy.AddComponent<OnSelectButton>().Init(() => OnSelect?.Invoke(index));
+    }
+    
+    public void SelectButton()
+    {
+        _buy.Select();
     }
 
     //TODO: make function to calculate upgrade price

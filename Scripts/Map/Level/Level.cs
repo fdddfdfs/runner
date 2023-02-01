@@ -14,7 +14,7 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
         Factories factories,
         Transform player,
         RunProgress runProgress) :
-        base(levelBlocks, player, true, 0.2f)
+        base(levelBlocks, player, true)
     {
         _factories = factories;
         _runProgress = runProgress;

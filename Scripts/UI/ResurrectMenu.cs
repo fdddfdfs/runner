@@ -69,6 +69,11 @@ public sealed class ResurrectMenu : MonoBehaviour
     private void ChangeMenuVisible(bool visible)
     {
         _menu.SetActive(visible);
+        
+        if (visible)
+        {
+            _skip.Select();
+        }
     }
 
     private void ChangeBuybackState()
