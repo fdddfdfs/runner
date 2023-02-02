@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
@@ -17,6 +18,8 @@ namespace StarterAssets
         [SerializeField] private Factories _factories;
         [SerializeField] private Transform _playerMesh;
         [SerializeField] private InputActionAsset _inputActionAsset;
+        [SerializeField] private CinemachineVirtualCamera _runCamera;
+        [SerializeField] private CinemachineVirtualCamera _idleCamera;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -114,6 +117,7 @@ namespace StarterAssets
         private Vector3 _startPosition;
 
         private PlayerRunInput _playerRunInput;
+        private PlayerCamera _playerCamera;
 
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
@@ -179,6 +183,7 @@ namespace StarterAssets
         {
             PlayerStateMachine.StartRun();
             _playerRunInput.StartRun();
+            _playerCamera.StartRun();
 
             _isPause = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
@@ -191,6 +196,7 @@ namespace StarterAssets
         {
             PlayerStateMachine.EndRun();
             _playerRunInput.EndRun();
+            _playerCamera.EndRun();
             
             Controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
@@ -231,6 +237,7 @@ namespace StarterAssets
             Controller = GetComponent<CharacterController>();
 
             PlayerAnimator = new PlayerAnimator(_animator, this);
+            _playerCamera = new PlayerCamera(_runCamera, _idleCamera);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {
@@ -330,12 +337,10 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
-            _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
-            _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
-
-            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
-                _cinemachineTargetPitch + CameraAngleOverride,
-                _cinemachineTargetYaw, 0.0f);
+            CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(
+                0,
+                -transform.rotation.eulerAngles.y,
+                0.0f);
         }
 
         private void Move()
