@@ -1,0 +1,107 @@
+﻿using System.Collections.Generic;
+
+public static class Languages
+{
+    public enum Language
+    {
+        English,
+        German,
+        French,
+        Italian,
+        Korean,
+        SpanishSpain,
+        SimplifiedChinese,
+        TraditionalChinese,
+        Russian,
+        Thai,
+        Japanese,
+        PortuguesePortugal,
+        Polish,
+        Danish,
+        Dutch,
+        Finnish,
+        Norwegian,
+        Swedish,
+        Hungarian,
+        Czech,
+        Romanian,
+        Turkish,
+        PortugueseBrazil,
+        Bulgarian,
+        Greek,
+        Ukrainian,
+        Vietnamese,
+        SpanishLatinAmerica,
+        SteamChina,
+    }
+
+    private static readonly Dictionary<Language, string> _steamJsonLanguages = new()
+    {
+        { Language.English, "english" },
+        { Language.German, "german" },
+        { Language.French, "french" },
+        { Language.Italian, "italian" },
+        { Language.Korean, "koreana" },
+        { Language.SpanishSpain, "spanish" },
+        { Language.SimplifiedChinese, "schinese" },
+        { Language.TraditionalChinese, "tchinese" },
+        { Language.Russian, "russian" },
+        { Language.Thai, "thai" },
+        { Language.Japanese, "japanese" },
+        { Language.PortuguesePortugal, "portuguese" },
+        { Language.Polish, "polish" },
+        { Language.Danish, "danish" },
+        { Language.Dutch, "dutch" },
+        { Language.Finnish, "finnish" },
+        { Language.Norwegian, "norwegian" },
+        { Language.Swedish, "swedish" },
+        { Language.Hungarian, "hungarian" },
+        { Language.Czech, "czech" },
+        { Language.Romanian, "romanian" },
+        { Language.Turkish, "turkish" },
+        { Language.PortugueseBrazil, "brazilian" },
+        { Language.Bulgarian, "bulgarian" },
+        { Language.Greek, "greek" },
+        { Language.Ukrainian, "ukrainian" },
+        { Language.Vietnamese, "vietnamese" },
+        { Language.SpanishLatinAmerica, "latam" },
+        { Language.SteamChina, "sc_schinese" },
+    };
+
+    private static readonly Dictionary<Language, string> _translatorLanguages = new()
+    {
+        { Language.English, "en" },
+        { Language.German, "de" },
+        { Language.French, "fr" },
+        { Language.Italian, "it" },
+        { Language.Korean, "ko" },
+        { Language.SpanishSpain, "es" },
+        { Language.SimplifiedChinese, "zh-CN" },
+        { Language.TraditionalChinese, "zh-TW" },
+        { Language.Russian, "ru" },
+        { Language.Thai, "th" },
+        { Language.Japanese, "ja" },
+        { Language.PortuguesePortugal, "pt" },
+        { Language.Polish, "pl" },
+        { Language.Danish, "da" },
+        { Language.Dutch, "nl" },
+        { Language.Finnish, "fi" },
+        { Language.Norwegian, "no" },
+        { Language.Swedish, "sv" },
+        { Language.Hungarian, "hu" },
+        { Language.Czech, "cs" },
+        { Language.Romanian, "ro" },
+        { Language.Turkish, "tr" },
+        { Language.PortugueseBrazil, "pt" },
+        { Language.Bulgarian, "bg" },
+        { Language.Greek, "el" },
+        { Language.Ukrainian, "uk" },
+        { Language.Vietnamese, "vi" },
+        { Language.SpanishLatinAmerica, "es" },
+        { Language.SteamChina, "zh-CN" },
+    };
+
+    public static IReadOnlyDictionary<Language, string> SteamJsonLanguages => _steamJsonLanguages;
+
+    public static IReadOnlyDictionary<Language, string> TranslatorLanguages => _translatorLanguages;
+}
