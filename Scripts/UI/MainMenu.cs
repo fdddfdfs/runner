@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public sealed class MainMenu : MonoBehaviour
 {
+    [SerializeField] private ShowFont _startTextShowFont;
     [SerializeField] private TMP_Text _startText;
     [SerializeField] private UpgradeMenu _upgradeMenu;
     [SerializeField] private StatsMenu _statsMenu;
@@ -19,13 +20,13 @@ public sealed class MainMenu : MonoBehaviour
     public void ShowMainMenu()
     {
         _upgradeMenu.ChangeMenuVisible(true);
-        _startText.gameObject.SetActive(true);
+        _startTextShowFont.EndRun();
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
         _exit.gameObject.SetActive(true);
     }
 
-    private void Awake()
+    private void Start()
     {
         _startText.text = "Press F/Start to start run";
         ShowMainMenu();
@@ -53,8 +54,7 @@ public sealed class MainMenu : MonoBehaviour
         _upgradeMenu.ChangeMenuVisible(false);
         _statsMenu.ChangeActiveState(false);
         _exit.gameObject.SetActive(false);
-
-        _startText.gameObject.SetActive(false);
+        _startTextShowFont.StartRun();
         _isRun = true;
         
         _run.StartRun();

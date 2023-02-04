@@ -21,7 +21,7 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     private List<IRunnable> _runnables;
 
-    private CancellationTokenSource _endRunTokenSource;
+    private CancellationTokenSource _endRunTokenSource = new();
 
     public CancellationToken EndRunToken => _endRunTokenSource.Token;
 
