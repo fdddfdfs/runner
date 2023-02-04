@@ -1,7 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public static class Languages
 {
+    static Languages()
+    {
+        var inGameLanguages = (Language[])Enum.GetValues(typeof(Language));
+        string[] inGameLanguageNames = Enum.GetNames(typeof(Language));
+
+        IEnumerable<(Language Language, string Name)> languages =
+            inGameLanguages.Zip(inGameLanguageNames, (language, name) => (language, name));
+
+        foreach ((Language Language, string Name) language in languages)
+        {
+            if (!_steamJsonLanguages.ContainsKey(language.Language))
+            {
+                _steamJsonLanguages[language.Language] = language.Name;
+            }
+        }
+    }
+
     public enum Language
     {
         English,
@@ -33,6 +52,74 @@ public static class Languages
         Vietnamese,
         SpanishLatinAmerica,
         SteamChina,
+        Afrikaans,
+        Amharic,
+        Assamese,
+        Bangla,
+        Belarusian,
+        Catalan,
+        Estonian,
+        Galician,
+        Gujarati,
+        Hebrew,
+        Icelandic,
+        Indonesian,
+        Kannada,
+        Khmer,
+        Kyrgyz,
+        Luxembourgish,
+        Malay,
+        Maltese,
+        Marathi,
+        Nepali,
+        PunjabiGurmukhi,
+        Quechua,
+        Serbian,
+        Sinhala,
+        Slovenian,
+        Sotho,
+        Tajik,
+        Tatar,
+        Tigrinya,
+        Urdu,
+        Uzbek,
+        Xhosa,
+        Zulu,
+        Albanian,
+        Armenian,
+        Azerbaijani,
+        Basque,
+        Bosnian,
+        Croatian,
+        Filipino,
+        Georgian,
+        Hausa,
+        Hindi,
+        Igbo,
+        Irish,
+        Kazakh,
+        Konkani,
+        Lithuanian,
+        Macedonian,
+        Malayalam,
+        Maori,
+        Mongolian,
+        Persian,
+        PunjabiShahmukhi,
+        Scots,
+        Sindhi,
+        Slovak,
+        Sorani,
+        Swahili,
+        Tamil,
+        Telugu,
+        Turkmen,
+        Uyghur,
+        Welsh,
+        Yoruba,
+        Kinyarwanda,
+        Latvian,
+        Odia,
     }
 
     private static readonly Dictionary<Language, string> _steamJsonLanguages = new()
@@ -68,40 +155,5 @@ public static class Languages
         { Language.SteamChina, "sc_schinese" },
     };
 
-    private static readonly Dictionary<Language, string> _translatorLanguages = new()
-    {
-        { Language.English, "en" },
-        { Language.German, "de" },
-        { Language.French, "fr" },
-        { Language.Italian, "it" },
-        { Language.Korean, "ko" },
-        { Language.SpanishSpain, "es" },
-        { Language.SimplifiedChinese, "zh-CN" },
-        { Language.TraditionalChinese, "zh-TW" },
-        { Language.Russian, "ru" },
-        { Language.Thai, "th" },
-        { Language.Japanese, "ja" },
-        { Language.PortuguesePortugal, "pt" },
-        { Language.Polish, "pl" },
-        { Language.Danish, "da" },
-        { Language.Dutch, "nl" },
-        { Language.Finnish, "fi" },
-        { Language.Norwegian, "no" },
-        { Language.Swedish, "sv" },
-        { Language.Hungarian, "hu" },
-        { Language.Czech, "cs" },
-        { Language.Romanian, "ro" },
-        { Language.Turkish, "tr" },
-        { Language.PortugueseBrazil, "pt" },
-        { Language.Bulgarian, "bg" },
-        { Language.Greek, "el" },
-        { Language.Ukrainian, "uk" },
-        { Language.Vietnamese, "vi" },
-        { Language.SpanishLatinAmerica, "es" },
-        { Language.SteamChina, "zh-CN" },
-    };
-
     public static IReadOnlyDictionary<Language, string> SteamJsonLanguages => _steamJsonLanguages;
-
-    public static IReadOnlyDictionary<Language, string> TranslatorLanguages => _translatorLanguages;
 }
