@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class Follower : MonoBehaviour, IRunnable
 {
     private const float FollowDelay = 0.2f;
+    private const int FollowDelayMilliseconds = (int)(FollowDelay * 1000);
 
     [SerializeField] private RunProgress _runProgress;
+    [SerializeField] private Run _run;
     
     private readonly Queue<Vector3> _targetPositions = new();
 
     private bool _isFollowing;
     private bool _isFollowingDelay;
     private GameObject _target;
-    private WaitForSeconds _followWaiter;
-    private float _previousTime = -1;
-    private Coroutine _followCoroutine;
-
+    
     private Vector3 _appearStartPosition;
     private Vector3 _appearEndPosition;
     private float _appearTime;
@@ -33,12 +32,6 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
     public void EndRun()
     {
-        if (_followCoroutine != null)
-        {
-            StopCoroutine(_followCoroutine);
-        }
-        
-
         _isFollowing = false;
         _isFollowingDelay = false;
         
@@ -52,13 +45,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
         
         SetupAppear();
 
-        if (_previousTime < 0 || Math.Abs(_previousTime - time) > 0.01f)
-        {
-            _followWaiter = new WaitForSeconds(time - FollowDelay);
-            _previousTime = time;
-        }
-
-        _followCoroutine = StartCoroutine(Follow());
+        Follow((int)((time - FollowDelay) * 1000));
     }
 
     private void FixedUpdate()
@@ -100,18 +87,30 @@ public sealed class Follower : MonoBehaviour, IRunnable
         _currentAppearTime = 0;
     }
 
-    private IEnumerator Follow()
+    private async void Follow(int followTimeMilliseconds)
     {
         _isFollowing = true;
         _isFollowingDelay = true;
 
-        yield return new WaitForSeconds(FollowDelay / _runProgress.SpeedMultiplier);
+        CancellationToken token = _run.EndRunToken;
+        
+        await Task.Delay((int)(FollowDelayMilliseconds / _runProgress.SpeedMultiplier), token)
+            .ContinueWith(GlobalCancellationToken.EmptyTask);
 
         _isFollowingDelay = false;
+        
+        if (token.IsCancellationRequested)
+        {
+            _isFollowing = false;
+            _targetPositions.Clear();
+            return;
+        }
 
-        yield return _followWaiter;
+        await Task.Delay(followTimeMilliseconds, token).ContinueWith(GlobalCancellationToken.EmptyTask);
 
         _isFollowing = false;
         _targetPositions.Clear();
     }
+    
+    
 }
