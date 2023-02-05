@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public sealed class MainMenu : MonoBehaviour
 {
-    [SerializeField] private ShowFont _startTextShowFont;
+    [SerializeField] private ChangeTextOnStart _startTextChangeTextOnStart;
     [SerializeField] private TMP_Text _startText;
     [SerializeField] private UpgradeMenu _upgradeMenu;
     [SerializeField] private StatsMenu _statsMenu;
@@ -20,7 +20,7 @@ public sealed class MainMenu : MonoBehaviour
     public void ShowMainMenu()
     {
         _upgradeMenu.ChangeMenuVisible(true);
-        _startTextShowFont.EndRun();
+        _startTextChangeTextOnStart.EndRun();
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
         _exit.gameObject.SetActive(true);
@@ -54,7 +54,7 @@ public sealed class MainMenu : MonoBehaviour
         _upgradeMenu.ChangeMenuVisible(false);
         _statsMenu.ChangeActiveState(false);
         _exit.gameObject.SetActive(false);
-        _startTextShowFont.StartRun();
+        _startTextChangeTextOnStart.StartRun();
         _isRun = true;
         
         _run.StartRun();
