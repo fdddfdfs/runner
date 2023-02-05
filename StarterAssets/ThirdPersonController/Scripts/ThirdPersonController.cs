@@ -283,7 +283,7 @@ namespace StarterAssets
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },
-                { typeof(PlayerHittable), new PlayerHittable(this, _follower) },
+                { typeof(PlayerHittable), new PlayerHittable(this, _follower, _run) },
                 { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
 
