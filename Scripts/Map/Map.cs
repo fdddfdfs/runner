@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class Map : MonoBehaviour, IPauseable , IRunnable
@@ -81,8 +82,8 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
         _road = new Road(_roadBlockInfos, _player);
         _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player);
         _runnables = new List<IRunnable> { _level, _environment, _road, _mainMenuLocation };
-        
-        _road.StartRun();
+
+        GenerateMapAsync();
     }
 
     private void Update()
@@ -94,5 +95,12 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
         _environment?.CheckToHideBlock();
         _road.CheckToHideBlock();
         _mainMenuLocation.CheckToHideBlock();
+    }
+
+    private void GenerateMapAsync()
+    {
+        _road.SetBlocks();
+        _level?.SetBlocks();
+        _environment?.SetBlocks();
     }
 }

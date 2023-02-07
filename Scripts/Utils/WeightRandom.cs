@@ -9,7 +9,7 @@ public sealed class WeightRandom
     private readonly int _totalWeights;
     
     private int _lastValue = -1;
-    
+
     public WeightRandom(IReadOnlyList<IWeightable> weigtables, bool canRepeatValues = false)
     {
         _canRepeatValues = canRepeatValues;

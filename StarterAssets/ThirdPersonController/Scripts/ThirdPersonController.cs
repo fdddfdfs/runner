@@ -205,6 +205,7 @@ namespace StarterAssets
             _previousMovingDestination = 0;
             _movingDestination = 0; 
             _movingXQueue = 0;
+            CinemachineCameraTarget.transform.localRotation = Quaternion.identity;
         }
 
         private void Awake()

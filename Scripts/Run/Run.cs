@@ -110,7 +110,7 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     private void Awake()
     {
-        _runnables = new List<IRunnable> { _map, _player, _runProgress, _follower, _activeItemsUI, _pauseController };
+        _runnables = new List<IRunnable> { _player, _map, _runProgress, _follower, _activeItemsUI, _pauseController };
     }
 
     private void OnDisable()

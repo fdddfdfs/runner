@@ -60,8 +60,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
             HideCurrentBlock();
         }
     }
-    
-    public void StartRun()
+
+    public void SetBlocks()
     {
         _firstBlockPosition = 0;
         if (_haveStartBlock)
@@ -69,11 +69,13 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
             _lastBlockPosition = SetStartBlock();
             UpdateFirstBlock();
         }
-
-        float previousBlockPosition = _lastBlockPosition;
+        
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
-
-        if (!_haveStartBlock && Math.Abs(previousBlockPosition - _lastBlockPosition) > 0.1f)
+    }
+    
+    public void StartRun()
+    {
+        if (!_haveStartBlock)
         {
             UpdateFirstBlock();
         }
@@ -91,6 +93,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
 
         _lastBlockPosition = 0;
+
+        SetBlocks();
     }
 
     public void HideCurrentEnteredBlock()
