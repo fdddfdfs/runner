@@ -2,10 +2,18 @@
 
 public class FlyState : PlayerActivateState, IState
 {
-    public FlyState(ThirdPersonController player, ActiveItemsUI activeItemsUI) : base(player, activeItemsUI) { }
+    private readonly Follower _follower;
+    
+    public FlyState(ThirdPersonController player, ActiveItemsUI activeItemsUI, Follower follower)
+        : base(player, activeItemsUI)
+    {
+        _follower = follower;
+    }
 
     public void EnterState()
     {
+        _follower.StopFollowing();
+
         _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));

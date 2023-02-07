@@ -12,6 +12,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     [SerializeField] private Run _run;
     
     private readonly Queue<Vector3> _targetPositions = new();
+    private readonly CancellationToken[] _linkedTokens = new CancellationToken[1];
 
     private bool _isFollowing;
     private bool _isFollowingDelay;
@@ -23,6 +24,8 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private float _currentAppearTime;
 
     private Vector3 _startPosition;
+
+    private CancellationTokenSource _followCancellation;
 
     public void StartRun()
     {
@@ -40,12 +43,22 @@ public sealed class Follower : MonoBehaviour, IRunnable
     
     public void FollowForTime(GameObject target, float time)
     {
+        SetCancellationToken();
+        
         _isFollowing = true;
         _target = target;
         
         SetupAppear();
 
         Follow((int)((time - FollowDelay) * 1000));
+    }
+
+    public void StopFollowing()
+    {
+        if (_isFollowing)
+        {
+            _followCancellation.Cancel();
+        }
     }
 
     private void FixedUpdate()
@@ -67,6 +80,32 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private void Awake()
     {
         _startPosition = transform.position;
+    }
+
+    private void SetCancellationToken()
+    {
+        if (_followCancellation == null)
+        {
+            _followCancellation = CancellationTokenSource.CreateLinkedTokenSource(GetLinkedTokens());
+            return;
+        }
+        
+        if (_isFollowing || _followCancellation.IsCancellationRequested)
+        {
+            if (!_followCancellation.IsCancellationRequested)
+            {
+                _followCancellation.Cancel();
+            }
+
+            _followCancellation.Dispose();
+            _followCancellation = CancellationTokenSource.CreateLinkedTokenSource(GetLinkedTokens());
+        }
+    }
+
+    private CancellationToken[] GetLinkedTokens()
+    {
+        _linkedTokens[0] = _run.EndRunToken;
+        return _linkedTokens;
     }
 
     private void Appear(float deltaTime)
@@ -92,7 +131,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
         _isFollowing = true;
         _isFollowingDelay = true;
 
-        CancellationToken token = _run.EndRunToken;
+        CancellationToken token = _followCancellation.Token;
 
         try
         {
@@ -107,13 +146,6 @@ public sealed class Follower : MonoBehaviour, IRunnable
         finally
         {
             _isFollowingDelay = false;   
-        }
-
-        if (token.IsCancellationRequested)
-        {
-            _isFollowing = false;
-            _targetPositions.Clear();
-            return;
         }
 
         await Task.Delay(followTimeMilliseconds, token).ContinueWith(GlobalCancellationToken.EmptyTask);

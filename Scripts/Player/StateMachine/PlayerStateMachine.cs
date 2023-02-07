@@ -8,12 +8,12 @@ public class PlayerStateMachine : IRunnable
 
     private readonly Dictionary<Type, IState> _states;
 
-    public PlayerStateMachine(ThirdPersonController player, ActiveItemsUI activeItemsUI)
+    public PlayerStateMachine(ThirdPersonController player, ActiveItemsUI activeItemsUI, Follower follower)
     {
         _states = new Dictionary<Type, IState>
         {
             [typeof(RunState)] = new RunState(player),
-            [typeof(FlyState)] = new FlyState(player, activeItemsUI),
+            [typeof(FlyState)] = new FlyState(player, activeItemsUI, follower),
             [typeof(ImmuneState)] = new ImmuneState(player, activeItemsUI),
             [typeof(BoardState)] = new BoardState(player, activeItemsUI),
             [typeof(IdleState)] = new IdleState(player.PlayerAnimator),

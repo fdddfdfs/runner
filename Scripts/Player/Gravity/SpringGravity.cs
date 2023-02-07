@@ -9,6 +9,7 @@ public sealed class SpringGravity : IGravitable, IRollable
     private readonly Roll _roll;
     private readonly MoneySpawner _moneySpawner;
     private readonly Map _map;
+    private readonly Follower _follower;
 
     private float _verticalVelocity;
 
@@ -21,7 +22,8 @@ public sealed class SpringGravity : IGravitable, IRollable
         Map map,
         RunProgress runProgress,
         Run run,
-        PlayerAnimator playerAnimator)
+        PlayerAnimator playerAnimator,
+        Follower follower)
     {
         _springGravity = springGravity;
         _springHeight = springHeight;
@@ -41,6 +43,8 @@ public sealed class SpringGravity : IGravitable, IRollable
 
     public void EnterGravity()
     {
+        _follower.StopFollowing();
+        
         _verticalVelocity = Mathf.Sqrt(_springHeight * -2f * _springGravity);
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(
             _springHeight * 0.7f,

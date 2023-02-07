@@ -276,7 +276,8 @@ namespace StarterAssets
                         _map,
                         _runProgress,
                         _run,
-                        PlayerAnimator)
+                        PlayerAnimator,
+                        _follower)
                 },
             };
             
@@ -288,7 +289,7 @@ namespace StarterAssets
                 { typeof(ImmuneHittable), new ImmuneHittable(_map) },
             };
 
-            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI);
+            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower);
         }
 
         private void FixedUpdate()
