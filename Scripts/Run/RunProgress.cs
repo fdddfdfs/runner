@@ -74,7 +74,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         _moneyMultiplier = DefaultMoneyMultiplier;
     }
 
-    private void Awake()
+    private void Start()
     {
         _scoreShowText.SetDilate(-1);
         _moneyShowText.SetDilate(-1);
