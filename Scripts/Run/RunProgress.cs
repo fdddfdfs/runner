@@ -7,41 +7,37 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     public const int DefaultScoreMultiplier = 1;
     private const float DefaultSpeedMultiplier = 1;
     
-    [SerializeField] private TMPro.TMP_Text _scoreText;
-    [SerializeField] private TMPro.TMP_Text _moneyText;
+    [SerializeField] private ShowTextOnStart _scoreShowText;
+    [SerializeField] private ShowTextOnStart _moneyShowText;
 
-    private float _score;
-    private int _money;
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
-    private float _speedMultiplier = DefaultSpeedMultiplier;
-    private float _halfSpeedMultiplier = DefaultSpeedMultiplier;
 
-    public float SpeedMultiplier => _speedMultiplier;
+    public float SpeedMultiplier { get; private set; } = DefaultSpeedMultiplier;
 
-    public float HalfSpeedMultiplier => _halfSpeedMultiplier;
+    public float HalfSpeedMultiplier { get; private set; } = DefaultSpeedMultiplier;
 
-    public float Score => _score;
+    public float Score { get; private set; }
 
-    public int Money => _money;
+    public int Money { get; private set; }
 
     public void AddScore(float value)
     {
-        _score += value * _scoreMultiplier * _speedMultiplier;
-        _scoreText.text = _score.ToString(CultureInfo.InvariantCulture);
+        Score += value * _scoreMultiplier * SpeedMultiplier;
+        _scoreShowText.Text.text = Score.ToString(CultureInfo.InvariantCulture);
     }
     
     public void AddMoney(int money = 1)
     {
-        _money += money * _moneyMultiplier;
-        _moneyText.text = _money.ToString(CultureInfo.InvariantCulture);
+        Money += money * _moneyMultiplier;
+        _moneyShowText.Text.text = Money.ToString(CultureInfo.InvariantCulture);
     }
 
     public void IncreaseSpeedMultiplayerInTime(float time)
     {
         float delta = SpeedMultiplayerFunc(time);
-        _speedMultiplier += delta;
-        _halfSpeedMultiplier += delta / 2;
+        SpeedMultiplier += delta;
+        HalfSpeedMultiplier += delta / 2;
     }
 
     public void ChangeMoneyMultiplier(int multiplier = DefaultMoneyMultiplier)
@@ -56,10 +52,10 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void StartRun()
     {
-        _money = 0;
-        _moneyText.text = _money.ToString(CultureInfo.InvariantCulture);
-        _score = 0;
-        _scoreText.text = ((int)_score).ToString(CultureInfo.InvariantCulture);
+        Money = 0;
+        _moneyShowText.Text.text = Money.ToString(CultureInfo.InvariantCulture);
+        Score = 0;
+        _scoreShowText.Text.text = ((int)Score).ToString(CultureInfo.InvariantCulture);
         
         ChangeMenuVisible(true);
         
@@ -70,23 +66,32 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     {
         ChangeMenuVisible(false);
         
-        _money = 0;
-        _score = 0;
-        _speedMultiplier = DefaultSpeedMultiplier;
-        _halfSpeedMultiplier = DefaultSpeedMultiplier;
+        Money = 0;
+        Score = 0;
+        SpeedMultiplier = DefaultSpeedMultiplier;
+        HalfSpeedMultiplier = DefaultSpeedMultiplier;
         _scoreMultiplier = DefaultScoreMultiplier;
         _moneyMultiplier = DefaultMoneyMultiplier;
     }
 
     private void Awake()
     {
-        ChangeMenuVisible(false);
+        _scoreShowText.gameObject.SetActive(false);
+        _moneyShowText.gameObject.SetActive(false);
     }
 
     private void ChangeMenuVisible(bool visible)
     {
-        _scoreText.gameObject.SetActive(visible);
-        _moneyText.gameObject.SetActive(visible);
+        if (visible)
+        {
+            _scoreShowText.StartRun();
+            _moneyShowText.StartRun();
+        }
+        else
+        {
+            _scoreShowText.EndRun();
+            _moneyShowText.EndRun();
+        }
     }
     
     private static float SpeedMultiplayerFunc(float time)
