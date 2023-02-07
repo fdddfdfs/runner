@@ -47,7 +47,7 @@ public sealed class PlayerHittable : IHittable
         _isRecovery = true;
         _follower.FollowForTime(_player.gameObject, RecoverTime);
 
-        await Task.Delay(RecoverTimeMilliseconds, _run.EndRunToken);
+        await Task.Delay(RecoverTimeMilliseconds, _run.EndRunToken).ContinueWith(GlobalCancellationToken.EmptyTask);
 
         _isRecovery = false;
     }
