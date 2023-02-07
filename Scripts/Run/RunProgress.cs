@@ -24,7 +24,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     public void AddScore(float value)
     {
         Score += value * _scoreMultiplier * SpeedMultiplier;
-        _scoreShowText.Text.text = Score.ToString(CultureInfo.InvariantCulture);
+        _scoreShowText.Text.text =((int)Score).ToString(CultureInfo.InvariantCulture);
     }
     
     public void AddMoney(int money = 1)
@@ -76,8 +76,8 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     private void Awake()
     {
-        _scoreShowText.gameObject.SetActive(false);
-        _moneyShowText.gameObject.SetActive(false);
+        _scoreShowText.SetDilate(-1);
+        _moneyShowText.SetDilate(-1);
     }
 
     private void ChangeMenuVisible(bool visible)

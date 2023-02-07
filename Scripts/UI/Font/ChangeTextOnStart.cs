@@ -17,6 +17,11 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
 
     public abstract void EndRun();
 
+    public void SetDilate(float value)
+    {
+        Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, value);
+    }
+
     private void Awake()
     {
         Text = GetComponent<TMP_Text>();
