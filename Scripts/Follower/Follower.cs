@@ -93,12 +93,22 @@ public sealed class Follower : MonoBehaviour, IRunnable
         _isFollowingDelay = true;
 
         CancellationToken token = _run.EndRunToken;
-        
-        await Task.Delay((int)(FollowDelayMilliseconds / _runProgress.SpeedMultiplier), token)
-            .ContinueWith(GlobalCancellationToken.EmptyTask);
 
-        _isFollowingDelay = false;
-        
+        try
+        {
+            await Task.Delay((int)(FollowDelayMilliseconds / _runProgress.SpeedMultiplier), token);
+        }
+        catch
+        {
+            _isFollowing = false;
+            _targetPositions.Clear();
+            return;
+        }
+        finally
+        {
+            _isFollowingDelay = false;   
+        }
+
         if (token.IsCancellationRequested)
         {
             _isFollowing = false;
