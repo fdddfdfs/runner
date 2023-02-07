@@ -24,12 +24,12 @@ public class ItemParent : MonoBehaviour
     public void EnterObstacle()
     {
         _isEntered = true;
-        transform.localRotation = _startRotation * _startRotationOffset;
     }
 
     public void HideObstacle()
     {
         _isEntered = false;
+        transform.localRotation = _startRotation * _startRotationOffset;
     }
 
     private void Update()
