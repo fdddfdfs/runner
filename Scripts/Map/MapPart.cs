@@ -158,7 +158,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     
     private TBlock SetBlock(int blockId, float positionZ)
     {
-        TBlock obstacleBlock = BlockPools[blockId].GetItem();
+        TBlock obstacleBlock = BlockPools[blockId].GetRandomItem();
         obstacleBlock.transform.localPosition = new Vector3(0, BaseYPosition, positionZ);
 
         return obstacleBlock;

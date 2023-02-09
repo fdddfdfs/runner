@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public abstract class PoolMono<T> where T: MonoBehaviour
 { 
@@ -27,14 +28,11 @@ public abstract class PoolMono<T> where T: MonoBehaviour
             InitializePool();
             _isInitialized = true;
         }
-        
-        for (int i = 0; i < _pool.Count; i++)
+
+        T item = FindFreeElement(0, _pool.Count);
+        if (item)
         {
-            if (!_pool[i].gameObject.activeSelf)
-            {
-                _pool[i].gameObject.SetActive(true);
-                return _pool[i];
-            }
+            return item;
         }
 
         if (_isExpandable)
@@ -43,6 +41,50 @@ public abstract class PoolMono<T> where T: MonoBehaviour
         }
         
         throw new Exception("Pool expend");
+    }
+
+    public T GetRandomItem()
+    {
+        if (!_isInitialized)
+        {
+            InitializePool();
+            _isInitialized = true;
+        }
+
+        int startIndex = Random.Range(0, _pool.Count);
+        
+        T item = FindFreeElement(startIndex, _pool.Count);
+        if (item)
+        {
+            return item;
+        }
+
+        item = FindFreeElement(0, startIndex);
+        if (item)
+        {
+            return item;
+        }
+        
+        if (_isExpandable)
+        {
+            return AddItem(true);
+        }
+        
+        throw new Exception("Pool expend");
+    }
+
+    private T FindFreeElement(int startIndex, int endIndex)
+    {
+        for (int i = startIndex; i < endIndex; i++)
+        {
+            if (!_pool[i].gameObject.activeSelf)
+            {
+                _pool[i].gameObject.SetActive(true);
+                return _pool[i];
+            }
+        }
+
+        return null;
     }
 
     private void InitializePool()
