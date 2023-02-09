@@ -42,12 +42,12 @@ public sealed class MoneySpawner
     
     public float SpawnMoneys(Vector3 startPosition, float activeTime)
     {
-        float currentPosition = 0;
+        var currentPosition = 0f;
         float distance = Time.fixedDeltaTime * _speed * _runProgress.SpeedMultiplier;
         float gravity = Mathf.Sqrt(_height * -2f * _gravity);
-        float currentGravity = 0;
-        float currentTime = 0;
-        int counter = 0;
+        var currentGravity = 0f;
+        var currentTime = 0f;
+        var counter = 0;
 
         _spawnLines = _randomSpawnLine.Init(startPosition.x);
 
@@ -126,6 +126,7 @@ public sealed class MoneySpawner
                  position.y + currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
             RuntimeItemParent itemParent = _moneyPool.GetItem();
+            itemParent.HideObstacle();
             itemParent.SetStartRotationOffset(Quaternion.Euler(0, counter * RotationOffsetY, 0));
             itemParent.EnterObstacle();
             itemParent.transform.position = tempPosition;
