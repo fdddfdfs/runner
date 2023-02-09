@@ -6,7 +6,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     where TBlockInfo: ScriptableObject, IWeightable
     where TBlock: MonoBehaviour, IMapBlock 
 {
-    private const int ViewDistance = 400;
+    private const int ViewDistance = 1000;
     private const float BaseYPosition = 0;
     private const float HideBlockOffset = 5;
 

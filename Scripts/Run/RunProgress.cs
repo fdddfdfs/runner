@@ -4,7 +4,7 @@ using UnityEngine;
 public sealed class RunProgress : MonoBehaviour, IRunnable
 {
     public const int DefaultMoneyMultiplier = 1;
-    public const int DefaultScoreMultiplier = 1;
+    public const int DefaultScoreMultiplier = 10;
     private const float DefaultSpeedMultiplier = 1;
     
     [SerializeField] private ShowTextOnStart _scoreShowText;
