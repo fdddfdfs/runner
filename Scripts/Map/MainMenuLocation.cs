@@ -1,5 +1,6 @@
 ﻿using StarterAssets;
 using UnityEngine;
+using Transform = UnityEngine.Transform;
 
 public class MainMenuLocation : IRunnable
 {

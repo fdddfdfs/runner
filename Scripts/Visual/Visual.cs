@@ -9,7 +9,7 @@ public abstract class Visual : MonoBehaviour
     private const float TargetZRotation = 30;
     private const float BaseSpeed = 2;
     
-    [SerializeField] private List<Transform> _rotators;
+    [SerializeField] private List<UnityEngine.Transform> _rotators;
 
     protected ThirdPersonController _player;
 
@@ -26,7 +26,7 @@ public abstract class Visual : MonoBehaviour
     
     public void Move(float speed)
     {
-        foreach (Transform rotator in _rotators)
+        foreach (UnityEngine.Transform rotator in _rotators)
         {
             rotator.localRotation *= Quaternion.Euler(RotatorAngle.eulerAngles * (BaseSpeed * speed * Time.timeScale));
         }

@@ -40,7 +40,7 @@ namespace StarterAssets
         }
 
 #if STARTER_ASSETS_PACKAGES_CHECKED
-        private static void CheckCameras(Transform targetParent, string prefabFolder)
+        private static void CheckCameras(UnityEngine.Transform targetParent, string prefabFolder)
         {
             CheckMainCamera(prefabFolder);
 

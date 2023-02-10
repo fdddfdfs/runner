@@ -26,7 +26,10 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
             { AnimationType.Fall, new BoolAnimation(playerAnimator, animationsID[AnimationType.Fall]) },
         };
 
-        _defaultHorizontalMoveAnimation = new DefaultHorizontalMoveAnimation(player);
+        _defaultHorizontalMoveAnimation = new DefaultHorizontalMoveAnimation(
+            player.transform,
+            player.RotationSmoothTime);
+        
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
             { AnimationType.Speed, new FloatAnimation(playerAnimator, animationsID[AnimationType.Speed]) },

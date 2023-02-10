@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
-public sealed class PlayerAnimator
+public sealed class PlayerAnimator : BaseAnimator
 {
-    private readonly Dictionary<Type, PlayerBaseAnimator> _animators;
     private readonly ThirdPersonController _player;
 
-    private PlayerBaseAnimator _current;
-    
     public PlayerAnimator(Animator playerAnimator, ThirdPersonController player)
     {
         _player = player;
@@ -28,32 +25,14 @@ public sealed class PlayerAnimator
         ChangeAnimator(typeof(PlayerIdleAnimator));
     }
 
-    public void ChangeAnimator(Type animatorType)
+    public override void ChangeAnimator(Type animatorType)
     {
-        _current?.ExitAnimator();
+        base.ChangeAnimator(animatorType);
         
-        _current = _animators[animatorType];
-        
-        _current.EnterAnimator();
         if (_player.IsRoll)
         {
             _current.ChangeAnimationTrigger(AnimationType.Roll);
         }
-    }
-
-    public void ChangeAnimationTrigger(AnimationType animation)
-    {
-        _current.ChangeAnimationTrigger(animation);
-    }
-
-    public void ChangeAnimationBool(AnimationType animation, bool value)
-    {
-        _current.ChangeAnimationBool(animation, value);
-    }
-
-    public void ChangeAnimationFloat(AnimationType animation, float value)
-    {
-        _current.ChangeAnimationFloat(animation, value);
     }
 
     private static Dictionary<AnimationType, int> GetAnimationIDs()

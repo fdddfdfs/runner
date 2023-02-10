@@ -10,6 +10,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private Run _run;
+    [SerializeField] private Animator _animator;
     
     private readonly Queue<Vector3> _targetPositions = new();
     private readonly CancellationToken[] _linkedTokens = new CancellationToken[1];
@@ -26,6 +27,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private Vector3 _startPosition;
 
     private CancellationTokenSource _followCancellation;
+    private FollowerAnimator _followerAnimator;
 
     public void StartRun()
     {
@@ -69,6 +71,8 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
         if (!_isFollowingDelay)
         {
+            Vector3 deltaPosition = _targetPositions.Peek() - transform.position;
+            _followerAnimator.ChangeAnimationFloat(AnimationType.HorizontalRun, deltaPosition.x);
             transform.position = _targetPositions.Dequeue();
         }
         else
@@ -80,6 +84,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private void Awake()
     {
         _startPosition = transform.position;
+        _followerAnimator = new FollowerAnimator(_animator, transform);
     }
 
     private void SetCancellationToken()

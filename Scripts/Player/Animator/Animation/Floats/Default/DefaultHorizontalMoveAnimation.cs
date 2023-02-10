@@ -1,14 +1,18 @@
 ﻿using StarterAssets;
 using UnityEngine;
+using Transform = UnityEngine.Transform;
 
 public sealed class DefaultHorizontalMoveAnimation : IFloatAnimation
 {
-    private readonly ThirdPersonController _player;
+    private readonly Transform _player;
+    private readonly float _smoothTime;
+    
     private float _rotationVelocity;
     
-    public DefaultHorizontalMoveAnimation(ThirdPersonController player)
+    public DefaultHorizontalMoveAnimation(Transform player, float smoothTime)
     {
         _player = player;
+        _smoothTime = smoothTime;
     }
     
     public void SetFloat(float value)
@@ -18,7 +22,7 @@ public sealed class DefaultHorizontalMoveAnimation : IFloatAnimation
             _player.transform.eulerAngles.y,
             targetRotation,
             ref _rotationVelocity,
-            _player.RotationSmoothTime);
+            _smoothTime);
         
         _player.transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
     }

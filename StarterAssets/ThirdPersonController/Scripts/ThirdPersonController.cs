@@ -16,7 +16,7 @@ namespace StarterAssets
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
         [SerializeField] private Factories _factories;
-        [SerializeField] private Transform _playerMesh;
+        [SerializeField] private UnityEngine.Transform _playerMesh;
         [SerializeField] private InputActionAsset _inputActionAsset;
         [SerializeField] private CinemachineVirtualCamera _runCamera;
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
@@ -123,7 +123,7 @@ namespace StarterAssets
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
         
-        public Transform PlayerMesh => _playerMesh;
+        public UnityEngine.Transform PlayerMesh => _playerMesh;
 
         public CharacterController Controller { get; private set; }
 
