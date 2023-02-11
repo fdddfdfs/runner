@@ -10,7 +10,7 @@ public class FollowerDefaultAnimator : PlayerBaseAnimator
     {
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
-            { AnimationType.Speed, new DefaultHorizontalMoveAnimation(follower, rotationSmoothTime) },
+            { AnimationType.HorizontalRun, new DefaultHorizontalMoveAnimation(follower, rotationSmoothTime) },
         };
     }
 }
