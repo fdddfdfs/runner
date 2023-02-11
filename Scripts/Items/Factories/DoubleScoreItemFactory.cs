@@ -7,6 +7,8 @@ public sealed class DoubleScoreItemFactory<T> : ItemFactory<T> where T: Item
     private readonly Run _run;
     private readonly ItemsActiveStates _itemsActiveStates;
     
+    protected override string PrefabName => "Items/DoubleScore";
+    
     public DoubleScoreItemFactory(
         RunProgress runProgress,
         ActiveItemsUI activeItemsUI,
@@ -18,9 +20,7 @@ public sealed class DoubleScoreItemFactory<T> : ItemFactory<T> where T: Item
         _run = run;
         _itemsActiveStates = itemsActiveStates;
     }
-    
-    protected override string PrefabName => "DoubleScore";
-    
+
     public override T CreateItem()
     {
         GameObject doubleScoreObject = Object.Instantiate(_prefab);

@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public sealed class MoneyItemFactory<T> : ItemFactory<T> where T: Item
@@ -9,6 +8,8 @@ public sealed class MoneyItemFactory<T> : ItemFactory<T> where T: Item
     private readonly bool _isAutoActivating;
     private readonly Run _run;
 
+    protected override string PrefabName => "Items/Money";
+    
     public MoneyItemFactory(RunProgress runProgress, Run run, bool isAutoActivating, bool isAutoHiding)
     {
         _runProgress = runProgress;
@@ -16,8 +17,6 @@ public sealed class MoneyItemFactory<T> : ItemFactory<T> where T: Item
         _isAutoHiding = isAutoHiding;
         _run = run;
     }
-
-    protected override string PrefabName => "Money";
 
     public override T CreateItem()
     {

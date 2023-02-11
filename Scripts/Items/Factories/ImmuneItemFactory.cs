@@ -6,14 +6,14 @@ public sealed class ImmuneItemFactory<T> : ItemFactory<T> where T: Item
     private readonly Run _run;
     private readonly ItemsActiveStates _itemsActiveStates;
 
+    protected override string PrefabName => "Items/Immune";
+    
     public ImmuneItemFactory(ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
     {
         _activeItemsUI = activeItemsUI;
         _run = run;
         _itemsActiveStates = itemsActiveStates;
     }
-    
-    protected override string PrefabName => "Immune";
 
     public override T CreateItem()
     {

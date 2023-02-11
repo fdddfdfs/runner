@@ -6,7 +6,7 @@ public sealed class FlyItemFactory<T> : ItemFactory<T> where T:Item
     private readonly Run _run;
     private readonly ItemsActiveStates _itemsActiveStates;
     
-    protected override string PrefabName => "Fly";
+    protected override string PrefabName => "Items/Fly";
 
     public FlyItemFactory(ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
     {

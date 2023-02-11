@@ -4,7 +4,7 @@ public sealed class SpringItemFactory<T> : ItemFactory<T> where T : Item
 {
     private readonly Run _run;
     
-    protected override string PrefabName => "Spring";
+    protected override string PrefabName => "Items/Spring";
 
     public SpringItemFactory(Run run)
     {

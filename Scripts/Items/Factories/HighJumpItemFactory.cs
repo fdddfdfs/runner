@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class HighJumpItemFactory<T> : ItemFactory<T> where T : Item
 {
-    protected override string PrefabName => "HighJump";
+    protected override string PrefabName => "Items/HighJump";
 
     private readonly float _baseJumpHeight;
     private readonly ActiveItemsUI _activeItemsUI;

@@ -2,7 +2,7 @@
 
 public sealed class MagnetItemFactory<T> : ItemFactory<T> where T : Item
 {
-    protected override string PrefabName => "Magnet";
+    protected override string PrefabName => "Items/Magnet";
 
     private readonly Run _run;
     private readonly ActiveItemsUI _activeItemsUI;

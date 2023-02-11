@@ -7,6 +7,8 @@ public sealed class DoubleMoneyItemFactory<T> : ItemFactory<T> where T: Item
     private readonly Run _run;
     private readonly ItemsActiveStates _itemsActiveStates;
     
+    protected override string PrefabName => "Items/DoubleMoney";
+    
     public DoubleMoneyItemFactory(
         RunProgress runProgress,
         ActiveItemsUI activeItemsUI,
@@ -18,8 +20,6 @@ public sealed class DoubleMoneyItemFactory<T> : ItemFactory<T> where T: Item
         _run = run;
         _itemsActiveStates = itemsActiveStates;
     }
-    
-    protected override string PrefabName => "DoubleMoney";
 
     public override T CreateItem()
     {

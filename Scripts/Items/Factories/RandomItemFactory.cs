@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 public sealed class RandomItemFactory<T> : ItemFactory<T> where T: Item
