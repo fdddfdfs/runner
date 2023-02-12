@@ -60,7 +60,7 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void ApplyLoseResults()
     {
-        Stat record = Stats.Record;
+        DataInt record = Stats.Record;
         if (record.Value < _runProgress.Score)
         {
             record.Value = (int)_runProgress.Score;

@@ -7,11 +7,11 @@ public sealed class MainMenu : MonoBehaviour
 {
     [SerializeField] private ChangeTextOnStart _startTextChangeTextOnStart;
     [SerializeField] private TMP_Text _startText;
-    [SerializeField] private UpgradeMenu _upgradeMenu;
     [SerializeField] private StatsMenu _statsMenu;
     [SerializeField] private Run _run;
     [SerializeField] private Button _exit;
     [SerializeField] private InputActionAsset _inputActionAsset;
+    [SerializeField] private MainMenuRightMenu _rightMenu;
 
     private bool _isStartPressed;
 
@@ -19,7 +19,7 @@ public sealed class MainMenu : MonoBehaviour
 
     public void ShowMainMenu()
     {
-        _upgradeMenu.ChangeMenuVisible(true);
+        _rightMenu.ChangeMenuActive(true);
         _startTextChangeTextOnStart.EndRun();
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
@@ -51,7 +51,7 @@ public sealed class MainMenu : MonoBehaviour
 
     private void StartRun()
     {
-        _upgradeMenu.ChangeMenuVisible(false);
+        _rightMenu.ChangeMenuActive(true);
         _statsMenu.ChangeActiveState(false);
         _exit.gameObject.SetActive(false);
         _startTextChangeTextOnStart.StartRun();
