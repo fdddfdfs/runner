@@ -1,6 +1,6 @@
 ﻿using System;
 
-public sealed class Stat
+public sealed class DataInt
 {
     private readonly string _key;
 
@@ -19,7 +19,7 @@ public sealed class Stat
         }
     }
 
-    public Stat(string key, int defaultValue)
+    public DataInt(string key, int defaultValue)
     {
         _key = key;
         LoadValue(defaultValue);
