@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
-public sealed class UpgradeMenu : MonoBehaviour
+public sealed class UpgradeMenu : Menu
 {
-    [SerializeField] private GameObject _menu;
+    private const string UpgradeItemResourceName = "UI/Upgrades/UpgradeItem";
+    
     [SerializeField] private RectTransform _parent;
-    [SerializeField] private GameObject _upgradeItemPrefab;
     [SerializeField] private List<ItemType> _itemTypes;
     [SerializeField] private List<Sprite> _itemSprites;
     [SerializeField] private ScrollRect _scrollRect;
@@ -16,11 +16,11 @@ public sealed class UpgradeMenu : MonoBehaviour
     private Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)> _upgradeActions;
     private UpgradeItem _firstUpgradeItem;
 
-    public void ChangeMenuVisible(bool visible)
+    public override void ChangeMenuActive(bool active)
     {
-        _menu.SetActive(visible);
+        base.ChangeMenuActive(active);
 
-        if (visible && _firstUpgradeItem)
+        if (active && _firstUpgradeItem)
         {
             _firstUpgradeItem.SelectButton();
         }
@@ -28,6 +28,8 @@ public sealed class UpgradeMenu : MonoBehaviour
 
     private void Start()
     {
+        GameObject upgradeItemPrefab = ResourcesLoader.LoadObject(UpgradeItemResourceName);
+        
         _upgradeActions = new Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)>
         {
             { ItemType.Fly, (() => Stats.FlyLevel.Value, () => Stats.FlyLevel.Value += 1) },
@@ -53,7 +55,7 @@ public sealed class UpgradeMenu : MonoBehaviour
         var parentVerticalLayoutGroup = _parent.GetComponent<VerticalLayoutGroup>();
         _parent.SetSizeWithCurrentAnchors(
             RectTransform.Axis.Vertical,
-            (_upgradeItemPrefab.GetComponent<RectTransform>().rect.height +
+            (upgradeItemPrefab.GetComponent<RectTransform>().rect.height +
              parentVerticalLayoutGroup.spacing) *
             _itemTypes.Count +
             parentVerticalLayoutGroup.padding.bottom +
@@ -66,7 +68,7 @@ public sealed class UpgradeMenu : MonoBehaviour
                 throw new Exception($"Upgrade actions not implemented for type {_itemTypes[i]}");
             }
 
-            GameObject newUpgrade = Instantiate(_upgradeItemPrefab, _parent);
+            GameObject newUpgrade = Instantiate(upgradeItemPrefab, _parent);
             var upgradeItem = newUpgrade.GetComponent<UpgradeItem>();
             upgradeItem.Init(
                 _itemSprites[i],
