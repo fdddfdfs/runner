@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Palmmedia.ReportGenerator.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,19 +20,25 @@ public class SettingsMenu : Menu
     private void Awake()
     {
         _musicHeader.text = "Music";
+        float musicVolume = SettingsData.MusicVolume.Value;
+        UpdateMusicVolume(musicVolume);
+        _musicSlider.value = musicVolume;
         _musicSlider.onValueChanged.AddListener(UpdateMusicVolume);
-        _musicSlider.value = SettingsData.MusicVolume.Value;
 
         _soundsHeader.text = "Sounds";
+        float soundVolume = SettingsData.SoundVolume.Value;
+        UpdateSoundsVolume(soundVolume);
+        _soundsSlider.value = soundVolume;
         _soundsSlider.onValueChanged.AddListener(UpdateSoundsVolume);
-        _soundsSlider.value = SettingsData.SoundVolume.Value;
 
         _graphicHeader.text = "Graphic";
         _graphicSlider.wholeNumbers = true;
         _graphicSlider.minValue = 0;
         _graphicSlider.maxValue = _qualities.Length - 1;
+        int graphicValue = SettingsData.Graphic.Value;
+        UpdateGraphic(graphicValue);
+        _graphicSlider.value = graphicValue;
         _graphicSlider.onValueChanged.AddListener(UpdateGraphic);
-        _graphicSlider.value = SettingsData.Graphic.Value;
     }
 
     private void UpdateMusicVolume(float newVolume)
