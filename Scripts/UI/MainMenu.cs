@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using fdddfdfs.Leaderboard;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -16,6 +17,8 @@ public sealed class MainMenu : MonoBehaviour
     private bool _isStartPressed;
 
     private bool _isRun;
+
+    public LeaderboardController LeaderboardController => _rightMenu.LeaderboardController;
 
     public void ShowMainMenu()
     {
@@ -51,7 +54,7 @@ public sealed class MainMenu : MonoBehaviour
 
     private void StartRun()
     {
-        _rightMenu.ChangeMenuActive(true);
+        _rightMenu.ChangeMenuActive(false);
         _statsMenu.ChangeActiveState(false);
         _exit.gameObject.SetActive(false);
         _startTextChangeTextOnStart.StartRun();

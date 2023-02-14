@@ -61,11 +61,12 @@ public sealed class Run : MonoBehaviour, IRunnable
     public void ApplyLoseResults()
     {
         DataInt record = Stats.Record;
+        _mainMenu.LeaderboardController.UploadResult((int)_runProgress.Score);
         if (record.Value < _runProgress.Score)
         {
             record.Value = (int)_runProgress.Score;
         }
-        
+
         Stats.Money.Value += _runProgress.Money;
     }
 
