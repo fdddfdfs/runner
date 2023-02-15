@@ -27,6 +27,8 @@ public sealed class MainMenu : MonoBehaviour
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
         _exit.gameObject.SetActive(true);
+        
+        _cutscenes.ChangeCurrentCutscene(typeof(BaseStartCutscene));
     }
 
     private void Start()

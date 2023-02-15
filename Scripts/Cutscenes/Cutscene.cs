@@ -4,12 +4,14 @@ using UnityEngine;
 public abstract class Cutscene : MonoBehaviour
 {
     private const string StartCutsceneTrigger = "Start";
+    private const string BackToStartTrigger = "Back";
         
     [SerializeField] private Camera _cutsceneCamera;
     [SerializeField] private Animator _cutsceneAnimator;
     [SerializeField] private GameObject _cutsceneObject;
 
     private readonly int _startCutsceneTrigger = Animator.StringToHash(StartCutsceneTrigger);
+    private readonly int _backToStartTrigger = Animator.StringToHash(BackToStartTrigger);
     
     private Fade _fade;
 
@@ -28,6 +30,7 @@ public abstract class Cutscene : MonoBehaviour
 
     public void HideCutscene()
     {
+        _cutsceneAnimator.SetTrigger(_backToStartTrigger);
         _cutsceneCamera.gameObject.SetActive(false);
         _cutsceneObject.gameObject.SetActive(false);
     }
@@ -45,5 +48,6 @@ public abstract class Cutscene : MonoBehaviour
     private void Awake()
     {
         _cutsceneAnimator.GetBehaviour<EndCutsceneBehaviour>().Cutscene = this;
+        _cutsceneAnimator.keepAnimatorControllerStateOnDisable = true;
     }
 }

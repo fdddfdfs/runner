@@ -34,7 +34,5 @@ public class Cutscenes : MonoBehaviour
         {
             [typeof(BaseStartCutscene)] = baseStartCutscene,
         };
-        
-        ChangeCurrentCutscene(typeof(BaseStartCutscene));
     }
 }
