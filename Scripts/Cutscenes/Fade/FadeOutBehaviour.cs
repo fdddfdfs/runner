@@ -4,10 +4,25 @@ public class FadeOutBehaviour : StateMachineBehaviour
 {
     public Fade Fade { get; set; }
 
-    public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    private bool _isEntered;
+
+    public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        base.OnStateExit(animator, stateInfo, layerIndex);
+        base.OnStateEnter(animator, stateInfo, layerIndex);
+
+        _isEntered = true;
+    }
+    
+    public override void OnStateMove(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    {
+        base.OnStateMove(animator, stateInfo, layerIndex);
+
+        if (!_isEntered) return;
         
-        Fade.FinishFadeOut();
+        if (stateInfo.normalizedTime >= 1)
+        {
+            _isEntered = false;
+            Fade.FinishFadeOut();
+        }
     }
 }

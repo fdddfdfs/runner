@@ -44,5 +44,6 @@ public class Fade : MonoBehaviour
     {
         _fadeAnimator.GetBehaviour<FadeOutBehaviour>().Fade = this;
         _fadeAnimator.GetBehaviour<FadeInBehaviour>().Fade = this;
+        _fadeObject.SetActive(false);
     }
 }
