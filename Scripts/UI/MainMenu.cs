@@ -9,10 +9,10 @@ public sealed class MainMenu : MonoBehaviour
     [SerializeField] private ChangeTextOnStart _startTextChangeTextOnStart;
     [SerializeField] private TMP_Text _startText;
     [SerializeField] private StatsMenu _statsMenu;
-    [SerializeField] private Run _run;
     [SerializeField] private Button _exit;
     [SerializeField] private InputActionAsset _inputActionAsset;
     [SerializeField] private MainMenuRightMenu _rightMenu;
+    [SerializeField] private Cutscenes _cutscenes;
 
     private bool _isStartPressed;
 
@@ -60,6 +60,6 @@ public sealed class MainMenu : MonoBehaviour
         _startTextChangeTextOnStart.StartRun();
         _isRun = true;
         
-        _run.StartRun();
+        _cutscenes.PlayCurrentCutscene();
     }
 }

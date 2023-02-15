@@ -16,10 +16,11 @@ namespace StarterAssets
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
         [SerializeField] private Factories _factories;
-        [SerializeField] private UnityEngine.Transform _playerMesh;
+        [SerializeField] private Transform _playerMesh;
         [SerializeField] private InputActionAsset _inputActionAsset;
         [SerializeField] private CinemachineVirtualCamera _runCamera;
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
+        [SerializeField] private Camera _playerRunCamera;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -238,7 +239,7 @@ namespace StarterAssets
             Controller = GetComponent<CharacterController>();
 
             PlayerAnimator = new PlayerAnimator(_animator, this);
-            _playerCamera = new PlayerCamera(_runCamera, _idleCamera);
+            _playerCamera = new PlayerCamera(_playerRunCamera, _runCamera, _idleCamera);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {

@@ -1,22 +1,40 @@
-﻿public class Cutscenes
-{
-    private const string BaseStartCutsceneResourceName = "BaseStartCutscene";
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
-    private Cutscene _cutscene;
+public class Cutscenes : MonoBehaviour
+{
+    private const string BaseStartCutsceneResourceName = "Cutscenes/BaseStartCutscene";
+
+    [SerializeField] private Run _run;
+    [SerializeField] private Fade _fade;
     
-    public Cutscenes(Run run, Fade fade)
+    private Dictionary<Type, Cutscene> _cutscenes;
+    private Cutscene _cutscene;
+
+    public void ChangeCurrentCutscene(Type newCutscene)
+    {
+        _cutscene = _cutscenes[newCutscene];
+        _cutscene.SetCutscene();
+    }
+
+    public void PlayCurrentCutscene()
+    {
+        _cutscene.PlayCutscene();
+    }
+    
+    private void Awake()
     {
         var baseStartCutscene = ResourcesLoader.InstantiateLoadComponent<BaseStartCutscene>(
             BaseStartCutsceneResourceName);
 
-        baseStartCutscene.Init(run, fade);
+        baseStartCutscene.Init(_run, _fade);
 
-        _cutscene = baseStartCutscene;
-        _cutscene.SetCutscene();
-    }
-
-    public void PlayCutscene()
-    {
-        _cutscene.PlayCutscene();
+        _cutscenes = new Dictionary<Type, Cutscene>
+        {
+            [typeof(BaseStartCutscene)] = baseStartCutscene,
+        };
+        
+        ChangeCurrentCutscene(typeof(BaseStartCutscene));
     }
 }

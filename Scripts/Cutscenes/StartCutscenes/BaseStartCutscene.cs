@@ -12,8 +12,9 @@ public class BaseStartCutscene : Cutscene
 
         _endCutsceneCallback = () =>
         {
-            run.StartRun();
+            HideCutscene();
             fade.FadeOut(null);
+            run.StartRun();
         };
     }
 }
