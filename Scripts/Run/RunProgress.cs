@@ -6,7 +6,9 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     public const int DefaultMoneyMultiplier = 1;
     public const int DefaultScoreMultiplier = 10;
     private const float DefaultSpeedMultiplier = 1;
-    
+
+    [SerializeField] private GameObject _scoreParent;
+    [SerializeField] private GameObject _moneyParent;
     [SerializeField] private ShowTextOnStart _scoreShowText;
     [SerializeField] private ShowTextOnStart _moneyShowText;
 
@@ -78,10 +80,16 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     {
         _scoreShowText.SetDilate(-1);
         _moneyShowText.SetDilate(-1);
+        
+        _moneyParent.SetActive(false);
+        _scoreParent.SetActive(false);
     }
 
     private void ChangeMenuVisible(bool visible)
     {
+        _moneyParent.SetActive(visible);
+        _scoreParent.SetActive(visible);
+        
         if (visible)
         {
             _scoreShowText.StartRun();
