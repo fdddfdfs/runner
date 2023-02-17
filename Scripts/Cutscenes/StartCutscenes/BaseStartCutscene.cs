@@ -17,4 +17,11 @@ public class BaseStartCutscene : Cutscene
             run.StartRun();
         };
     }
+
+    public override void PlayCutscene()
+    {
+        base.PlayCutscene();
+        
+        Sounds.Instance.PlaySound(0, "BellKnock");
+    }
 }

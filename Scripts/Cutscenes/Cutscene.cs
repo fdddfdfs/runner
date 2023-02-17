@@ -35,7 +35,7 @@ public abstract class Cutscene : MonoBehaviour
         _cutsceneObject.gameObject.SetActive(false);
     }
 
-    public void PlayCutscene()
+    public virtual void PlayCutscene()
     {
         _cutsceneAnimator.SetTrigger(_startCutsceneTrigger); 
     }
