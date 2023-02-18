@@ -12,7 +12,7 @@ public abstract class Cutscene : MonoBehaviour
 
     private readonly int _startCutsceneTrigger = Animator.StringToHash(StartCutsceneTrigger);
     private readonly int _backToStartTrigger = Animator.StringToHash(BackToStartTrigger);
-    
+
     private Fade _fade;
 
     protected abstract Action EndCutsceneCallback { get; }
