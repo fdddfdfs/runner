@@ -22,7 +22,7 @@ public abstract class Cutscene : MonoBehaviour
         _fade = fade;
     }
     
-    public void SetCutscene()
+    public virtual void SetCutscene()
     {
         _cutsceneCamera.gameObject.SetActive(true);
         _cutsceneObject.gameObject.SetActive(true);
@@ -47,7 +47,15 @@ public abstract class Cutscene : MonoBehaviour
 
     private void Awake()
     {
-        _cutsceneAnimator.GetBehaviour<EndCutsceneBehaviour>().Cutscene = this;
+        var endCutsceneBehaviour = _cutsceneAnimator.GetBehaviour<EndCutsceneBehaviour>();
+
+        if (!endCutsceneBehaviour)
+        {
+            throw new NullReferenceException(
+                $"{gameObject.name} animator must contain {nameof(EndCutsceneBehaviour)}");
+        }
+        
+        endCutsceneBehaviour.Cutscene = this;
         _cutsceneAnimator.keepAnimatorControllerStateOnDisable = true;
     }
 }
