@@ -16,11 +16,13 @@ public sealed class Run : MonoBehaviour, IRunnable
     [SerializeField] private PauseController _pauseController;
     [SerializeField] private LoseMenu _loseMenu;
     [SerializeField] private MainMenu _mainMenu;
+    [SerializeField] private LoseDecideMenu _loseDecideMenu;
+    [SerializeField] private Cutscenes _cutscenes;
 
     private bool _isRun;
-
     private List<IRunnable> _runnables;
-
+    private Type _cutsceneType;
+        
     private CancellationTokenSource _endRunTokenSource = new();
 
     public CancellationToken EndRunToken => _endRunTokenSource.Token;
@@ -55,7 +57,18 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void ShowLoseMenu()
     {
+        if (_cutsceneType == null)
+        {
+            _loseDecideMenu.ShowMenu();
+            return;
+        }
+        
         _loseMenu.ShowLoseMenu((int)_runProgress.Score, _runProgress.Money);
+    }
+
+    public void SetLoseCutscene(Type type)
+    {
+        _cutsceneType = type;
     }
 
     public void ApplyLoseResults()
@@ -97,7 +110,8 @@ public sealed class Run : MonoBehaviour, IRunnable
     public void BackToMenu()
     {
         EndRun();
-        _mainMenu.ShowMainMenu();
+        _cutscenes.ChangeCurrentCutscene(_cutsceneType);
+        _cutscenes.PlayCurrentCutscene();
     }
 
     private void Update()

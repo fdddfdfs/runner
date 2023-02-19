@@ -1,4 +1,5 @@
-﻿using fdddfdfs.Leaderboard;
+﻿using System;
+using fdddfdfs.Leaderboard;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,7 +16,7 @@ public sealed class MainMenu : MonoBehaviour
     [SerializeField] private Cutscenes _cutscenes;
 
     private bool _isStartPressed;
-
+    private Type _cutsceneType;
     private bool _isRun;
 
     public LeaderboardController LeaderboardController => _rightMenu.LeaderboardController;
@@ -28,11 +29,17 @@ public sealed class MainMenu : MonoBehaviour
         _isRun = false;
         _exit.gameObject.SetActive(true);
         
-        _cutscenes.ChangeCurrentCutscene(typeof(BaseStartCutscene));
+        _cutscenes.ChangeCurrentCutscene(_cutsceneType);
+    }
+
+    public void SetCutsceneType(Type cutsceneType)
+    {
+        _cutsceneType = cutsceneType;
     }
 
     private void Start()
     {
+        SetCutsceneType(typeof(BaseStartCutscene));
         _startText.text = "Press F/Start to start run";
         ShowMainMenu();
         
