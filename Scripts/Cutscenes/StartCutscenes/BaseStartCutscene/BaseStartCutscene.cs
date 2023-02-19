@@ -1,11 +1,11 @@
 ﻿using System;
 
-public class PrisonEndGameCutscene : Cutscene
+public class BaseStartCutscene : Cutscene
 {
     private Action _endCutsceneCallback;
 
     protected override Action EndCutsceneCallback => _endCutsceneCallback;
-    
+
     public void Init(Run run ,Fade fade)
     {
         base.Init(fade);
@@ -16,5 +16,12 @@ public class PrisonEndGameCutscene : Cutscene
             fade.FadeOut(null);
             run.StartRun();
         };
+    }
+
+    public override void PlayCutscene()
+    {
+        base.PlayCutscene();
+        
+        Sounds.Instance.PlaySound(0, "BellKnock");
     }
 }
