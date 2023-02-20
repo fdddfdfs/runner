@@ -16,7 +16,8 @@ namespace StarterAssets
         [SerializeField] private Run _run;
         [SerializeField] private Follower _follower;
         [SerializeField] private Factories _factories;
-        [SerializeField] private Transform _playerMesh;
+        [SerializeField] private Transform _playerBones;
+        [SerializeField] private GameObject _playerMesh;
         [SerializeField] private InputActionAsset _inputActionAsset;
         [SerializeField] private CinemachineVirtualCamera _runCamera;
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
@@ -124,7 +125,7 @@ namespace StarterAssets
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
         
-        public UnityEngine.Transform PlayerMesh => _playerMesh;
+        public Transform PlayerBones => _playerBones;
 
         public CharacterController Controller { get; private set; }
 
@@ -191,6 +192,8 @@ namespace StarterAssets
             ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
             _horizontalMoveRestriction.Init(0);
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
+            
+            _playerMesh.SetActive(true);
         }
 
         public void EndRun()
@@ -207,6 +210,20 @@ namespace StarterAssets
             _movingDestination = 0; 
             _movingXQueue = 0;
             CinemachineCameraTarget.transform.localRotation = Quaternion.identity;
+            
+            _playerMesh.SetActive(false);
+        }
+
+        public void SetStartRunPosition(
+            Vector3 playerStartPosition,
+            Vector3 cameraStartPosition,
+            Quaternion cameraStartRotation)
+        {
+            playerStartPosition = new Vector3(playerStartPosition.x, _startPosition.y, playerStartPosition.z);
+            Controller.Move(playerStartPosition - transform.localPosition);
+            Transform cameraTransform = _playerRunCamera.transform;
+            cameraTransform.position = cameraStartPosition;
+            cameraTransform.rotation = cameraStartRotation;
         }
 
         private void Awake()
@@ -228,6 +245,8 @@ namespace StarterAssets
                 { typeof(HorizontalMoveRestriction), new HorizontalMoveRestriction() },
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
             };
+            
+            PlayerBones.gameObject.SetActive(false);
         }
 
         private void Start()

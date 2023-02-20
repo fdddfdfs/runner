@@ -31,7 +31,7 @@ public abstract class Visual : MonoBehaviour
             rotator.localRotation *= Quaternion.Euler(RotatorAngle.eulerAngles * (BaseSpeed * speed * Time.timeScale));
         }
         
-        transform.position = _player.transform.position + _player.PlayerMesh.localPosition.y * Vector3.up;
+        transform.position = _player.transform.position + _player.PlayerBones.localPosition.y * Vector3.up;
     }
     
     public virtual void ChangeActiveState(bool state)
@@ -39,7 +39,7 @@ public abstract class Visual : MonoBehaviour
         gameObject.SetActive(state);
         
         transform.rotation = Quaternion.identity;
-        _player.PlayerMesh.localRotation = Quaternion.identity;
+        _player.PlayerBones.localRotation = Quaternion.identity;
     }
 
     public void MoveX(float dir)
@@ -61,8 +61,8 @@ public abstract class Visual : MonoBehaviour
             objectRotation.y,
             objectRotation.z);
 
-        Vector3 playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
-        _player.PlayerMesh.localRotation = Quaternion.Euler(
+        Vector3 playerRotation = _player.PlayerBones.localRotation.eulerAngles;
+        _player.PlayerBones.localRotation = Quaternion.Euler(
             rotation,
             playerRotation.y,
             playerRotation.z);
@@ -87,8 +87,8 @@ public abstract class Visual : MonoBehaviour
             rotation,
             objectRotation.z);
 
-        Vector3 playerRotation = _player.PlayerMesh.localRotation.eulerAngles;
-        _player.PlayerMesh.localRotation = Quaternion.Euler(
+        Vector3 playerRotation = _player.PlayerBones.localRotation.eulerAngles;
+        _player.PlayerBones.localRotation = Quaternion.Euler(
             playerRotation.x,
             rotation,
             playerRotation.z);
@@ -113,8 +113,8 @@ public abstract class Visual : MonoBehaviour
             objectRotation.y,
             rotation);
 
-        Vector3 playerRotation = _player.PlayerMesh.rotation.eulerAngles;
-        _player.PlayerMesh.rotation = Quaternion.Euler(
+        Vector3 playerRotation = _player.PlayerBones.rotation.eulerAngles;
+        _player.PlayerBones.rotation = Quaternion.Euler(
             playerRotation.x,
             playerRotation.y,
             rotation);
