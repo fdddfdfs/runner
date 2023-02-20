@@ -45,7 +45,7 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void Lose()
     {
-        _map.Level.HideCurrentEnteredBlock();
+        _map.Level?.HideCurrentEnteredBlock();
         
         Time.timeScale = 0;
         
