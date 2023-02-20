@@ -23,7 +23,7 @@ public abstract class ColliderVisual : Visual
     {
         base.ChangeActiveState(state);
 
-        _player.PlayerMesh.position += state ? ColliderOffset : -_colliderOffset;
+        _player.PlayerBones.position += state ? ColliderOffset : -_colliderOffset;
     }
 
     private void Awake()

@@ -12,6 +12,7 @@ public class PlayerCamera : IRunnable
         _runCamera = runCamera;
         _idleCamera = idleCamera;
         _camera = camera;
+
         _idleCamera.gameObject.SetActive(false);
         _runCamera.gameObject.SetActive(false);
         _camera.gameObject.SetActive(false);

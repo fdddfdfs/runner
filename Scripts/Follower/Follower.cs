@@ -11,7 +11,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private Run _run;
     [SerializeField] private Animator _animator;
-    
+
     private readonly Queue<Vector3> _targetPositions = new();
     private readonly CancellationToken[] _linkedTokens = new CancellationToken[1];
 
