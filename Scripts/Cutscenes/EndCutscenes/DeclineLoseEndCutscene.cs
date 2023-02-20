@@ -16,7 +16,6 @@ public class DeclineLoseEndCutscene : Cutscene
         {
             HideCutscene();
             fade.FadeOut(null);
-            _cutsceneEnvironment.ChangeEnvironmentActive(false);
             mainMenu.SetCutsceneType(typeof(DeclineLoseStartCutscene));
             mainMenu.ShowMainMenu();
         };
@@ -27,5 +26,12 @@ public class DeclineLoseEndCutscene : Cutscene
         base.SetCutscene();
         
         _cutsceneEnvironment.ChangeEnvironmentActive(true);
+    }
+
+    public override void HideCutscene()
+    {
+        base.HideCutscene();
+        
+        _cutsceneEnvironment.ChangeEnvironmentActive(false);
     }
 }
