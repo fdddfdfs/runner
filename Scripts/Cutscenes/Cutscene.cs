@@ -6,7 +6,7 @@ public abstract class Cutscene : MonoBehaviour
     private const string StartCutsceneTrigger = "Start";
     private const string BackToStartTrigger = "Back";
         
-    [SerializeField] private Camera _cutsceneCamera;
+    [SerializeField] protected Camera _cutsceneCamera;
     [SerializeField] private Animator _cutsceneAnimator;
     [SerializeField] private GameObject _cutsceneObject;
 
@@ -15,6 +15,10 @@ public abstract class Cutscene : MonoBehaviour
 
     private Fade _fade;
 
+    protected bool _isEnded;
+
+    public event Action OnCutsceneEnded;
+    
     protected abstract Action EndCutsceneCallback { get; }
 
     protected void Init(Fade fade)
@@ -26,9 +30,11 @@ public abstract class Cutscene : MonoBehaviour
     {
         _cutsceneCamera.gameObject.SetActive(true);
         _cutsceneObject.gameObject.SetActive(true);
+
+        _isEnded = false;
     }
 
-    public void HideCutscene()
+    public virtual void HideCutscene()
     {
         _cutsceneAnimator.SetTrigger(_backToStartTrigger);
         _cutsceneCamera.gameObject.SetActive(false);
@@ -40,9 +46,18 @@ public abstract class Cutscene : MonoBehaviour
         _cutsceneAnimator.SetTrigger(_startCutsceneTrigger); 
     }
 
-    public void EndCutscene()
+    public virtual void EndCutscene()
     {
+        if (_isEnded) return;
+        
         _fade.FadeIn(EndCutsceneCallback);
+        _isEnded = true;
+        TriggerEnd();
+    }
+
+    protected void TriggerEnd()
+    {
+        OnCutsceneEnded?.Invoke();
     }
 
     private void Awake()
@@ -57,5 +72,7 @@ public abstract class Cutscene : MonoBehaviour
         
         endCutsceneBehaviour.Cutscene = this;
         _cutsceneAnimator.keepAnimatorControllerStateOnDisable = true;
+        
+        _cutsceneObject.SetActive(false);
     }
 }

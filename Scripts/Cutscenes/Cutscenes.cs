@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using StarterAssets;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Cutscenes : MonoBehaviour
 {
@@ -13,9 +15,11 @@ public class Cutscenes : MonoBehaviour
     [SerializeField] private Run _run;
     [SerializeField] private Fade _fade;
     [SerializeField] private MainMenu _mainMenu;
+    [SerializeField] private ThirdPersonController _player;
     
     private Dictionary<Type, Cutscene> _cutscenes;
     private Cutscene _cutscene;
+    private bool _cutsceneActive;
 
     public void ChangeCurrentCutscene(Type newCutscene)
     {
@@ -26,6 +30,12 @@ public class Cutscenes : MonoBehaviour
     public void PlayCurrentCutscene()
     {
         _cutscene.PlayCutscene();
+        _cutsceneActive = true;
+    }
+    
+    public void ForceEndCutscene()
+    {
+        _cutscene.EndCutscene();
     }
     
     private void Awake()
@@ -41,8 +51,10 @@ public class Cutscenes : MonoBehaviour
             ResourcesLoader.InstantiateLoadComponent<DeclineLoseEndCutscene>(DeclineLoseEndCutsceneResourceName);
 
         baseStartCutscene.Init(_run, _fade);
-        declineLoseStartCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment);
+        declineLoseStartCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment, _player);
         declineLoseEndCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment, _mainMenu);
+        
+        declineLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
 
         _cutscenes = new Dictionary<Type, Cutscene>();
         _cutscenes = new Dictionary<Type, Cutscene>
@@ -51,5 +63,36 @@ public class Cutscenes : MonoBehaviour
             [typeof(DeclineLoseStartCutscene)] = declineLoseStartCutscene,
             [typeof(DeclineLoseEndCutscene)] = declineLoseEndCutscene,
         };
+    }
+
+    private void OnEnable()
+    {
+        foreach (Cutscene cutscene in _cutscenes.Values)
+        {
+            cutscene.OnCutsceneEnded += CutsceneEnded;
+        }
+    }
+
+    private void OnDisable()
+    {
+        foreach (Cutscene cutscene in _cutscenes.Values)
+        {
+            cutscene.OnCutsceneEnded -= CutsceneEnded;
+        }
+    }
+
+    private void Update()
+    {
+        if (!_cutsceneActive) return;
+        
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            ForceEndCutscene();
+        }
+    }
+
+    private void CutsceneEnded()
+    {
+        _cutsceneActive = false;
     }
 }
