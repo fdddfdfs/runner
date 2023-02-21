@@ -22,7 +22,9 @@ public sealed class Run : MonoBehaviour, IRunnable
     private bool _isRun;
     private List<IRunnable> _runnables;
     private Type _cutsceneType;
-        
+    private Type _mainMenuCutsceneType;
+    private bool _isCutsceneChanged;
+
     private CancellationTokenSource _endRunTokenSource = new();
 
     public CancellationToken EndRunToken => _endRunTokenSource.Token;
@@ -68,7 +70,20 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void SetLoseCutscene(Type type)
     {
-        _cutsceneType = type;
+        if (_cutsceneType != type)
+        {
+            _cutsceneType = type;
+            _isCutsceneChanged = true;
+        }
+        else
+        {
+            _isCutsceneChanged = false;
+        }
+    }
+
+    public void SetMainMenuCutscene(Type type)
+    {
+        _mainMenuCutsceneType = type;
     }
 
     public void ApplyLoseResults()
@@ -107,11 +122,25 @@ public sealed class Run : MonoBehaviour, IRunnable
         _endRunTokenSource.Cancel();
     }
 
-    public void BackToMenu()
+    public void ShowLoseDecideMenu()
+    {
+        _loseDecideMenu.ShowMenu();
+    }
+
+    public void BackToMenu(bool playCutscene = true)
     {
         EndRun();
-        _cutscenes.ChangeCurrentCutscene(_cutsceneType);
-        _cutscenes.PlayCurrentCutscene();
+
+        if (playCutscene && _isCutsceneChanged)
+        {
+            _cutscenes.ChangeCurrentCutscene(_cutsceneType);
+            _cutscenes.PlayCurrentCutscene();
+        }
+        else
+        {
+            _mainMenu.SetCutsceneType(_mainMenuCutsceneType);
+            _mainMenu.ShowMainMenu();
+        }
     }
 
     private void Update()

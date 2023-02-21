@@ -31,7 +31,7 @@ public sealed class LoseMenu : MonoBehaviour
         _backToMenu.onClick.AddListener(() =>
         {
             ChangeMenuVisible(false);
-            _run.BackToMenu();
+            _run.ShowLoseDecideMenu();
         });
     }
 

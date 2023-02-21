@@ -19,6 +19,7 @@ public class LoseDecideMenu : MonoBehaviour
         _acceptButton.onClick.AddListener(() =>
         {
             _run.SetLoseCutscene(typeof(AcceptLoseEndCutscene));
+            _run.SetMainMenuCutscene(typeof(AcceptLoseStartCutscene));
             _run.BackToMenu();
             _menu.SetActive(false);
         });
@@ -26,6 +27,7 @@ public class LoseDecideMenu : MonoBehaviour
         _declineButton.onClick.AddListener(() =>
         {
             _run.SetLoseCutscene(typeof(DeclineLoseEndCutscene));
+            _run.SetMainMenuCutscene(typeof(DeclineLoseStartCutscene));
             _run.BackToMenu();
             _menu.SetActive(false);
         });

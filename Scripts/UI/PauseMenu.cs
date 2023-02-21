@@ -36,7 +36,7 @@ public class PauseMenu : MonoBehaviour
             _pauseController.ChangePauseState();
             
             _run.ApplyLoseResults();
-            _run.BackToMenu();
+            _run.BackToMenu(false);
         });
     }
 }
