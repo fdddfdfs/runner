@@ -9,6 +9,7 @@ public abstract class Cutscene : MonoBehaviour
     [SerializeField] protected Camera _cutsceneCamera;
     [SerializeField] private Animator _cutsceneAnimator;
     [SerializeField] private GameObject _cutsceneObject;
+    [SerializeField] private float _endThreshold = 1f;
 
     private readonly int _startCutsceneTrigger = Animator.StringToHash(StartCutsceneTrigger);
     private readonly int _backToStartTrigger = Animator.StringToHash(BackToStartTrigger);
@@ -70,7 +71,7 @@ public abstract class Cutscene : MonoBehaviour
                 $"{gameObject.name} animator must contain {nameof(EndCutsceneBehaviour)}");
         }
         
-        endCutsceneBehaviour.Cutscene = this;
+        endCutsceneBehaviour.Init(this, _endThreshold);
         _cutsceneAnimator.keepAnimatorControllerStateOnDisable = true;
         
         _cutsceneObject.SetActive(false);

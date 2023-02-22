@@ -1,12 +1,17 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Animations;
 
 public class EndCutsceneBehaviour : StateMachineBehaviour
 {
-    public Cutscene Cutscene { get; set; }
-
+    private Cutscene _cutscene;
+    private float _endThreshold;
     private bool _isEnter;
+
+    public void Init(Cutscene cutscene, float endThreshold = 1)
+    {
+        _cutscene = cutscene;
+        _endThreshold = endThreshold;
+    }
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex,
         AnimatorControllerPlayable controller)
@@ -22,9 +27,9 @@ public class EndCutsceneBehaviour : StateMachineBehaviour
 
         if (!_isEnter) return;
 
-        if (stateInfo.normalizedTime >= 1)
+        if (stateInfo.normalizedTime >= _endThreshold)
         {
-            Cutscene.EndCutscene();
+            _cutscene.EndCutscene();
             _isEnter = false;
         }
     }
