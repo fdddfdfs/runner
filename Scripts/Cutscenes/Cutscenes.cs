@@ -12,6 +12,10 @@ public class Cutscenes : MonoBehaviour
     private const string DeclineLoseStartCutsceneResourceName = "Cutscenes/DeclineLoseStartCutscene";
     private const string DeclineLoseEndCutsceneResourceName = "Cutscenes/DeclineLoseEndCutscene";
 
+    private const string AcceptLoseCutsceneEnvironmentResourceName = "Cutscenes/AcceptLoseCutsceneEnvironment";
+    private const string AcceptLoseStartCutsceneResourceName = "Cutscenes/AcceptLoseStartCutscene";
+    private const string AcceptLoseEndCutsceneResourceName = "Cutscenes/AcceptLoseEndCutscene";
+
     [SerializeField] private Run _run;
     [SerializeField] private Fade _fade;
     [SerializeField] private MainMenu _mainMenu;
@@ -50,11 +54,21 @@ public class Cutscenes : MonoBehaviour
         var declineLoseEndCutscene =
             ResourcesLoader.InstantiateLoadComponent<DeclineLoseEndCutscene>(DeclineLoseEndCutsceneResourceName);
 
+        var acceptLoseCutsceneEnvironment =
+            ResourcesLoader.InstantiateLoadComponent<CutsceneEnvironment>(AcceptLoseCutsceneEnvironmentResourceName);
+        var acceptLoseStartCutscene =
+            ResourcesLoader.InstantiateLoadComponent<AcceptLoseStartCutscene>(AcceptLoseStartCutsceneResourceName);
+        var acceptLoseEndCutscene =
+            ResourcesLoader.InstantiateLoadComponent<AcceptLoseEndCutscene>(AcceptLoseEndCutsceneResourceName);
+
         baseStartCutscene.Init(_run, _fade);
         declineLoseStartCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment, _player);
-        declineLoseEndCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment, _mainMenu);
+        declineLoseEndCutscene.Init(_fade, declineLoseCutsceneEnvironment, _mainMenu);
+        acceptLoseStartCutscene.Init(_run, _fade, acceptLoseCutsceneEnvironment, _player);
+        acceptLoseEndCutscene.Init(_fade, acceptLoseCutsceneEnvironment, _mainMenu);
         
         declineLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
+        acceptLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
 
         _cutscenes = new Dictionary<Type, Cutscene>();
         _cutscenes = new Dictionary<Type, Cutscene>
@@ -62,6 +76,8 @@ public class Cutscenes : MonoBehaviour
             [typeof(BaseStartCutscene)] = baseStartCutscene,
             [typeof(DeclineLoseStartCutscene)] = declineLoseStartCutscene,
             [typeof(DeclineLoseEndCutscene)] = declineLoseEndCutscene,
+            [typeof(AcceptLoseStartCutscene)] = acceptLoseStartCutscene,
+            [typeof(AcceptLoseEndCutscene)] = acceptLoseEndCutscene,
         };
     }
 
