@@ -40,6 +40,7 @@ public class Cutscenes : MonoBehaviour
     public void ForceEndCutscene()
     {
         _cutscene.EndCutscene();
+        Sounds.Instance.StopAllSounds();
     }
     
     private void Awake()
