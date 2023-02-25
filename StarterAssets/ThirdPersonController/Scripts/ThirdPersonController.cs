@@ -151,13 +151,18 @@ namespace StarterAssets
         public void Pause()
         {
             _isPause = true;
-            _animator.enabled = false;
+            //_animator.enabled = false;
         }
 
         public void UnPause()
         {
             _isPause = false;
-            _animator.enabled = true;
+            //_animator.enabled = true;
+        }
+
+        public void Resurrect()
+        {
+            PlayerAnimator.ChangeAnimationTrigger(AnimationType.Resurrect);
         }
 
         public void ChangeHittable(IHittable newHittable)
@@ -520,13 +525,16 @@ namespace StarterAssets
 
                 if (result)
                 {
-                    Die();
+                    Die(hit.normal);
                 }
                 else if (hitType == HitType.Soft)
                 {
                     _movingDestination = _previousMovingDestination;
                     _movingXDir *= -1;
                     _horizontalMoveRestriction.CheckHorizontalMoveRestriction(_movingXDir);
+                    
+                    PlayerAnimator.ChangeAnimationTrigger(
+                        hit.normal.x < 0 ? AnimationType.SoftHitLeft : AnimationType.SoftHitRight);
                 }
             }
             else if (hit.gameObject.TryGetComponent(out Item item))
@@ -535,9 +543,15 @@ namespace StarterAssets
             }
         }
 
-        private void Die()
+        private void Die(Vector3 hitNormal)
         {
             _run.Lose();
+            _follower.StopFollowing();
+            AnimationType dieAnimationType = 
+                Mathf.Abs(hitNormal.x) < 0.5f ? AnimationType.Die :
+                hitNormal.x < 0 ? AnimationType.DieLeft : 
+                AnimationType.DieRight;
+            PlayerAnimator.ChangeAnimationTrigger(dieAnimationType);
         }
 
         private void OnTriggerEnter(Collider other)

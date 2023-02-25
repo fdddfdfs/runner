@@ -44,6 +44,12 @@ public sealed class PlayerAnimator : BaseAnimator
             { AnimationType.Fall, Animator.StringToHash("FreeFall") },
             { AnimationType.Speed, Animator.StringToHash("Speed") },
             { AnimationType.Roll, Animator.StringToHash("Roll") },
+            { AnimationType.Die, Animator.StringToHash("Die")},
+            { AnimationType.DieRight, Animator.StringToHash("DieRight")},
+            { AnimationType.DieLeft, Animator.StringToHash("DieLeft")},
+            { AnimationType.Resurrect, Animator.StringToHash("Resurrect")},
+            { AnimationType.SoftHitLeft, Animator.StringToHash("SoftHitLeft")},
+            { AnimationType.SoftHitRight, Animator.StringToHash("SoftHitRight")},
         };
     }
 }

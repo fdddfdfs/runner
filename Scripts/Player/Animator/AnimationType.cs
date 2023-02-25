@@ -6,4 +6,10 @@
     Fall,
     Roll,
     Land,
+    Die,
+    DieLeft,
+    DieRight,
+    Resurrect,
+    SoftHitLeft,
+    SoftHitRight,
 }

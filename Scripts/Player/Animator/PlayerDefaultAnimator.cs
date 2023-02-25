@@ -17,6 +17,12 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
         _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>
         {
             { AnimationType.Roll, new InstantTriggerAnimation(playerAnimator, animationsID[AnimationType.Roll]) },
+            { AnimationType.Die, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Die])},
+            { AnimationType.DieRight, new TriggerAnimation(playerAnimator, animationsID[AnimationType.DieRight])},
+            { AnimationType.DieLeft, new TriggerAnimation(playerAnimator, animationsID[AnimationType.DieLeft])},
+            { AnimationType.Resurrect, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Resurrect])},
+            { AnimationType.SoftHitLeft, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitLeft])},
+            { AnimationType.SoftHitRight, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitRight])},
         };
 
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>
