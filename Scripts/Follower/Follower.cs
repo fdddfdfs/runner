@@ -60,6 +60,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
         if (_isFollowing)
         {
             _followCancellation.Cancel();
+            transform.position = _startPosition;
         }
     }
 
