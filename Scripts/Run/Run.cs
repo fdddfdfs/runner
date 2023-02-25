@@ -47,9 +47,10 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void Lose()
     {
-        _map.Level?.HideCurrentEnteredBlock();
+        //_map.Level?.HideCurrentEnteredBlock();
         
-        Time.timeScale = 0;
+        //Time.timeScale = 0;
+        _player.Pause();
         
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -100,7 +101,9 @@ public sealed class Run : MonoBehaviour, IRunnable
 
     public void Resurrect()
     {
-        Time.timeScale = 1;
+        _player.UnPause();
+        _player.Resurrect();
+        //Time.timeScale = 1;
     }
 
     public void EndRun()
