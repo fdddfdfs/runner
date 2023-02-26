@@ -116,6 +116,7 @@ namespace StarterAssets
         private HorizontalMoveRestriction _horizontalMoveRestriction;
 
         private bool _isPause;
+        private bool _isFall;
         private Vector3 _startPosition;
 
         private PlayerRunInput _playerRunInput;
@@ -224,11 +225,16 @@ namespace StarterAssets
             Vector3 cameraStartPosition,
             Quaternion cameraStartRotation)
         {
-            playerStartPosition = new Vector3(playerStartPosition.x, _startPosition.y, playerStartPosition.z);
+            playerStartPosition = new Vector3(_startPosition.x, _startPosition.y, playerStartPosition.z);
             Controller.Move(playerStartPosition - transform.localPosition);
             Transform cameraTransform = _playerRunCamera.transform;
             cameraTransform.position = cameraStartPosition;
             cameraTransform.rotation = cameraStartRotation;
+        }
+        
+        public void StopRecover()
+        {
+            (_hittable as PlayerHittable)?.StopRecover();
         }
 
         private void Awake()
@@ -319,6 +325,11 @@ namespace StarterAssets
 
         private void FixedUpdate()
         {
+            if (_isFall)
+            {
+                Fall();
+            }
+        
             if (_isPause)
             {
                 return;
@@ -546,12 +557,27 @@ namespace StarterAssets
         private void Die(Vector3 hitNormal)
         {
             _run.Lose();
-            _follower.StopFollowing();
+            StopRecover();
             AnimationType dieAnimationType = 
                 Mathf.Abs(hitNormal.x) < 0.5f ? AnimationType.Die :
                 hitNormal.x < 0 ? AnimationType.DieLeft : 
                 AnimationType.DieRight;
             PlayerAnimator.ChangeAnimationTrigger(dieAnimationType);
+            _isFall = true;
+        }
+
+        private void Fall()
+        {
+            if (Grounded)
+            {
+                _isFall = false;
+                return;
+            }
+
+            JumpAndGravity();
+            GroundedCheck();
+
+            Controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.fixedDeltaTime);
         }
 
         private void OnTriggerEnter(Collider other)
