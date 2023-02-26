@@ -43,7 +43,7 @@ public sealed class SpringGravity : IGravitable, IRollable
 
     public void EnterGravity()
     {
-        _follower.StopFollowing();
+        _player.StopRecover();
         
         _verticalVelocity = Mathf.Sqrt(_springHeight * -2f * _springGravity);
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(

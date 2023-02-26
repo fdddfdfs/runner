@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using StarterAssets;
 using UnityEngine;
@@ -11,8 +12,8 @@ public sealed class PlayerHittable : IHittable
     private readonly ThirdPersonController _player;
     private readonly Follower _follower;
     private readonly Run _run;
-    
-    private Coroutine _recoveryRoutine;
+
+    private CancellationTokenSource _recoverCancellationSource;
     private bool _isRecovery;
 
     public PlayerHittable(ThirdPersonController player, Follower follower, Run run)
@@ -20,6 +21,8 @@ public sealed class PlayerHittable : IHittable
         _player = player;
         _follower = follower;
         _run = run;
+        
+        _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
     }
     
     public bool Hit(HitType hitType)
@@ -29,8 +32,7 @@ public sealed class PlayerHittable : IHittable
             case HitType.Hard:
                 return true;
             case HitType.Soft when _isRecovery:
-                Coroutines.StopRoutine(_recoveryRoutine);
-                _isRecovery = false;
+                _recoverCancellationSource.Cancel();
                 return true;
             case HitType.Soft:
                 Recover();
@@ -41,13 +43,30 @@ public sealed class PlayerHittable : IHittable
 
         return false;
     }
+
+    public void StopRecover()
+    {
+        if (_isRecovery)
+        {
+            _recoverCancellationSource.Cancel();
+        }
+    }
     
     private async void Recover()
     {
         _isRecovery = true;
         _follower.FollowForTime(_player.gameObject, RecoverTime);
 
-        await Task.Delay(RecoverTimeMilliseconds, _run.EndRunToken).ContinueWith(GlobalCancellationToken.EmptyTask);
+        try
+        {
+            await Task.Delay(RecoverTimeMilliseconds, _recoverCancellationSource.Token);
+        }
+        catch
+        {
+            _follower.StopFollowing();
+            _recoverCancellationSource.Dispose();
+            _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+        }
 
         _isRecovery = false;
     }

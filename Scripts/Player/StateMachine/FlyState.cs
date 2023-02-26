@@ -12,7 +12,7 @@ public class FlyState : PlayerActivateState, IState
 
     public void EnterState()
     {
-        _follower.StopFollowing();
+        _player.StopRecover();
 
         _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
