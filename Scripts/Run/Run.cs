@@ -5,7 +5,7 @@ using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
 
-public sealed class Run : MonoBehaviour, IRunnable
+public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 {
     [SerializeField] private Follower _follower;
     [SerializeField] private RunProgress _runProgress;
@@ -26,8 +26,6 @@ public sealed class Run : MonoBehaviour, IRunnable
     private bool _isCutsceneChanged;
 
     private CancellationTokenSource _endRunTokenSource = new();
-
-    public CancellationToken EndRunToken => _endRunTokenSource.Token;
 
     public void StartRun()
     {
@@ -166,5 +164,10 @@ public sealed class Run : MonoBehaviour, IRunnable
         {
             _endRunTokenSource.Cancel();
         }
+    }
+
+    public CancellationToken GetCancellationToken()
+    {
+        return _endRunTokenSource.Token;
     }
 }

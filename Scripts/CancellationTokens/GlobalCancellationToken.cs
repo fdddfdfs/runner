@@ -3,12 +3,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public sealed class GlobalCancellationToken : MonoBehaviour
+public sealed class GlobalCancellationToken : MonoBehaviour, ICancellationTokenProvider
 {
     private CancellationTokenSource _source;
     private static GlobalCancellationToken _instance;
-    
-    public CancellationToken CancellationToken => _source.Token;
 
     public static GlobalCancellationToken Instance
     {
@@ -31,5 +29,10 @@ public sealed class GlobalCancellationToken : MonoBehaviour
     private void OnDisable()
     {
         _source.Cancel();
+    }
+
+    public CancellationToken GetCancellationToken()
+    {
+        return _source.Token;
     }
 }
