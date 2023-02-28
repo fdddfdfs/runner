@@ -11,18 +11,22 @@ public sealed class PlayerHittable : IHittable
     
     private readonly ThirdPersonController _player;
     private readonly Follower _follower;
-    private readonly Run _run;
+    private readonly ICancellationTokenProvider _cancellationTokenProvider;
 
     private CancellationTokenSource _recoverCancellationSource;
     private bool _isRecovery;
 
-    public PlayerHittable(ThirdPersonController player, Follower follower, Run run)
+    public PlayerHittable(
+        ThirdPersonController player,
+        Follower follower,
+        ICancellationTokenProvider cancellationTokenProvider)
     {
         _player = player;
         _follower = follower;
-        _run = run;
+        _cancellationTokenProvider = cancellationTokenProvider;
         
-        _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+        _recoverCancellationSource = 
+            CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
     }
     
     public bool Hit(HitType hitType)
@@ -65,7 +69,8 @@ public sealed class PlayerHittable : IHittable
         {
             _follower.StopFollowing();
             _recoverCancellationSource.Dispose();
-            _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+            _recoverCancellationSource = 
+                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
         }
 
         _isRecovery = false;

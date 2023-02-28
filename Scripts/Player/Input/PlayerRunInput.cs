@@ -5,6 +5,8 @@ public sealed class PlayerRunInput : IRunnable
 {
     private const float JumpTimeoutLength = 0.5f;
     private const float RollTimeoutLength = 0.5f;
+
+    private readonly ICancellationTokenProvider _cancellationTokenProvider;
     
     private bool _isLeftPressed;
     private bool _isRightPressed;
@@ -16,7 +18,7 @@ public sealed class PlayerRunInput : IRunnable
     private bool _isRollTimeout;
     
     private bool _isRun;
-    
+
     public bool IsBoardPressed
     {
         get
@@ -74,7 +76,7 @@ public sealed class PlayerRunInput : IRunnable
         }
     }
     
-    public PlayerRunInput(InputActionMap inputActionMap)
+    public PlayerRunInput(InputActionMap inputActionMap, ICancellationTokenProvider cancellationTokenProvider)
     {
         inputActionMap["Left"].started += (_) => _isLeftPressed = true;
         inputActionMap["Left"].canceled += (_) => _isLeftPressed = false;
@@ -86,6 +88,8 @@ public sealed class PlayerRunInput : IRunnable
         inputActionMap["Roll"].canceled += (_) => _isRollPressed = false;
         inputActionMap["ActivateBoard"].started += (_) => _isBoardPressed = true;
         inputActionMap["ActivateBoard"].canceled += (_) => _isBoardPressed = false;
+
+        _cancellationTokenProvider = cancellationTokenProvider;
     }
     
     public void Update()
@@ -138,7 +142,7 @@ public sealed class PlayerRunInput : IRunnable
     {
         _isJumpTimeout = true;
 
-        await Task.Delay((int)(1000 * JumpTimeoutLength), GlobalCancellationToken.Instance.CancellationToken)
+        await Task.Delay((int)(1000 * JumpTimeoutLength), _cancellationTokenProvider.GetCancellationToken())
             .ContinueWith(GlobalCancellationToken.EmptyTask);
 
         _isJumpTimeout = false;
@@ -148,7 +152,7 @@ public sealed class PlayerRunInput : IRunnable
     {
         _isRollTimeout = true;
 
-        await Task.Delay((int)(1000 * RollTimeoutLength), GlobalCancellationToken.Instance.CancellationToken)
+        await Task.Delay((int)(1000 * RollTimeoutLength), _cancellationTokenProvider.GetCancellationToken())
             .ContinueWith(GlobalCancellationToken.EmptyTask);
 
         _isRollTimeout = false;

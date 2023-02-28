@@ -30,7 +30,7 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
     {
         Text = GetComponent<TMP_Text>();
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-            GlobalCancellationToken.Instance.CancellationToken);
+            GlobalCancellationToken.Instance.GetCancellationToken());
     }
 
     protected async void ChangeTextDilate(float startValue, int dir)
@@ -69,7 +69,7 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-                GlobalCancellationToken.Instance.CancellationToken);
+                GlobalCancellationToken.Instance.GetCancellationToken());
         }
     }
 }

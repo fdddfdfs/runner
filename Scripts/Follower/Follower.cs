@@ -112,7 +112,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
     private CancellationToken[] GetLinkedTokens()
     {
-        _linkedTokens[0] = _run.EndRunToken;
+        _linkedTokens[0] = _run.GetCancellationToken();
         return _linkedTokens;
     }
 

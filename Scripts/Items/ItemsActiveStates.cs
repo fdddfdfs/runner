@@ -3,12 +3,12 @@ using System.Threading;
 
 public class ItemsActiveStates
 {
-    private readonly Run _run;
+    private readonly ICancellationTokenProvider _cancellationTokenProvider;
     private readonly Dictionary<ItemType, ActiveState> _itemActiveStates;
 
-    public ItemsActiveStates(Run run)
+    public ItemsActiveStates(ICancellationTokenProvider cancellationTokenProvider)
     {
-        _run = run;
+        _cancellationTokenProvider = cancellationTokenProvider;
         _itemActiveStates = new Dictionary<ItemType, ActiveState>();
     }
 
@@ -16,7 +16,7 @@ public class ItemsActiveStates
     {
         if (!_itemActiveStates.ContainsKey(item))
         {
-            _itemActiveStates.Add(item, new ActiveState(_run));
+            _itemActiveStates.Add(item, new ActiveState(_cancellationTokenProvider));
         }
 
         ActiveState activeState = _itemActiveStates[item];
@@ -24,7 +24,8 @@ public class ItemsActiveStates
         {
             activeState.CancellationTokenSource.Cancel();
             activeState.CancellationTokenSource.Dispose();
-            activeState.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+            activeState.CancellationTokenSource = 
+                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
         }
 
         activeState.IsActive = true;
@@ -45,9 +46,10 @@ public class ItemsActiveStates
         public bool IsActive;
         public CancellationTokenSource CancellationTokenSource;
         
-        public ActiveState(Run run)
+        public ActiveState(ICancellationTokenProvider cancellationTokenProvider)
         {
-            CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(run.EndRunToken);
+            CancellationTokenSource = 
+                CancellationTokenSource.CreateLinkedTokenSource(cancellationTokenProvider.GetCancellationToken());
             IsActive = false;
         }
     }

@@ -16,18 +16,18 @@ public abstract class Item : MonoBehaviour
     private BoxCollider _boxCollider;
     private bool _isAutoShowing;
 
-    protected Run _run;
+    protected ICancellationTokenProvider _cancellationTokenProvider;
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isDeactivating;
 
     private WaitForSeconds _activateWaiter;
 
-    protected void Init(Run run, bool isAutoShowing = false)
+    protected void Init(ICancellationTokenProvider run, bool isAutoShowing = false)
     {
         _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
-        _run = run;
+        _cancellationTokenProvider = run;
     }
 
     public virtual void PickupItem(ThirdPersonController player)
@@ -80,7 +80,8 @@ public abstract class Item : MonoBehaviour
         if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
         {
             _cancellationTokenSource?.Dispose();
-            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_run.EndRunToken);
+            _cancellationTokenSource = 
+                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
         }
         
         await Task.Delay(DeactivateTime, _cancellationTokenSource.Token)

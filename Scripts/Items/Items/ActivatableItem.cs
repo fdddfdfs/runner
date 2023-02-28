@@ -8,9 +8,12 @@ public abstract class ActivatableItem : Item
     private ActiveItemsUI _activeItemsUI;
     private ItemsActiveStates _itemsActiveStates;
     
-    public void Init(ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
+    public void Init(
+        ActiveItemsUI activeItemsUI,
+        ICancellationTokenProvider cancellationTokenProvider,
+        ItemsActiveStates itemsActiveStates)
     {
-        base.Init(run);
+        base.Init(cancellationTokenProvider);
         
         _activeItemsUI = activeItemsUI;
         _itemsActiveStates = itemsActiveStates;
@@ -38,7 +41,7 @@ public abstract class ActivatableItem : Item
         Activate();
 
         CancellationToken token = _itemsActiveStates.GetTokenForItem(ActiveItemType);
-        CancellationToken endRunToken = _run.EndRunToken;
+        CancellationToken endRunToken = _cancellationTokenProvider.GetCancellationToken();
 
         await Task.Delay((int)ActiveTime * 1000, token).ContinueWith(GlobalCancellationToken.EmptyTask);
         

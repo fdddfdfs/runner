@@ -240,7 +240,7 @@ namespace StarterAssets
         private void Awake()
         {
             InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
-            _playerRunInput = new PlayerRunInput(inputActionMap);
+            _playerRunInput = new PlayerRunInput(inputActionMap, GlobalCancellationToken.Instance);
             inputActionMap.Enable();
 
             _startPosition = transform.position;
