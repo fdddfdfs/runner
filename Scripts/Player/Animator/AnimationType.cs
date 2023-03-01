@@ -12,4 +12,5 @@
     Resurrect,
     SoftHitLeft,
     SoftHitRight,
+    Lose,
 }

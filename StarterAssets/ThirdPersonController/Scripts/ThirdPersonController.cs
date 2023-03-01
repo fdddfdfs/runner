@@ -237,6 +237,11 @@ namespace StarterAssets
             (_hittable as PlayerHittable)?.StopRecover();
         }
 
+        public void Lose()
+        {
+            PlayerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
+        }
+
         private void Awake()
         {
             InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
