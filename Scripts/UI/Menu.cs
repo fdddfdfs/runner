@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Menu : MonoBehaviour
+public abstract class Menu : MonoBehaviour
 {
     [SerializeField] protected GameObject _menu;
 

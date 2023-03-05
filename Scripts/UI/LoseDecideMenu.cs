@@ -3,7 +3,7 @@ using StarterAssets;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LoseDecideMenu : MonoBehaviour
+public sealed class LoseDecideMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
     [SerializeField] private Button _acceptButton;

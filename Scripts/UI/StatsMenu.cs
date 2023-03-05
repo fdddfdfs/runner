@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 
-public class StatsMenu : MonoBehaviour
+public sealed class StatsMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
     [SerializeField] private TMP_Text _balance;

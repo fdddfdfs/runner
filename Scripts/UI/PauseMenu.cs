@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PauseMenu : MonoBehaviour
+public sealed class PauseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
     [SerializeField] private Button _restartButton;
