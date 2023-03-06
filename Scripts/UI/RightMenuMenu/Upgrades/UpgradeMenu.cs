@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
@@ -77,7 +78,7 @@ public sealed class UpgradeMenu : Menu
                 _upgradeActions[_itemTypes[i]].getLevel,
                 _upgradeActions[_itemTypes[i]].increaseLevel,
                 i);
-
+            
             upgradeItem.OnSelect += SetVerticalPosition;
 
             if (i == 0)
@@ -90,6 +91,8 @@ public sealed class UpgradeMenu : Menu
 
     private void SetVerticalPosition(int index)
     {
+        if (Gamepad.current == null) return;
+        
         _scrollRect.verticalScrollbar.value = 1 - (float)index / (_itemTypes.Count - 1);
     }
 }
