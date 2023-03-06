@@ -18,16 +18,19 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         ActiveItem item = _currentlyActiveItems.ContainsKey(itemType) 
             ? _currentlyActiveItems[itemType] 
             : _activeItems.GetItem();
-
+        
         item.ItemImage.sprite = _items[itemType];
-        item.ProgressImage.DOKill();
-        item.ProgressImage.fillAmount = 1;
-        item.ProgressImage.DOFillAmount(0, time).SetEase(Ease.Linear).OnComplete(() =>
+        foreach (var progressImage in item.ProgressImages)
+        {
+            progressImage.DOKill();
+            progressImage.fillAmount = 1;
+            progressImage.DOFillAmount(0, time).SetEase(Ease.Linear).OnComplete(() =>
             {
                 item.gameObject.SetActive(false);
                 _currentlyActiveItems.Remove(itemType);
             });
-        
+        }
+
         _currentlyActiveItems[itemType] = item;
     }
 
@@ -40,7 +43,11 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         
         ActiveItem item = _currentlyActiveItems[itemType];
 
-        item.ProgressImage.DOKill();
+        foreach (var progressImage in item.ProgressImages)
+        {
+            progressImage.DOKill();
+        }
+
         item.gameObject.SetActive(false);
         _currentlyActiveItems.Remove(itemType);
     }
