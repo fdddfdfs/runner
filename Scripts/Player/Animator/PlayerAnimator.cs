@@ -7,6 +7,8 @@ public sealed class PlayerAnimator : BaseAnimator
 {
     private readonly ThirdPersonController _player;
 
+    public Type CurrentAnimatorType { get; private set; }
+
     public PlayerAnimator(Animator playerAnimator, ThirdPersonController player)
     {
         _player = player;
@@ -27,6 +29,8 @@ public sealed class PlayerAnimator : BaseAnimator
 
     public override void ChangeAnimator(Type animatorType)
     {
+        CurrentAnimatorType = animatorType;
+        
         base.ChangeAnimator(animatorType);
         
         if (_player.IsRoll)
@@ -43,6 +47,7 @@ public sealed class PlayerAnimator : BaseAnimator
             { AnimationType.Jump, Animator.StringToHash("Jump") },
             { AnimationType.Fall, Animator.StringToHash("FreeFall") },
             { AnimationType.Speed, Animator.StringToHash("Speed") },
+            { AnimationType.HitSpeed, Animator.StringToHash("HitSpeed") },
             { AnimationType.Roll, Animator.StringToHash("Roll") },
             { AnimationType.Die, Animator.StringToHash("Die")},
             { AnimationType.DieRight, Animator.StringToHash("DieRight")},
@@ -50,6 +55,7 @@ public sealed class PlayerAnimator : BaseAnimator
             { AnimationType.Resurrect, Animator.StringToHash("Resurrect")},
             { AnimationType.SoftHitLeft, Animator.StringToHash("SoftHitLeft")},
             { AnimationType.SoftHitRight, Animator.StringToHash("SoftHitRight")},
+            { AnimationType.Lose, Animator.StringToHash("Lose")},
         };
     }
 }

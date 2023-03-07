@@ -23,6 +23,7 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
             { AnimationType.Resurrect, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Resurrect])},
             { AnimationType.SoftHitLeft, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitLeft])},
             { AnimationType.SoftHitRight, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitRight])},
+            { AnimationType.Lose, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Lose])},
         };
 
         _boolAnimations = new Dictionary<AnimationType, IBoolAnimation>
@@ -39,6 +40,7 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>
         {
             { AnimationType.Speed, new FloatAnimation(playerAnimator, animationsID[AnimationType.Speed]) },
+            { AnimationType.HitSpeed, new FloatAnimation(playerAnimator, animationsID[AnimationType.HitSpeed]) },
             { AnimationType.HorizontalRun, _defaultHorizontalMoveAnimation }
         };
     }

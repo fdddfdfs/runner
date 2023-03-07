@@ -9,11 +9,12 @@ public class FollowerAnimator : BaseAnimator
     public FollowerAnimator(Animator animator, Transform follower)
     {
         int speedAnimationID = Animator.StringToHash("Speed");
+        int loseAnimationID = Animator.StringToHash("Lose");
         
         _animators = new Dictionary<Type, PlayerBaseAnimator>
         {
             { typeof(FollowerDefaultAnimator), 
-                new FollowerDefaultAnimator(animator, follower, RotationSmoothTime, speedAnimationID) },
+                new FollowerDefaultAnimator(animator, follower, RotationSmoothTime, speedAnimationID, loseAnimationID) },
         };
 
         ChangeAnimator(typeof(FollowerDefaultAnimator));
