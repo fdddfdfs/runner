@@ -13,4 +13,5 @@
     SoftHitLeft,
     SoftHitRight,
     Lose,
+    HitSpeed,
 }

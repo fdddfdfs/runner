@@ -421,6 +421,11 @@ namespace StarterAssets
                 Vector3.forward * (_speed * _runProgress.SpeedMultiplier * Time.fixedDeltaTime));
             
             PlayerAnimator.ChangeAnimationFloat(AnimationType.Speed, _runProgress.HalfSpeedMultiplier);
+
+            if (PlayerAnimator.CurrentAnimatorType == typeof(PlayerDefaultAnimator))
+            {
+                PlayerAnimator.ChangeAnimationFloat(AnimationType.HitSpeed, _runProgress.HalfSpeedMultiplier + 1);
+            }
         }
 
         private int CheckForMovingX()
