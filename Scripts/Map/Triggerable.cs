@@ -11,6 +11,8 @@ public abstract class Triggerable : MonoBehaviour, ITriggerable
     protected void Init()
     {
         _triggerables = new List<ITriggerable>();
+        if (_triggerableObjects == null) return;
+        
         for (var i = 0; i < _triggerableObjects.Count; i++)
         {
             var triggerable = _triggerableObjects[i].GetComponent<ITriggerable>();
