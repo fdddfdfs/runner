@@ -6,7 +6,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     where TBlockInfo: ScriptableObject, IWeightable
     where TBlock: MonoBehaviour, IMapBlock 
 {
-    private const int ViewDistance = 1000;
+    private const int ViewDistance = 750;
     private const float BaseYPosition = 0;
     private const float HideBlockOffset = 5;
 
@@ -19,10 +19,12 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private readonly TBlockInfo _startBlock;
     private readonly bool _haveStartBlock;
     private readonly float _nextBlockDistancePercentToHide;
+    private readonly float _nextBlockDistancePercentToTrigger;
     
     private TBlock _firstBlock;
     private float _lastBlockPosition;
     private float _firstBlockPosition;
+    private ITriggerable _nextTriggerableBlock;
 
     private Dictionary<int, FactoryPoolMono<TBlock>> BlockPools
     {
@@ -37,7 +39,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         IEnumerable<TBlockInfo> blocksInfo,
         Transform player,
         bool haveStartBlock = false,
-        float nextBlockDistancePercentToHide = 0)
+        float nextBlockDistancePercentToHide = 0,
+        float nextBlockDistancePercentToTrigger = 0.2f)
     {
         // TODO: change it to false when make more SO
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
@@ -45,6 +48,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _player = player;
         _haveStartBlock = haveStartBlock;
         _nextBlockDistancePercentToHide = nextBlockDistancePercentToHide;
+        _nextBlockDistancePercentToTrigger = nextBlockDistancePercentToTrigger;
     }
     
     public void CheckToHideBlock()
@@ -59,6 +63,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         {
             HideCurrentBlock();
         }
+
+        CheckToTriggerBlock();
     }
 
     public void SetBlocks()
@@ -71,6 +77,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
         
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
+        
+        if (_haveStartBlock)
+        {
+            _nextTriggerableBlock = _blocksPositions.Peek() as ITriggerable;
+        }
     }
     
     public void StartRun()
@@ -117,9 +128,22 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     
     protected abstract Dictionary<int, FactoryPoolMono<TBlock>> InitializeBlockPools();
 
+    private void CheckToTriggerBlock()
+    {
+        if (_nextTriggerableBlock == null) return;
+        
+        if(_firstBlock.BlockSize * (1 - _nextBlockDistancePercentToTrigger) < _player.transform.position.z)
+        {
+            _nextTriggerableBlock.Trigger();
+            _nextTriggerableBlock = null;
+        }
+    }
+
     private void HideCurrentBlock()
     {
         _firstBlock?.HideBlock();
+        
+        _nextTriggerableBlock?.Trigger();
 
         UpdateFirstBlock();
         
@@ -131,6 +155,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _firstBlockPosition += _firstBlock?.BlockSize ?? 0;
         _firstBlock = _blocksPositions.Dequeue();
         _firstBlock.EnterBlock();
+
+        if (_blocksPositions.Count != 0)
+        {
+            _nextTriggerableBlock = _blocksPositions.Peek() as ITriggerable;
+        }
     }
 
     private float SetNewBlocks(float startPosition, float lastBlockPosition)
