@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "Environment", menuName = "Environments")]
+[CreateAssetMenu(fileName = "Environment", menuName = "Environments/EnvironmentBlockInfo")]
 public sealed class EnvironmentBlockInfo : ScriptableObject, IWeightable
 {
     [SerializeField] private int _weight;
