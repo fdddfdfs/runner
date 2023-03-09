@@ -43,8 +43,8 @@ public abstract class ActivatableItem : Item
         CancellationToken token = _itemsActiveStates.GetTokenForItem(ActiveItemType);
         CancellationToken endRunToken = _cancellationTokenProvider.GetCancellationToken();
 
-        await Task.Delay((int)ActiveTime * 1000, token).ContinueWith(AsyncUtils.EmptyTask);
-        
+        await AsyncUtils.Wait(ActiveTime, token);
+
         if (token.IsCancellationRequested && !endRunToken.IsCancellationRequested)
         {
             return;

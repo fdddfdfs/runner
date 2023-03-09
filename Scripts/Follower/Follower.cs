@@ -141,22 +141,16 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
         CancellationToken token = _followCancellation.Token;
 
-        try
-        {
-            await Task.Delay((int)(FollowDelayMilliseconds / _runProgress.SpeedMultiplier), token);
-        }
-        catch
+        await AsyncUtils.Wait(FollowDelayMilliseconds / _runProgress.SpeedMultiplier, token);
+        _isFollowingDelay = false; 
+        if (token.IsCancellationRequested)
         {
             _isFollowing = false;
             _targetPositions.Clear();
             return;
         }
-        finally
-        {
-            _isFollowingDelay = false;   
-        }
 
-        await Task.Delay(followTimeMilliseconds, token).ContinueWith(AsyncUtils.EmptyTask);
+        await AsyncUtils.Wait(followTimeMilliseconds, token);
 
         _isFollowing = false;
         _targetPositions.Clear();

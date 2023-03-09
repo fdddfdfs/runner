@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using UnityEngine;
 
 public class Effect : MonoBehaviour
@@ -12,7 +11,7 @@ public class Effect : MonoBehaviour
 
         try
         {
-            await Task.Delay(timeMilliseconds, cancellationTokenProvider.GetCancellationToken());
+            await AsyncUtils.Wait(timeMilliseconds, cancellationTokenProvider.GetCancellationToken());
         }
         finally
         {
