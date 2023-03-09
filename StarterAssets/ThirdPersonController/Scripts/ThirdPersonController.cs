@@ -194,6 +194,7 @@ namespace StarterAssets
             _playerCamera.StartRun();
 
             _isPause = false;
+            _isFall = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
             ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
             _horizontalMoveRestriction.Init(0);
@@ -245,7 +246,7 @@ namespace StarterAssets
         private void Awake()
         {
             InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
-            _playerRunInput = new PlayerRunInput(inputActionMap, GlobalCancellationToken.Instance);
+            _playerRunInput = new PlayerRunInput(inputActionMap, AsyncUtils.Instance);
             inputActionMap.Enable();
 
             _startPosition = transform.position;
@@ -330,11 +331,13 @@ namespace StarterAssets
 
         private void FixedUpdate()
         {
+            GroundedCheck();
+            
             if (_isFall)
             {
                 Fall();
             }
-        
+
             if (_isPause)
             {
                 return;
@@ -343,7 +346,6 @@ namespace StarterAssets
             BoardActive();
             Roll();
             JumpAndGravity();
-            GroundedCheck();
             Move();
             CameraRotation();
         }
@@ -580,7 +582,6 @@ namespace StarterAssets
         {
             if (Grounded)
             {
-                _isFall = false;
                 return;
             }
 
