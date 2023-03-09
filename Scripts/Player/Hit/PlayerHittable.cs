@@ -12,6 +12,7 @@ public sealed class PlayerHittable : IHittable
     private readonly ThirdPersonController _player;
     private readonly Follower _follower;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
+    private readonly CancellationToken[] _linkedTokens;
 
     private CancellationTokenSource _recoverCancellationSource;
     private bool _isRecovery;
@@ -24,9 +25,8 @@ public sealed class PlayerHittable : IHittable
         _player = player;
         _follower = follower;
         _cancellationTokenProvider = cancellationTokenProvider;
-        
-        _recoverCancellationSource = 
-            CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
+        _linkedTokens = new[] { cancellationTokenProvider.GetCancellationToken() };
+        _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
     }
     
     public bool Hit(HitType hitType)
@@ -61,16 +61,14 @@ public sealed class PlayerHittable : IHittable
         _isRecovery = true;
         _follower.FollowForTime(_player.gameObject, RecoverTime);
 
-        try
-        {
-            await Task.Delay(RecoverTimeMilliseconds, _recoverCancellationSource.Token);
-        }
-        catch
+        await AsyncUtils.Wait(RecoverTimeMilliseconds, _recoverCancellationSource.Token);
+
+        if (_recoverCancellationSource.IsCancellationRequested)
         {
             _follower.StopFollowing();
             _recoverCancellationSource.Dispose();
-            _recoverCancellationSource = 
-                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
+            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
+            _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
 
         _isRecovery = false;

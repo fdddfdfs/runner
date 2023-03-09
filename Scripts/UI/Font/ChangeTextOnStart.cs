@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using TMPro;
 using UnityEngine;
 
@@ -13,6 +11,7 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
     private const int DeltaTimeMilliseconds = (int)(ShowDelta / ShowTime * 1000);
 
     private CancellationTokenSource _cancellationTokenSource;
+    private CancellationToken[] _linkedTokens;
     private bool _isActive;
 
     public TMP_Text Text { get; private set; }
@@ -26,11 +25,11 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
         Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, value);
     }
 
-    private void Awake()
+    private void Awake() // TODO: might be error if AsyncUtils load after this try to change to start
     {
         Text = GetComponent<TMP_Text>();
-        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-            AsyncUtils.Instance.GetCancellationToken());
+        _linkedTokens = new[] { AsyncUtils.Instance.GetCancellationToken() };
+        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
     }
 
     protected async void ChangeTextDilate(float startValue, int dir)
@@ -45,11 +44,8 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
                 ShaderUtilities.ID_FaceDilate,
                 startValue + currentTime / ShowTimeMilliseconds * dir);
 
-            try
-            {
-                await Task.Delay(DeltaTimeMilliseconds, _cancellationTokenSource.Token);
-            }
-            catch
+            await AsyncUtils.Wait(DeltaTimeMilliseconds, _cancellationTokenSource.Token);
+            if (_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, startValue + dir);
                 return;
@@ -68,8 +64,8 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
         {
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-                AsyncUtils.Instance.GetCancellationToken());
+            _linkedTokens[0] = AsyncUtils.Instance.GetCancellationToken();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
     }
 }

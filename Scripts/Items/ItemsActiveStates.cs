@@ -4,11 +4,13 @@ using System.Threading;
 public class ItemsActiveStates
 {
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
+    private readonly CancellationToken[] _linkedTokens;
     private readonly Dictionary<ItemType, ActiveState> _itemActiveStates;
 
     public ItemsActiveStates(ICancellationTokenProvider cancellationTokenProvider)
     {
         _cancellationTokenProvider = cancellationTokenProvider;
+        _linkedTokens = new[] { cancellationTokenProvider.GetCancellationToken() };
         _itemActiveStates = new Dictionary<ItemType, ActiveState>();
     }
 
@@ -16,7 +18,7 @@ public class ItemsActiveStates
     {
         if (!_itemActiveStates.ContainsKey(item))
         {
-            _itemActiveStates.Add(item, new ActiveState(_cancellationTokenProvider));
+            _itemActiveStates.Add(item, new ActiveState(_linkedTokens));
         }
 
         ActiveState activeState = _itemActiveStates[item];
@@ -24,8 +26,9 @@ public class ItemsActiveStates
         {
             activeState.CancellationTokenSource.Cancel();
             activeState.CancellationTokenSource.Dispose();
+            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
             activeState.CancellationTokenSource = 
-                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
+                CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
 
         activeState.IsActive = true;
@@ -46,10 +49,10 @@ public class ItemsActiveStates
         public bool IsActive;
         public CancellationTokenSource CancellationTokenSource;
         
-        public ActiveState(ICancellationTokenProvider cancellationTokenProvider)
+        public ActiveState(CancellationToken[] linkedTokens)
         {
             CancellationTokenSource = 
-                CancellationTokenSource.CreateLinkedTokenSource(cancellationTokenProvider.GetCancellationToken());
+                CancellationTokenSource.CreateLinkedTokenSource(linkedTokens);
             IsActive = false;
         }
     }

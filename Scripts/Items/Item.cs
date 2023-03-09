@@ -18,16 +18,19 @@ public abstract class Item : MonoBehaviour
 
     protected ICancellationTokenProvider _cancellationTokenProvider;
     private CancellationTokenSource _cancellationTokenSource;
+    private CancellationToken[] _linkedTokens;
     private bool _isDeactivating;
 
     private WaitForSeconds _activateWaiter;
 
-    protected void Init(ICancellationTokenProvider run, bool isAutoShowing = false)
+    protected void Init(ICancellationTokenProvider cancellationTokenProvider, bool isAutoShowing = false)
     {
         _meshRenderers = GetComponentsInChildren<MeshRenderer>().ToList();
         _boxCollider = GetComponent<BoxCollider>();
         _isAutoShowing = isAutoShowing;
-        _cancellationTokenProvider = run;
+        _cancellationTokenProvider = cancellationTokenProvider;
+
+        _linkedTokens = new []{cancellationTokenProvider.GetCancellationToken()};
     }
 
     public virtual void PickupItem(ThirdPersonController player)
@@ -80,12 +83,12 @@ public abstract class Item : MonoBehaviour
         if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
         {
             _cancellationTokenSource?.Dispose();
+            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
             _cancellationTokenSource = 
-                CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenProvider.GetCancellationToken());
+                CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
-        
-        await Task.Delay(DeactivateTime, _cancellationTokenSource.Token)
-            .ContinueWith(AsyncUtils.EmptyTask);
+
+        await AsyncUtils.Wait(DeactivateTime, _cancellationTokenSource.Token);
 
         if (gameObject.activeSelf)
         {
