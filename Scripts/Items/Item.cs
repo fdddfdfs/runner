@@ -85,7 +85,7 @@ public abstract class Item : MonoBehaviour
         }
         
         await Task.Delay(DeactivateTime, _cancellationTokenSource.Token)
-            .ContinueWith(GlobalCancellationToken.EmptyTask);
+            .ContinueWith(AsyncUtils.EmptyTask);
 
         if (gameObject.activeSelf)
         {

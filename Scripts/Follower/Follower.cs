@@ -156,7 +156,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
             _isFollowingDelay = false;   
         }
 
-        await Task.Delay(followTimeMilliseconds, token).ContinueWith(GlobalCancellationToken.EmptyTask);
+        await Task.Delay(followTimeMilliseconds, token).ContinueWith(AsyncUtils.EmptyTask);
 
         _isFollowing = false;
         _targetPositions.Clear();

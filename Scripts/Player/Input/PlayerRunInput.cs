@@ -143,7 +143,7 @@ public sealed class PlayerRunInput : IRunnable
         _isJumpTimeout = true;
 
         await Task.Delay((int)(1000 * JumpTimeoutLength), _cancellationTokenProvider.GetCancellationToken())
-            .ContinueWith(GlobalCancellationToken.EmptyTask);
+            .ContinueWith(AsyncUtils.EmptyTask);
 
         _isJumpTimeout = false;
     }
@@ -153,7 +153,7 @@ public sealed class PlayerRunInput : IRunnable
         _isRollTimeout = true;
 
         await Task.Delay((int)(1000 * RollTimeoutLength), _cancellationTokenProvider.GetCancellationToken())
-            .ContinueWith(GlobalCancellationToken.EmptyTask);
+            .ContinueWith(AsyncUtils.EmptyTask);
 
         _isRollTimeout = false;
     }

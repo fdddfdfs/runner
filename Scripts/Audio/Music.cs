@@ -57,7 +57,7 @@ public class Music : ResourcesSingleton<Music, MusicResourceName>
 
     private void Start()
     {
-        _linkedTokens = new[] { GlobalCancellationToken.Instance.GetCancellationToken() };
+        _linkedTokens = new[] { AsyncUtils.Instance.GetCancellationToken() };
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         PlayMusic();
     }
