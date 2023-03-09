@@ -7,6 +7,7 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
 {
     private CancellationTokenSource _source;
     private static AsyncUtils _instance;
+    private static float _timeScale = 1f;
 
     public static AsyncUtils Instance
     {
@@ -23,6 +24,12 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
             return _instance;
         }
     }
+
+    public static float TimeScale
+    {
+        get => _timeScale;
+        set => _timeScale = Mathf.Clamp(value, 0f, 1f);
+    }
     
     public static async Task Wait(float time, bool unscaledTime = false)
     {
@@ -30,15 +37,39 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
         float targetTime = currentTime + time;
         while (currentTime < targetTime)
         {
-            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            currentTime += unscaledTime ? Time.deltaTime * TimeScale : Time.deltaTime;
             await Task.Yield();
         }
     }
-    
+
     public static async Task Wait(float time, CancellationToken cancellationToken, bool unscaledTime = false)
     {
         float currentTime = Time.time;
         float targetTime = currentTime + time;
+        while (currentTime < targetTime)
+        {
+            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            await Task.Yield();
+
+            if (cancellationToken.IsCancellationRequested) return;
+        }
+    }
+    
+    public static async Task Wait(int timeMilliseconds, bool unscaledTime = false)
+    {
+        float currentTime = Time.time;
+        float targetTime = currentTime + timeMilliseconds / 1000f;
+        while (currentTime < targetTime)
+        {
+            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            await Task.Yield();
+        }
+    }
+
+    public static async Task Wait(int timeMilliseconds, CancellationToken cancellationToken, bool unscaledTime = false)
+    {
+        float currentTime = Time.time;
+        float targetTime = currentTime + timeMilliseconds / 1000f;
         while (currentTime < targetTime)
         {
             currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
