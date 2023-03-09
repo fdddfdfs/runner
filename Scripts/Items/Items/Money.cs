@@ -40,7 +40,7 @@ public sealed class Money : Item
     {
         float currentTime = 0;
         Vector3 currentPosition = transform.position;
-        UnityEngine.Transform endTransform = player.transform;
+        Transform endTransform = player.transform;
         CancellationToken token = _cancellationTokenProvider.GetCancellationToken();
         while (currentTime < Speed)
         {
