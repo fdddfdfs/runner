@@ -10,7 +10,7 @@ using UnityEngine;
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 1;
-    private const int DeactivateTime = 20 * 1000;
+    private const int DeactivateTimeMilliseconds = 20 * 1000;
 
     private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;
@@ -20,8 +20,6 @@ public abstract class Item : MonoBehaviour
     private CancellationTokenSource _cancellationTokenSource;
     private CancellationToken[] _linkedTokens;
     private bool _isDeactivating;
-
-    private WaitForSeconds _activateWaiter;
 
     protected void Init(ICancellationTokenProvider cancellationTokenProvider, bool isAutoShowing = false)
     {
@@ -38,10 +36,8 @@ public abstract class Item : MonoBehaviour
         if (_isAutoShowing)
         {
             ChangeItemVisible(false);
-
-            _activateWaiter ??= new WaitForSeconds(ActivateTime);
             
-            Coroutines.StartRoutine(ActivateItem());
+            ActivateItem();
         }
         else
         {
@@ -59,9 +55,9 @@ public abstract class Item : MonoBehaviour
         _boxCollider.enabled = state;
     }
 
-    private IEnumerator ActivateItem()
+    private async void ActivateItem()
     {
-        yield return _activateWaiter;
+        await AsyncUtils.Wait(ActivateTime, _cancellationTokenSource.Token);
         
         ChangeItemVisible(true);
     }
@@ -84,11 +80,10 @@ public abstract class Item : MonoBehaviour
         {
             _cancellationTokenSource?.Dispose();
             _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
-            _cancellationTokenSource = 
-                CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
 
-        await AsyncUtils.Wait(DeactivateTime, _cancellationTokenSource.Token);
+        await AsyncUtils.Wait(DeactivateTimeMilliseconds, _cancellationTokenSource.Token);
 
         if (gameObject.activeSelf)
         {
