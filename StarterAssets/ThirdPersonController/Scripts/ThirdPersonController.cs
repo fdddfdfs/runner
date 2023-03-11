@@ -318,7 +318,7 @@ namespace StarterAssets
                 },
             };
             
-            _board = new Board(this, _map, _activeItemsUI, PlayerAnimator);
+            _board = new Board(this, _map, _run);
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },

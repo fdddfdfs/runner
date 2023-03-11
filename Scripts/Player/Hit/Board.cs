@@ -1,43 +1,45 @@
 using System;
-using System.Collections;
+using System.Threading;
 using StarterAssets;
-using UnityEngine;
 
 public sealed class Board : IHittable
 {
     private const float ActiveTime = 10f;
     private const float RecoverTime = 3f;
     
-    private readonly WaitForSeconds _activateWaiter = new(ActiveTime);
-    private readonly WaitForSeconds _recoveryWaiter = new(RecoverTime);
     private readonly ThirdPersonController _player;
     private readonly Map _map;
-    private readonly ActiveItemsUI _activeItemsUI;
-    private readonly PlayerAnimator _playerAnimator;
+    private readonly ICancellationTokenProvider _cancellationTokenProvider;
+    private readonly CancellationToken[] _linkedTokens;
     
-    private Coroutine _activeRoutine;
-    private Coroutine _recoveryRoutine;
+    private CancellationTokenSource _cancellationTokenSource;
 
     private bool _isActive;
     private bool _isRecovery;
 
-    public Board(ThirdPersonController player, Map map, ActiveItemsUI activeItemsUI, PlayerAnimator playerAnimator)
+    public Board(ThirdPersonController player, Map map, ICancellationTokenProvider cancellationTokenProvider)
     {
         _player = player;
         _map = map;
-        _activeItemsUI = activeItemsUI;
-        _playerAnimator = playerAnimator;
+        _cancellationTokenProvider = cancellationTokenProvider;
+        _linkedTokens = new[] { cancellationTokenProvider.GetCancellationToken() };
+        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
     }
     
     public void Activate()
     {
         if (_isActive)
         {
-            Coroutines.StopRoutine(_activeRoutine);
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+            
+            Deactivate();
             _isActive = false;
         }
         
-        _activeRoutine = Coroutines.StartRoutine(Activated());
+        Activated();
         _player.ChangeHittable(this);
     }
     
@@ -46,18 +48,17 @@ public sealed class Board : IHittable
         switch (hitType)
         {
             case HitType.Soft when _isRecovery && _isActive:
-                Coroutines.StopRoutine(_recoveryRoutine);
-                Coroutines.StopRoutine(_activeRoutine);
+                _cancellationTokenSource.Cancel();
                 _isRecovery = false;
                 _isActive = false;
                 _map.Level.HideCurrentEnteredBlock();
                 Deactivate();
                 break;
             case HitType.Soft:
-                _recoveryRoutine = Coroutines.StartRoutine(Recover());
+                Recover();
                 break;
             case HitType.Hard when _isActive:
-                Coroutines.StopRoutine(_activeRoutine);
+                _cancellationTokenSource.Cancel();
                 _isActive = false;
                 _map.Level.HideCurrentEnteredBlock();
                 Deactivate();
@@ -77,26 +78,28 @@ public sealed class Board : IHittable
 
         if (_isRecovery)
         {
-            Coroutines.StopRoutine(_recoveryRoutine);
+            _cancellationTokenSource.Cancel();
             _isRecovery = false;
         }
     }
-
-    private IEnumerator Activated()
+    
+    private async void Activated()
     {
         _isActive = true;
-        
-        yield return _activateWaiter;
-        
+
+        await AsyncUtils.Wait(ActiveTime, _cancellationTokenSource.Token);
+
+        if (_cancellationTokenSource.IsCancellationRequested) return;
+
         Deactivate();
         _isActive = false;
     }
 
-    private IEnumerator Recover()
+    private async void Recover()
     {
         _isRecovery = true;
-        
-        yield return _recoveryWaiter;
+
+        await AsyncUtils.Wait(RecoverTime, _cancellationTokenSource.Token);
 
         _isRecovery = false;
     }
