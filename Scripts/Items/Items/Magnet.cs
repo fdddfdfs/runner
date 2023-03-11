@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using StarterAssets;
 using UnityEngine;
+using Task = System.Threading.Tasks.Task;
 
 public sealed class Magnet : Item
 {
@@ -8,43 +11,50 @@ public sealed class Magnet : Item
 
     private readonly Vector3 _overlapHalfSize = new(Map.ColumnOffset, 20, 2);
     private readonly Collider[] _overlappedColliders = new Collider[10];
+    private readonly HashSet<Collider> _movingMoneys = new ();
+
+    private ItemsActiveStates _itemsActiveStates;
+
     private Vector3 _center;
     private LayerMask _mask;
     private ActiveItemsUI _activeItemsUI;
 
-    private static Coroutine _magnetActive;
-    private static bool _isActive;
-    
     public static int Weight => 1;
 
-    public void Init(ActiveItemsUI activeItemsUI, Run run)
+    private static ItemType ActiveItemType => ItemType.Magnet;
+
+    public void Init(
+        ActiveItemsUI activeItemsUI,
+        ICancellationTokenProvider cancellationTokenProvider,
+        ItemsActiveStates itemsActiveStates)
     {
-        base.Init(run);
+        base.Init(cancellationTokenProvider);
 
         _activeItemsUI = activeItemsUI;
         _center = new Vector3(0, 0, 0);
         _mask = LayerMask.GetMask("Item");
+
+        _itemsActiveStates = itemsActiveStates;
     }
 
     public override void PickupItem(ThirdPersonController player)
     {
         base.PickupItem(player);
         
-        if (_isActive)
-        {
-            Coroutines.StopRoutine(_magnetActive);
-            _isActive = false;
-        }
-        
-        _activeItemsUI.ShowNewItemEffect(ItemType.Magnet, ActiveTime);
-        _magnetActive = Coroutines.StartRoutine(MagnetActive(player));
+        MagnetActive(player);
     }
 
-    private IEnumerator MagnetActive(ThirdPersonController player)
+    private async void MagnetActive(ThirdPersonController player)
     {
         float currentTime = 0;
-        _isActive = true;
+        _activeItemsUI.ShowNewItemEffect(ItemType.Magnet, ActiveTime);
+        
+        _itemsActiveStates.ActivateItem(ActiveItemType);
+        CancellationToken token = _itemsActiveStates.GetTokenForItem(ActiveItemType);
+        CancellationToken endRunToken = _cancellationTokenProvider.GetCancellationToken();
 
+        _movingMoneys.Clear();
+        
         while (currentTime < ActiveTime)
         {
             Vector3 position = player.transform.position;
@@ -54,17 +64,29 @@ public sealed class Magnet : Item
                 _overlappedColliders,
                 Quaternion.identity,
                 _mask);
-            
-            for (int i = 0; i < collidersCount; i++)
+
+            for (var i = 0; i < collidersCount; i++)
             {
+                if (_movingMoneys.Contains(_overlappedColliders[i])) continue;
+
+                _movingMoneys.Add(_overlappedColliders[i]);
+                
                 if (_overlappedColliders[i].TryGetComponent(out Money money))
                 {
                     money.MoveToPlayerAsync(player);
                 }
             }
 
-            currentTime += Time.deltaTime;
-            yield return null;
+            currentTime += Time.unscaledDeltaTime * AsyncUtils.TimeScale;
+            await Task.Yield();
+            if(token.IsCancellationRequested || endRunToken.IsCancellationRequested) break;
         }
+
+        if (token.IsCancellationRequested && !endRunToken.IsCancellationRequested)
+        {
+            return;
+        }
+        
+        _itemsActiveStates.DeactivateItem(ActiveItemType);
     }
 }
