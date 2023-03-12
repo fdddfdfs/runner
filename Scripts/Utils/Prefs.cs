@@ -28,22 +28,6 @@ public static class Prefs
         PlayerPrefs.SetFloat(key, variable);
     }
 
-    public static void SaveVariable<T>(T variable, string key)
-    {
-        if (variable is int valueInt)
-        {
-            SaveVariable(valueInt, key);
-        }
-        else if (variable is float valueFloat)
-        {
-            SaveVariable(valueFloat, key);
-        }
-        else
-        {
-            throw new Exception($"Cannot save variable with type: {typeof(T)}");
-        }
-    }
-
     public static void SaveArray(int[] array, string key)
     {
         for (int i = 0; i < array.Length; i++)
@@ -72,9 +56,10 @@ public static class Prefs
         PlayerPrefs.SetInt(key + ArrayLengthKey, array.Length);
     }
 
-    public static void LoadArray(out int[] array, string key)
+    public static int[] LoadArray(string key)
     {
-        int length;
+        var length = 0;
+        int[] array;
 
         if (PlayerPrefs.HasKey(key + ArrayLengthKey))
         {
@@ -83,7 +68,7 @@ public static class Prefs
         else
         {
             array = Array.Empty<int>();
-            return;
+            return array;
         }
 
         array = new int[length];
@@ -91,6 +76,8 @@ public static class Prefs
         {
             array[i] = PlayerPrefs.GetInt(key + i);
         }
+
+        return array;
     }
 
     public static void LoadArray(out string[] array, string key)
