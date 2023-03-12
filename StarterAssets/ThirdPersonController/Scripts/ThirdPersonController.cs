@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
@@ -241,6 +242,7 @@ namespace StarterAssets
         public void Lose()
         {
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
+            _follower.Lose(this);
         }
 
         private void Awake()
@@ -263,7 +265,7 @@ namespace StarterAssets
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
             };
             
-            PlayerBones.gameObject.SetActive(false);
+            //PlayerBones.gameObject.SetActive(false);
         }
 
         private void Start()

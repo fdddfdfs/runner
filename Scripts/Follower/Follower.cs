@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using StarterAssets;
 using UnityEngine;
 
 public sealed class Follower : MonoBehaviour, IRunnable
 {
     private const float FollowDelay = 0.2f;
-    private const int FollowDelayMilliseconds = (int)(FollowDelay * 1000);
 
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private Run _run;
@@ -62,6 +62,12 @@ public sealed class Follower : MonoBehaviour, IRunnable
             _followCancellation.Cancel();
             transform.position = _startPosition;
         }
+    }
+
+    public void Lose(ThirdPersonController player)
+    {
+        transform.position = player.transform.position;
+        _followerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
     }
 
     private void FixedUpdate()
@@ -141,7 +147,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
         CancellationToken token = _followCancellation.Token;
 
-        await AsyncUtils.Wait(FollowDelayMilliseconds / _runProgress.SpeedMultiplier, token);
+        await AsyncUtils.Wait(FollowDelay / _runProgress.SpeedMultiplier, token);
         _isFollowingDelay = false; 
         if (token.IsCancellationRequested)
         {
