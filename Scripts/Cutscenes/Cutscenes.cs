@@ -4,7 +4,7 @@ using StarterAssets;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Cutscenes : MonoBehaviour
+public class Cutscenes : MonoBehaviour , IClothesChanger
 {
     private const string BaseStartCutsceneResourceName = "Cutscenes/BaseStartCutscene";
 
@@ -25,6 +25,8 @@ public class Cutscenes : MonoBehaviour
     private Cutscene _cutscene;
     private bool _cutsceneActive;
 
+    public PlayerClothes CurrentCutscenePlayerClothes => _cutscene.PlayerClothes;
+
     public void ChangeCurrentCutscene(Type newCutscene)
     {
         _cutscene = _cutscenes[newCutscene];
@@ -41,6 +43,11 @@ public class Cutscenes : MonoBehaviour
     {
         _cutscene.EndCutscene();
         Sounds.Instance.StopAllSounds();
+    }
+    
+    public void ChangeClothes(int clothesID)
+    {
+        _cutscene.AddClothes(clothesID);
     }
     
     private void Awake()
@@ -70,8 +77,7 @@ public class Cutscenes : MonoBehaviour
         
         declineLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
         acceptLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
-
-        _cutscenes = new Dictionary<Type, Cutscene>();
+        
         _cutscenes = new Dictionary<Type, Cutscene>
         {
             [typeof(BaseStartCutscene)] = baseStartCutscene,

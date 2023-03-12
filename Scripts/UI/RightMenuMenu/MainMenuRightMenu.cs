@@ -9,11 +9,13 @@ public class MainMenuRightMenu : Menu
     private const string UpgradeMenuResourceName = "UI/Upgrades/UpgradeMenu";
     private const string SettingsMenuResourceName = "UI/Settings/SettingsMenu";
     private const string LeaderboardMenuResourceName = "UI/Leaderboard/LeaderboardMenu";
+    private const string InventoryMenuResourceName = "UI/Inventory/Inventory";
 
     private const string LeaderboardName = "Leaders";
 
     [SerializeField] private List<Button> _submenuButtons;
     [SerializeField] private Transform _submenuParent;
+    [SerializeField] private Cutscenes _cutscenes;
 
     private List<Menu> _submenus;
     private Menu _currentSubmenu;
@@ -34,12 +36,17 @@ public class MainMenuRightMenu : Menu
     {
         LeaderboardController = SpawnMenu<LeaderboardController>(LeaderboardMenuResourceName);
         LeaderboardController.SetCurrentLeaderboard(LeaderboardName);
+
+        var inventory = SpawnMenu<Inventory>(InventoryMenuResourceName);
+        inventory.Init(_cutscenes);
         
         _submenus = new List<Menu>
         {
             SpawnMenu<UpgradeMenu>(UpgradeMenuResourceName),
             SpawnMenu<SettingsMenu>(SettingsMenuResourceName),
             LeaderboardController,
+            inventory,
+            inventory,
         };
 
         if (_submenuButtons.Count != _submenus.Count)
@@ -53,6 +60,9 @@ public class MainMenuRightMenu : Menu
             _submenuButtons[i].onClick.AddListener(() => ChangeCurrentSubmenu(index));
         }
         
+        _submenuButtons[3].onClick.AddListener(() => inventory.OpenInventory(typeof(InventoryClothes)));
+        _submenuButtons[4].onClick.AddListener(() => inventory.OpenInventory(typeof(InventoryChests)));
+
         ChangeCurrentSubmenu(0);
     }
 

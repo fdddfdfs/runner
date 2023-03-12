@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class Cutscene : MonoBehaviour
@@ -10,21 +11,31 @@ public abstract class Cutscene : MonoBehaviour
     [SerializeField] private Animator _cutsceneAnimator;
     [SerializeField] private GameObject _cutsceneObject;
     [SerializeField] private float _endThreshold = 1f;
+    [SerializeField] private Transform _playerRootBone;
 
     private readonly int _startCutsceneTrigger = Animator.StringToHash(StartCutsceneTrigger);
     private readonly int _backToStartTrigger = Animator.StringToHash(BackToStartTrigger);
 
+    protected bool _isEnded;
+    
     private Fade _fade;
 
-    protected bool _isEnded;
-
     public event Action OnCutsceneEnded;
-    
+
+    public PlayerClothes PlayerClothes { get; private set; }
+
     protected abstract Action EndCutsceneCallback { get; }
 
     protected void Init(Fade fade)
     {
         _fade = fade;
+
+        PlayerClothes = new PlayerClothes(_playerRootBone);
+    }
+
+    public void AddClothes(int clothesID)
+    {
+        PlayerClothes.AddClothes(clothesID);
     }
     
     public virtual void SetCutscene()
@@ -33,6 +44,8 @@ public abstract class Cutscene : MonoBehaviour
         _cutsceneObject.gameObject.SetActive(true);
 
         _isEnded = false;
+        
+        PlayerClothes.AddClothes(ClothesData.PlayerClothes.Value);
     }
 
     public virtual void HideCutscene()
