@@ -92,8 +92,10 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
     }
 
-    public void EndRun()
+    public async void EndRun()
     {
+        await AsyncUtils.Wait(0.1f, AsyncUtils.Instance.GetCancellationToken());
+        
         _firstBlock?.HideBlock();
 
         _firstBlock = null;
