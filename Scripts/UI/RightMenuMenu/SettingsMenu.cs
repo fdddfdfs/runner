@@ -1,4 +1,4 @@
-﻿using Palmmedia.ReportGenerator.Core;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,8 +14,13 @@ public class SettingsMenu : Menu
     [SerializeField] private TMP_Text _graphicHeader;
     [SerializeField] private Slider _graphicSlider;
     [SerializeField] private TMP_Text _graphicValue;
+    [SerializeField] private TMP_Text _languageHeader;
+    [SerializeField] private TMP_Dropdown _languageDropdown;
+    [SerializeField] private List<LanguageData> _languageData;
 
     private readonly string[] _qualities = { "Very Low", "Low", "Medium", "High", "Very High", "Ultra" };
+
+    private List<Languages.Language> _languages;
 
     private void Awake()
     {
@@ -39,6 +44,23 @@ public class SettingsMenu : Menu
         UpdateGraphic(graphicValue);
         _graphicSlider.value = graphicValue;
         _graphicSlider.onValueChanged.AddListener(UpdateGraphic);
+
+        _languageHeader.text = "Language";
+
+        _languages = new List<Languages.Language>();
+        List<TMP_Dropdown.OptionData> languagesOptions = new();
+        for (var i = 0; i < _languageData.Count; i++)
+        {
+            LanguageData data = _languageData[i];
+            languagesOptions.Add(new TMP_Dropdown.OptionData(data.LanguageName, data.Flag));
+            _languages.Add(data.Language);
+        }
+        
+        _languageDropdown.AddOptions(languagesOptions);
+        _languageDropdown.onValueChanged.AddListener((index) =>
+        {
+            Localization.Instance.ChangeLanguage(_languages[index]);
+        });
     }
 
     private void UpdateMusicVolume(float newVolume)

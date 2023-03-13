@@ -26,21 +26,8 @@ public class Localization
     }
 
     public Dictionary<string, string> LocalizationDictionary { get; private set; }
-
-    private static InGameTextLocalization LoadLocalization(Languages.Language language)
-    {
-        string path = Languages.SteamJsonLanguages[language];
-        var targetFile = Resources.Load<TextAsset>(path);
-
-        if (targetFile == null)
-        {
-            throw new Exception($"Resources doesnt contains localization file {path} for language {language}");
-        }
-        
-        return JsonParser.LoadJsonFromFile<InGameTextLocalization>(targetFile.text);
-    }
-
-    private void ChangeLanguage(Languages.Language newLanguage)
+    
+    public void ChangeLanguage(Languages.Language newLanguage)
     {
         if (_currentLanguage == newLanguage) return;
         
@@ -54,6 +41,19 @@ public class Localization
         }
 
         _currentLanguage = newLanguage;
+    }
+
+    private static InGameTextLocalization LoadLocalization(Languages.Language language)
+    {
+        string path = Languages.SteamJsonLanguages[language];
+        var targetFile = Resources.Load<TextAsset>(path);
+
+        if (targetFile == null)
+        {
+            throw new Exception($"Resources doesnt contains localization file {path} for language {language}");
+        }
+        
+        return JsonParser.LoadJsonFromFile<InGameTextLocalization>(targetFile.text);
     }
 
     private void Initialize()
