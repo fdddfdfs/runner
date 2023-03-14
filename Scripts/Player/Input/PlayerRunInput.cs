@@ -91,36 +91,6 @@ public sealed class PlayerRunInput : IRunnable
 
         _cancellationTokenProvider = cancellationTokenProvider;
     }
-    
-    public void Update()
-    {
-        if (!_isRun) return;
-        
-        if (!_isJumpPressed && !_isJumpTimeout)
-        {
-            _isJumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
-        }
-
-        if (!_isLeftPressed)
-        {
-            _isLeftPressed = Keyboard.current.aKey.wasPressedThisFrame;
-        }
-
-        if (!_isRightPressed)
-        {
-            _isRightPressed = Keyboard.current.dKey.wasPressedThisFrame;
-        }
-
-        if (!_isRollPressed && !_isRollTimeout)
-        {
-            _isRollPressed = Keyboard.current.sKey.wasPressedThisFrame;
-        }
-
-        if (!_isBoardPressed)
-        {
-            _isBoardPressed = Keyboard.current.eKey.wasPressedThisFrame;
-        }
-    }
 
     public void StartRun()
     {

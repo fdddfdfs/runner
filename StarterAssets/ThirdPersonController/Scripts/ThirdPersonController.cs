@@ -352,16 +352,6 @@ namespace StarterAssets
             CameraRotation();
         }
 
-        private void Update()
-        {
-            CheckForMovingInput();
-        }
-
-        private void CheckForMovingInput()
-        {
-            _playerRunInput.Update();
-        }
-
         private void BoardActive()
         {
             if (_playerRunInput.IsBoardPressed)
