@@ -21,9 +21,11 @@ namespace fdddfdfs.Leaderboard
 
         private CallResult<LeaderboardFindResult_t> _leaderboardCallResult;
         private CallResult<LeaderboardScoresDownloaded_t> _leaderboardDownloaded;
+        private CallResult<LeaderboardScoreUploaded_t> _leaderboardUploaded;
         private SteamLeaderboard_t _currentLeaderboard;
 
         private string _currentLeaderboardName;
+        private bool _isInitialized;
 
 
         private void RefreshLeaderboard(string leaderboardName)
@@ -41,18 +43,26 @@ namespace fdddfdfs.Leaderboard
         public void SetCurrentLeaderboard(string leaderboardName)
         {
             _currentLeaderboardName = leaderboardName;
+
+            if (!_isInitialized)
+            {
+                Initialize();
+            }
+            
+            RefreshLeaderboard(_currentLeaderboardName);
         }
 
         public void UploadResult(int score)
         {
             if (!SteamManager.Initialized) return;
             
-            SteamUserStats.UploadLeaderboardScore(
-                _currentLeaderboard,
-                ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest,
-                score,
-                null,
-                0);
+            _leaderboardUploaded.Set(
+                SteamUserStats.UploadLeaderboardScore(
+                    _currentLeaderboard,
+                    ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest,
+                    score,
+                    null,
+                    0));
         }
 
         public override void ChangeMenuActive(bool active)
@@ -61,8 +71,28 @@ namespace fdddfdfs.Leaderboard
 
             if (active)
             {
-                RefreshLeaderboard(_currentLeaderboardName);
+                if (_currentLeaderboard.m_SteamLeaderboard == 0)
+                {
+                    RefreshLeaderboard(_currentLeaderboardName);
+                }
+                else
+                {
+                    _leaderboardDownloaded.Set(SteamUserStats.DownloadLeaderboardEntries(
+                        _currentLeaderboard,
+                        ELeaderboardDataRequest.k_ELeaderboardDataRequestGlobal,
+                        1,
+                        100));
+                }
             }
+        }
+
+        private void Initialize()
+        {
+            _leaderboardUploaded = CallResult<LeaderboardScoreUploaded_t>.Create(LeaderboardUpdated);
+            _leaderboardCallResult = CallResult<LeaderboardFindResult_t>.Create(GetLeaderboard);
+            _leaderboardDownloaded = CallResult<LeaderboardScoresDownloaded_t>.Create(DownloadedLeaderboard);
+
+            _isInitialized = true;
         }
 
         private void Awake()
@@ -81,15 +111,10 @@ namespace fdddfdfs.Leaderboard
             _nickname.text = "Nickname";
         }
 
-        private void OnEnable()
+        private void LeaderboardUpdated(LeaderboardScoreUploaded_t leaderboardScoreUploadedT, bool bIOFailure)
         {
-            if (!SteamManager.Initialized)
-            {
-                return;
-            }
-
-            _leaderboardCallResult = CallResult<LeaderboardFindResult_t>.Create(GetLeaderboard);
-            _leaderboardDownloaded = CallResult<LeaderboardScoresDownloaded_t>.Create(DownloadedLeaderboard);
+            Debug.Log("success: " + leaderboardScoreUploadedT.m_bSuccess);
+            Debug.Log("changed: " + leaderboardScoreUploadedT.m_bScoreChanged);
         }
 
         private void GetLeaderboard(LeaderboardFindResult_t respond, bool success)
@@ -104,7 +129,7 @@ namespace fdddfdfs.Leaderboard
 
         private void FindLeaderboard(string leaderboardName)
         {
-            _leaderboardCallResult.Set(SteamUserStats.FindLeaderboard(leaderboardName));
+            _leaderboardCallResult.Set(SteamUserStats.FindOrCreateLeaderboard(leaderboardName,ELeaderboardSortMethod.k_ELeaderboardSortMethodDescending,ELeaderboardDisplayType.k_ELeaderboardDisplayTypeNumeric));
         }
 
         private void SetPlayerInfoInLeaderboard(int index, string nickname, int score, Texture2D avatar)

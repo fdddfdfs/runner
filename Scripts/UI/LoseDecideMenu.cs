@@ -23,6 +23,7 @@ public sealed class LoseDecideMenu : MonoBehaviour
     {
         _run.SetLoseCutscene(_endCutscene);
         _run.SetMainMenuCutscene(_startCutscene);
+        _run.ApplyLoseResults();
         _run.BackToMenu();
     }
 
