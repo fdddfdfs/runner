@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using UnityEngine.InputSystem;
+﻿using UnityEngine.InputSystem;
 
 public sealed class PlayerRunInput : IRunnable
 {
@@ -16,8 +15,6 @@ public sealed class PlayerRunInput : IRunnable
 
     private bool _isJumpTimeout;
     private bool _isRollTimeout;
-    
-    private bool _isRun;
 
     public bool IsBoardPressed
     {
@@ -82,9 +79,23 @@ public sealed class PlayerRunInput : IRunnable
         inputActionMap["Left"].canceled += (_) => _isLeftPressed = false;
         inputActionMap["Right"].started += (_) => _isRightPressed = true;
         inputActionMap["Right"].canceled += (_) => _isRightPressed = false;
-        inputActionMap["Jump"].started += (_) => _isJumpPressed = true;
+        inputActionMap["Jump"].started += (_) =>
+        {
+            if (_isJumpTimeout) return;
+            
+            _isJumpPressed = true;
+            JumpTimeout();
+        };
+        
         inputActionMap["Jump"].canceled += (_) => _isJumpPressed = false;
-        inputActionMap["Roll"].started += (_) => _isRollPressed = true;
+        inputActionMap["Roll"].started += (_) =>
+        {
+            if (_isRollTimeout) return;
+            
+            _isRollPressed = true;
+            RollTimeout();
+        };
+        
         inputActionMap["Roll"].canceled += (_) => _isRollPressed = false;
         inputActionMap["ActivateBoard"].started += (_) => _isBoardPressed = true;
         inputActionMap["ActivateBoard"].canceled += (_) => _isBoardPressed = false;
@@ -94,13 +105,10 @@ public sealed class PlayerRunInput : IRunnable
 
     public void StartRun()
     {
-        _isRun = true;
     }
 
     public void EndRun()
     {
-        _isRun = false;
-        
         _isJumpPressed = false;
         _isLeftPressed = false;
         _isRightPressed = false;
