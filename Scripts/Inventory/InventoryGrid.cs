@@ -18,7 +18,7 @@ public abstract class InventoryGrid
 
     protected List<Image> _inventoryCellsImages;
     protected List<Button> _inventoryCellsButtons;
-    protected List<Text> _inventoryCellsStackText;
+    protected List<TMP_Text> _inventoryCellsStackText;
 
     protected List<InventoryItem> _items;
     protected List<int> _itemsCount;
@@ -56,14 +56,14 @@ public abstract class InventoryGrid
 
         _inventoryCellsImages = new List<Image>();
         _inventoryCellsButtons = new List<Button>();
-        _inventoryCellsStackText = new List<Text>();
+        _inventoryCellsStackText = new List<TMP_Text>();
 
         for (int i = 0; i < _inventoryCells.Count; i++)
         {
             _inventoryCellsImages.Add(_inventoryCells[i].GetComponent<Image>());
             _inventoryCellsButtons.Add(_inventoryCells[i].GetComponent<Button>());
             _inventoryCellsButtons[^1].enabled = false;
-            _inventoryCellsStackText.Add(_inventoryCells[i].GetComponentInChildren<Text>());
+            _inventoryCellsStackText.Add(_inventoryCells[i].GetComponentInChildren<TMP_Text>());
 
             _inventoryCellsStackText[^1].text = string.Empty;
         }
@@ -96,7 +96,7 @@ public abstract class InventoryGrid
 
         for (int i = 0; i < inventoryItems.Count; i++)
         {
-            if (inventoryItems[i].Type != _inventoryItemsType)
+            if (inventoryItems[i].InventoryItemData.InventoryItemType != _inventoryItemsType)
             {
                 continue;
             }
@@ -122,10 +122,11 @@ public abstract class InventoryGrid
 
         for (int i = 0; i < removedItems.Count; i++)
         {
-            if (removedItems[i].Type != _inventoryItemsType)
+            if (removedItems[i].InventoryItemData.InventoryItemType != _inventoryItemsType)
                 continue;
 
-            int removedItemIndex = _items.FindIndex(x =>x.ID==removedItems[i].ID);
+            int removedItemIndex = _items.FindIndex(
+                item => item.InventoryItemData.ID == removedItems[i].InventoryItemData.ID);
 
             if (_itemsCount[removedItemIndex] == 1)
             {
@@ -163,10 +164,11 @@ public abstract class InventoryGrid
 
         for (int i = 0; i < addedItems.Count; i++)
         {
-            if (addedItems[i].Type != _inventoryItemsType)
+            if (addedItems[i].InventoryItemData.InventoryItemType != _inventoryItemsType)
                 continue;
 
-            int addedItemIndex = _items.FindIndex(x => x.ID == addedItems[i].ID);
+            int addedItemIndex = _items.FindIndex(
+                item => item.InventoryItemData.ID == addedItems[i].InventoryItemData.ID);
 
             if (addedItemIndex == -1)
             {
@@ -196,13 +198,14 @@ public abstract class InventoryGrid
         for (int i = 0; i < numberOfItems; i++)
         {
             IsActive = true;
-            _inventoryCellsImages[i].sprite = _items[i + _currentPage * _inventoryCells.Count].Icon;
+            _inventoryCellsImages[i].sprite = _items[i + _currentPage * _inventoryCells.Count].InventoryItemData.Icon;
 
             int itemNumber = i + _currentPage * _inventoryCells.Count;
             _inventoryCellsButtons[i].enabled = true;
             _inventoryCellsButtons[i].onClick.AddListener(() => ShowItemInfo(itemNumber));
 
-            _inventoryCellsStackText[i].text = "x" + _itemsCount[i + (_currentPage * _inventoryCells.Count)].ToString();
+            int count = _itemsCount[i + _currentPage * _inventoryCells.Count];
+            _inventoryCellsStackText[i].text = $"x{count.ToString()}";
         }
 
         _nextPageButton.onClick.AddListener(() => ChangePage(1));
@@ -244,7 +247,8 @@ public abstract class InventoryGrid
     {
         for (int i = 0; i < _items.Count; i++)
         {
-            List<InventoryItem> sameItems = _items.FindAll((x) => x.ID == _items[i].ID);
+            List<InventoryItem> sameItems = _items.FindAll(
+                item => item.InventoryItemData.ID == _items[i].InventoryItemData.ID);
 
             _itemsCount[i] = sameItems.Count;
 
@@ -252,7 +256,7 @@ public abstract class InventoryGrid
 
             for (int j = i + 1; j < _items.Count; j++)
             {
-                if(_items[j].ID == _items[i].ID)
+                if(_items[j].InventoryItemData.ID == _items[i].InventoryItemData.ID)
                 {
                     _itemsIDs[i].Add(_items[j].SteamID);
 
@@ -267,8 +271,8 @@ public abstract class InventoryGrid
 
     protected virtual void ShowItemInfo(int chestNumber)
     {
-        //_nameText.text = LanguageController.CurrentLanguage[_items[chestNumber].Name];
-        //_descriptionText.text = LanguageController.CurrentLanguage[_items[chestNumber].Description];
+        _nameText.text = _items[chestNumber].InventoryItemData.Name;
+        _descriptionText.text = _items[chestNumber].InventoryItemData.Description;
     }
 
     private void ChangePage(int dir)
@@ -314,9 +318,9 @@ public abstract class InventoryGrid
 
         for (int i = 0; i < defaultItemsIDs.Count; i++)
         {
-            _items.Add(InventoryAllItems.AllItems[defaultItemsIDs[i]]);
+            _items.Add(new InventoryItem(0, InventoryAllItems.Instance.Items[defaultItemsIDs[i]]));
             _itemsCount.Add(1);
-            _itemsIDs.Add(new List<ulong>() { InventoryAllItems.AllItems[defaultItemsIDs[i]].SteamID });
+            _itemsIDs.Add(new List<ulong>() { 0 });
         }
     }
 }

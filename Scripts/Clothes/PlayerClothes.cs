@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using Unity.VisualScripting;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class PlayerClothes
 {
@@ -34,21 +35,28 @@ public class PlayerClothes
 
     public void AddClothes(int[] clothesIDs)
     {
-        for (int i = 0; i < clothesIDs.Length; i++)
+        for (var i = 0; i < clothesIDs.Length; i++)
         {
             AddClothes(clothesIDs[i]);
         }
     }
 
-    public void AddClothes(int clothID)
+    public void AddClothes(int clothesID)
     {
-        ClotherType clothType = InventoryAllItems.AllClothersType[clothID];
+        var clothesData = InventoryAllItems.Instance.Items[clothesID] as InventoryClothesItemData;
+        
+        if (!clothesData)
+        {
+            throw new Exception($"Clothes ID: {clothesID} marked as clothes, but not clothes");
+        }
+
+        ClotherType clothesType = clothesData.ClotherType;
         
         for (var i = 0; i < _clothes.Count; i++)
         {
-            if ((_clothes[i].Type & clothType) != 0)
+            if ((_clothes[i].Type & clothesType) != 0)
             {
-                if (_clothesIDs[i] == clothID) return;
+                if (_clothesIDs[i] == clothesID) return;
                 
                 ClothesManager.RemoveClother(_clothes[i].Bones);
                 _clothes.RemoveAt(i);
@@ -57,16 +65,22 @@ public class PlayerClothes
             }
         }
 
-        ApplyCloth(clothID);
+        ApplyCloth(clothesID);
     }
 
-    private void ApplyCloth(int clothID)
+    private void ApplyCloth(int clothesID)
     {
-        InventoryItem item = InventoryAllItems.AllItems[clothID];
-        GameObject clother = Object.Instantiate(item.Prefab);
-        ClotherType type = InventoryAllItems.AllClothersType[item.ID];
-        List<GameObject> clotherBones = ClothesManager.ApplyClother(_player, _bones, clother, type);
-        _clothes.Add((type,clotherBones));
-        _clothesIDs.Add(clothID);
+        var clothesData = InventoryAllItems.Instance.Items[clothesID] as InventoryClothesItemData;
+        
+        if (!clothesData)
+        {
+            throw new Exception($"Clothes ID: {clothesID} marked as clothes, but not clothes");
+        }
+
+        ClotherType clothesType = clothesData.ClotherType;
+        GameObject clother = Object.Instantiate(clothesData.Prefab);
+        List<GameObject> clotherBones = ClothesManager.ApplyClother(_player, _bones, clother, clothesType);
+        _clothes.Add((clothesType, clotherBones));
+        _clothesIDs.Add(clothesID);
     }
 }

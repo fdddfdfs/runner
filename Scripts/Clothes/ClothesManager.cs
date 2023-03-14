@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -91,43 +92,23 @@ public class ClothesManager : MonoBehaviour
 
         for (int i = 0; i < clothes.Length; i++)
         {
+            var clothesData = InventoryAllItems.Instance.Items[clothes[i]] as InventoryClothesItemData;
+
+            if (!clothesData)
+            {
+                throw new Exception($"Clothes ID: {clothes[i]} marked as clothes, but not clothes");
+            }
+            
             List<GameObject> appliedClotherParts = ApplyClother(
                 character,
                 characterBones,
-                Instantiate(InventoryAllItems.AllItems[clothes[i]].Prefab),
-                InventoryAllItems.AllClothersType[InventoryAllItems.AllItems[clothes[i]].ID],
+                Instantiate(clothesData.Prefab),
+                clothesData.ClotherType,
                 scale);
             
             clothesParts.AddRange(appliedClotherParts);
         }
 
         return clothesParts;
-    }
-
-    public static List<int> SetRandomClothes(GameObject character, float scale = 1)
-    {
-        Transform[] characterBones = FindBones(character, out Transform rootBone);
-
-        List<int> clothesIDs = new ();
-
-        foreach (ClotherType item in (ClotherType[])System.Enum.GetValues(typeof(ClotherType)))
-        {
-            if (InventoryAllItems.AllClothersByType[item].Count == 0)
-            {
-                break;
-            }
-
-            int r = Random.Range(0, InventoryAllItems.AllClothersByType[item].Count);
-            ApplyClother(
-                character,
-                characterBones,
-                Instantiate(InventoryAllItems.AllItems[InventoryAllItems.AllClothersByType[item][r]].Prefab),
-                item,
-                scale);
-
-            clothesIDs.Add(InventoryAllItems.AllClothersByType[item][r]);
-        }
-
-        return clothesIDs;
     }
 }

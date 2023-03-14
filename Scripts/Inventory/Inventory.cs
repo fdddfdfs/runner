@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Steamworks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 public class Inventory : Menu
@@ -21,6 +21,7 @@ public class Inventory : Menu
     private Dictionary<Type, InventoryGrid> _inventories;
     private InventoryGrid _currentInventoryGrid;
     private IClothesChanger _clothesChanger;
+    private InventorySteamworks _inventorySteamworks;
 
     public void Init(IClothesChanger clothesChanger)
     {
@@ -32,11 +33,16 @@ public class Inventory : Menu
         OpenNewInventory(_inventories[inventoryType]);
     }
 
+    public void SetInventoryResult(SteamInventoryResult_t inventoryResult)
+    {
+        _inventorySteamworks.SetInventoryResult(inventoryResult);
+    }
+
     private void Awake()
     {
-        var inventorySteamworks = new InventorySteamworks();
+         _inventorySteamworks = new InventorySteamworks();
          var inventoryChests = new InventoryChests(
-            inventorySteamworks,
+             _inventorySteamworks,
             _inventoryCells,
             _nameText,
             _descriptionText,
@@ -46,7 +52,7 @@ public class Inventory : Menu
             _chest,
             _invisibleSprite);
          var inventoryClothes = new InventoryClothes(
-             inventorySteamworks,
+             _inventorySteamworks,
              _inventoryCells,
              _nameText,
              _descriptionText,

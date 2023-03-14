@@ -52,9 +52,9 @@ public class InventoryChests : InventoryGrid
         {
             for (int i = 0; i < addedItems.Count; i++)
             {
-                if (addedItems[i].Type != _inventoryItemsType)
+                if (addedItems[i].InventoryItemData.InventoryItemType != _inventoryItemsType)
                 {
-                    openedItems.Add(addedItems[i].ID);
+                    openedItems.Add(addedItems[i].InventoryItemData.ID);
                 }
             }
 

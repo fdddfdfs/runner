@@ -29,7 +29,7 @@ public class InventoryClothes : InventoryGrid
     {
         //defaultItemsIDs = new List<int> { InventoryAllItems.GetDefaultClother() };
 
-        _inventoryItemsType = InventoryItemType.Clother;
+        _inventoryItemsType = InventoryItemType.Clothes;
 
         _clothesChanger = clothesChanger;
     }
@@ -56,6 +56,6 @@ public class InventoryClothes : InventoryGrid
 
     private void PutOnClother(int clotherNumber)
     {
-        _clothesChanger.ChangeClothes(_items[clotherNumber].ID);
+        _clothesChanger.ChangeClothes(_items[clotherNumber].InventoryItemData.ID);
     }
 }
