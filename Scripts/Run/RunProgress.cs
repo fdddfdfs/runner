@@ -1,4 +1,5 @@
 using System.Globalization;
+using Steamworks;
 using UnityEngine;
 
 public sealed class RunProgress : MonoBehaviour, IRunnable
@@ -11,6 +12,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     [SerializeField] private GameObject _moneyParent;
     [SerializeField] private ShowTextOnStart _scoreShowText;
     [SerializeField] private ShowTextOnStart _moneyShowText;
+    [SerializeField] private MainMenuRightMenu _mainMenuRightMenu;
 
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
@@ -74,6 +76,15 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         HalfSpeedMultiplier = DefaultSpeedMultiplier;
         _scoreMultiplier = DefaultScoreMultiplier;
         _moneyMultiplier = DefaultMoneyMultiplier;
+
+        if (SteamManager.Initialized)
+        {
+            SteamInventory.TriggerItemDrop(
+                out SteamInventoryResult_t result,
+                new SteamItemDef_t(InventoryAllItems.PlaytimeGeneratorID));
+            
+            _mainMenuRightMenu.SetInventoryResult(result);
+        }
     }
 
     private void Start()
