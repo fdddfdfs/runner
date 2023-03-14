@@ -227,11 +227,11 @@ namespace StarterAssets
             Vector3 cameraStartPosition,
             Quaternion cameraStartRotation)
         {
-            playerStartPosition = new Vector3(_startPosition.x, _startPosition.y, playerStartPosition.z);
+            /*playerStartPosition = new Vector3(_startPosition.x, _startPosition.y, playerStartPosition.z);
             Controller.Move(playerStartPosition - transform.localPosition);
             Transform cameraTransform = _playerRunCamera.transform;
             cameraTransform.position = cameraStartPosition;
-            cameraTransform.rotation = cameraStartRotation;
+            cameraTransform.rotation = cameraStartRotation;*/
         }
         
         public void StopRecover()
