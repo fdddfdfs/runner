@@ -12,6 +12,12 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
     private bool _isPause;
     private bool _isRun;
     private bool _isPausePressed;
+    private bool _isPauseAllowed;
+
+    public void ChangeAllowingPause(bool isPauseAllowed)
+    {
+        _isPauseAllowed = isPauseAllowed;
+    }
     
     public void Pause()
     {
@@ -31,6 +37,8 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
     
     public void ChangePauseState()
     {
+        if (!_isPauseAllowed) return;
+        
         if (_isPause)
         {
             UnPause();
@@ -79,10 +87,12 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
     public void StartRun()
     {
         _isRun = true;
+        _isPauseAllowed = true;
     }
 
     public void EndRun()
     {
         _isRun = false;
+        _isPauseAllowed = false;
     }
 }

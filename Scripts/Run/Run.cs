@@ -54,6 +54,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         Cursor.lockState = CursorLockMode.None;
         
         _resurrectMenu.ShowMenu(_runProgress.Score);
+        _pauseController.ChangeAllowingPause(false);
     }
 
     public void ShowLoseMenu()
@@ -101,7 +102,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     {
         _player.UnPause();
         _player.Resurrect();
-        //Time.timeScale = 1;
+        _pauseController.ChangeAllowingPause(true);
     }
 
     public void EndRun()
