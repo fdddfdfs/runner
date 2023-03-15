@@ -1,12 +1,11 @@
-﻿using System;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 public sealed class StatsMenu : MonoBehaviour
 {
     [SerializeField] private GameObject _menu;
-    [SerializeField] private TMP_Text _balance;
-    [SerializeField] private TMP_Text _record;
+    [SerializeField] private TMP_Text _balanceValue;
+    [SerializeField] private TMP_Text _recordValue;
 
     public void ChangeActiveState(bool state)
     {
@@ -14,8 +13,8 @@ public sealed class StatsMenu : MonoBehaviour
 
         if (state)
         {
-            _balance.text = Stats.Money.Value.ToString();
-            _record.text = Stats.Record.Value.ToString();
+            _balanceValue.text = Stats.Money.Value.ToString();
+            _recordValue.text = Stats.Record.Value.ToString();
         }
     }
 
@@ -33,6 +32,6 @@ public sealed class StatsMenu : MonoBehaviour
     {
         if (!_menu.activeSelf) return;
 
-        _balance.text = newValue.ToString();
+        _balanceValue.text = newValue.ToString();
     }
 }
