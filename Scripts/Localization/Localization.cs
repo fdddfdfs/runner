@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class Localization
 {
-    private const Languages.Language DefaultLanguage = Languages.Language.English;
+    public const Languages.Language DefaultLanguage = Languages.Language.English;
 
     private static Localization _instance;
     
     private Languages.Language _currentLanguage;
     private InGameTextLocalization _defaultLocalization;
+
+    public event Action OnLanguageUpdated;
 
     public static Localization Instance
     {
@@ -41,6 +43,9 @@ public class Localization
         }
 
         _currentLanguage = newLanguage;
+
+        OnLanguageUpdated?.Invoke();
+        SettingsData.Localization.Value = (int)_currentLanguage;
     }
 
     private static InGameTextLocalization LoadLocalization(Languages.Language language)
@@ -58,8 +63,9 @@ public class Localization
 
     private void Initialize()
     {
+        var playerLanguage = (Languages.Language)SettingsData.Localization.Value;
         _defaultLocalization = LoadLocalization(DefaultLanguage);
         LocalizationDictionary = new Dictionary<string, string>();
-        ChangeLanguage(DefaultLanguage);
+        ChangeLanguage(playerLanguage);
     }
 }
