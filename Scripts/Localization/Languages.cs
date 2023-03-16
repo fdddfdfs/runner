@@ -12,6 +12,7 @@ public static class Languages
         IEnumerable<(Language Language, string Name)> languages =
             inGameLanguages.Zip(inGameLanguageNames, (language, name) => (language, name));
 
+        _steamJsonLanguages = new Dictionary<Language, string>();
         foreach ((Language Language, string Name) language in languages)
         {
             if (!_steamJsonLanguages.ContainsKey(language.Language))
@@ -51,7 +52,7 @@ public static class Languages
         Ukrainian,
         Vietnamese,
         SpanishLatinAmerica,
-        SteamChina,
+        Arabic,
         Afrikaans,
         Amharic,
         Assamese,
@@ -121,39 +122,8 @@ public static class Languages
         Latvian,
         Odia,
     }
-
-    private static readonly Dictionary<Language, string> _steamJsonLanguages = new()
-    {
-        { Language.English, "english" },
-        { Language.German, "german" },
-        { Language.French, "french" },
-        { Language.Italian, "italian" },
-        { Language.Korean, "koreana" },
-        { Language.SpanishSpain, "spanish" },
-        { Language.SimplifiedChinese, "schinese" },
-        { Language.TraditionalChinese, "tchinese" },
-        { Language.Russian, "russian" },
-        { Language.Thai, "thai" },
-        { Language.Japanese, "japanese" },
-        { Language.PortuguesePortugal, "portuguese" },
-        { Language.Polish, "polish" },
-        { Language.Danish, "danish" },
-        { Language.Dutch, "dutch" },
-        { Language.Finnish, "finnish" },
-        { Language.Norwegian, "norwegian" },
-        { Language.Swedish, "swedish" },
-        { Language.Hungarian, "hungarian" },
-        { Language.Czech, "czech" },
-        { Language.Romanian, "romanian" },
-        { Language.Turkish, "turkish" },
-        { Language.PortugueseBrazil, "brazilian" },
-        { Language.Bulgarian, "bulgarian" },
-        { Language.Greek, "greek" },
-        { Language.Ukrainian, "ukrainian" },
-        { Language.Vietnamese, "vietnamese" },
-        { Language.SpanishLatinAmerica, "latam" },
-        { Language.SteamChina, "sc_schinese" },
-    };
-
+    
     public static IReadOnlyDictionary<Language, string> SteamJsonLanguages => _steamJsonLanguages;
+
+    private static readonly Dictionary<Language, string> _steamJsonLanguages;
 }

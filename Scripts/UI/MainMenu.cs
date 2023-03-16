@@ -37,10 +37,19 @@ public sealed class MainMenu : MonoBehaviour
         _cutsceneType = cutsceneType;
     }
 
+    private void OnEnable()
+    {
+        Localization.Instance.OnLanguageUpdated += LocalizeText;
+    }
+
+    private void OnDisable()
+    {
+        Localization.Instance.OnLanguageUpdated -= LocalizeText;
+    }
+
     private void Start()
     {
         SetCutsceneType(typeof(BaseStartCutscene));
-        _startText.text = "Press F/Start to start run";
         ShowMainMenu();
         
         _exit.onClick.AddListener(Application.Quit);
@@ -59,6 +68,11 @@ public sealed class MainMenu : MonoBehaviour
         {
             StartRun();
         }
+    }
+
+    private void LocalizeText()
+    {
+        _startText.text = Localization.Instance[AllTexts.StartRun];
     }
 
     private void StartRun()

@@ -26,7 +26,8 @@ public sealed class ResurrectMenu : MonoBehaviour
         ChangeMenuVisible(true);
         
         ChangeBuybackState();
-        _currentScore.text = $"Current score:\n{score.ToString(CultureInfo.InvariantCulture)}";
+        string currentScore = Localization.Instance[AllTexts.CurrentScore];
+        _currentScore.text = $"{currentScore}\n{score.ToString(CultureInfo.InvariantCulture)}";
 
         _timer.fillAmount = 1;
         _timer.DOFillAmount(0, SkipTime).SetEase(Ease.Linear).SetUpdate(true).OnComplete(() =>
@@ -39,9 +40,7 @@ public sealed class ResurrectMenu : MonoBehaviour
     private void Awake()
     {
         _buyBackText.text = BuyBackPrice.ToString();
-        _watchAdText.text = "Watch ad";
-        _skipText.text = "Skip";
-        
+
         _buyBack.onClick.AddListener(() =>
         {
             Stats.Money.Value -= BuyBackPrice;
@@ -65,7 +64,27 @@ public sealed class ResurrectMenu : MonoBehaviour
             _timer.DOKill();
         });
     }
-    
+
+    private void OnEnable()
+    {
+        Localization.Instance.OnLanguageUpdated += LocalizeText;
+    }
+
+    private void OnDisable()
+    {
+        Localization.Instance.OnLanguageUpdated -= LocalizeText;
+    }
+
+    private void Start()
+    {
+        LocalizeText();
+    }
+
+    private void LocalizeText()
+    {
+        _skipText.text = Localization.Instance[AllTexts.Skip];
+    }
+
     private void ChangeMenuVisible(bool visible)
     {
         _menu.SetActive(visible);

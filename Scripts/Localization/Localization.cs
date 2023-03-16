@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class Localization
 {
     public const Languages.Language DefaultLanguage = Languages.Language.English;
 
+    private const string Path = "Localization/";
+
     private static Localization _instance;
-    
+
     private Languages.Language _currentLanguage;
     private InGameTextLocalization _defaultLocalization;
+    private Dictionary<string, string> _localization;
+    private bool _initialized;
 
     public event Action OnLanguageUpdated;
 
@@ -27,11 +32,24 @@ public class Localization
         }
     }
 
-    public Dictionary<string, string> LocalizationDictionary { get; private set; }
-    
+    public string this[string key]
+    {
+        get
+        {
+            if (_localization.ContainsKey(key))
+            {
+                return _localization[key];
+            }
+            
+            Debug.LogWarning($"Localization don`t contains translation for key: {key}");
+
+            return "UNLOCALIZED";
+        }
+    }
+
     public void ChangeLanguage(Languages.Language newLanguage)
     {
-        if (_currentLanguage == newLanguage) return;
+        if (_currentLanguage == newLanguage && _initialized) return;
         
         InGameTextLocalization newLanguageLocalization = LoadLocalization(newLanguage);
 
@@ -39,18 +57,22 @@ public class Localization
         {
             string text = _defaultLocalization.Texts[i];
             string localizedText = newLanguageLocalization.Texts[i];
-            LocalizationDictionary[text] = localizedText;
+            _localization[text] = localizedText;
         }
 
         _currentLanguage = newLanguage;
 
-        OnLanguageUpdated?.Invoke();
-        SettingsData.Localization.Value = (int)_currentLanguage;
+        if (_initialized)
+        {
+            OnLanguageUpdated?.Invoke();
+        }
+        
+        SettingsStorage.Localization.Value = (int)_currentLanguage;
     }
 
     private static InGameTextLocalization LoadLocalization(Languages.Language language)
     {
-        string path = Languages.SteamJsonLanguages[language];
+        var path = $"{Path}{Languages.SteamJsonLanguages[language]}";
         var targetFile = Resources.Load<TextAsset>(path);
 
         if (targetFile == null)
@@ -58,14 +80,15 @@ public class Localization
             throw new Exception($"Resources doesnt contains localization file {path} for language {language}");
         }
         
-        return JsonParser.LoadJsonFromFile<InGameTextLocalization>(targetFile.text);
+        return JsonConvert.DeserializeObject<InGameTextLocalization>(targetFile.text);
     }
 
     private void Initialize()
     {
-        var playerLanguage = (Languages.Language)SettingsData.Localization.Value;
+        var playerLanguage = (Languages.Language)SettingsStorage.Localization.Value;
         _defaultLocalization = LoadLocalization(DefaultLanguage);
-        LocalizationDictionary = new Dictionary<string, string>();
+        _localization = new Dictionary<string, string>();
         ChangeLanguage(playerLanguage);
+        _initialized = true;
     }
 }
