@@ -2,14 +2,17 @@ using System.Collections.Generic;
 using Steamworks;
 using System;
 
-public class InventorySteamworks
+public sealed class InventorySteamworks
 {
     private readonly List<SteamItemDetails_t> _inventoryItems;
     private readonly Callback<SteamInventoryResultReady_t> _inventoryItemsResult;
+    private readonly uint[] _openChestItemsQuantity = { 1 };
+    private readonly SteamItemInstanceID_t[] _openedChest = new SteamItemInstanceID_t[1];
+    private readonly SteamItemDef_t[] _openedItems = new SteamItemDef_t[1];
 
-    public Action<List<InventoryItem>> OnInventoryLoaded;
-    public Action<List<InventoryItem>> OnInventoryAddItem;
-    public Action<List<InventoryItem>> OnInventoryRemoveItem;
+    public Action<List<InventoryItem>> InventoryLoaded;
+    public Action<List<InventoryItem>> InventoryAddItem;
+    public Action<List<InventoryItem>> InventoryRemoveItem;
 
     private SteamInventoryResult_t _steamInventoryResult;
 
@@ -33,12 +36,6 @@ public class InventorySteamworks
     {
         _steamInventoryResult = inventoryResult;
     }
-
-    public void Unregister()
-    {
-        _inventoryItemsResult.Unregister();
-    }
-
 
     private void OnGetInventoryItems(SteamInventoryResultReady_t resultReady)
     {
@@ -87,7 +84,7 @@ public class InventorySteamworks
                 _inventoryItems.Add(changedItemsDetails[i]);
             }
 
-            OnInventoryLoaded?.Invoke(changedItems);
+            InventoryLoaded?.Invoke(changedItems);
 
             CheckForPromoItems();
 
@@ -115,10 +112,10 @@ public class InventorySteamworks
             }
 
             if (addedItems.Count != 0)
-                OnInventoryAddItem?.Invoke(addedItems);
+                InventoryAddItem?.Invoke(addedItems);
 
             if (removedItems.Count != 0)
-                OnInventoryRemoveItem?.Invoke(removedItems);
+                InventoryRemoveItem?.Invoke(removedItems);
         }
         
         SteamInventory.DestroyResult(_steamInventoryResult);
@@ -127,17 +124,17 @@ public class InventorySteamworks
     public void OpenChest(ulong chestSteamID)
     {
         SteamItemDetails_t chest = FindItemBySteamID(chestSteamID);
-        SteamItemInstanceID_t[] chests = { chest.m_itemId };
-        SteamItemDef_t[] generatedItems = { new (chest.m_iDefinition.m_SteamItemDef * 10) };
-        uint[] itemsQuantity = { 1 };
+        _openedChest[0] = chest.m_itemId;
+        _openedItems[0] = new SteamItemDef_t( chest.m_iDefinition.m_SteamItemDef * 10);
+
         SteamInventory.ExchangeItems(
             out _steamInventoryResult,
-            generatedItems,
-            itemsQuantity,
-            1,
-            chests,
-            itemsQuantity,
-            1);
+            _openedItems,
+            _openChestItemsQuantity,
+            (uint)_openChestItemsQuantity.Length,
+            _openedChest,
+            _openChestItemsQuantity,
+            (uint)_openChestItemsQuantity.Length);
     }
 
     private SteamItemDetails_t FindItemBySteamID(ulong steamID)
