@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class CutsceneSounds : MonoBehaviour
+public sealed class CutsceneSounds : MonoBehaviour
 {
     private void PlayLayerOneSound(string soundName)
     {

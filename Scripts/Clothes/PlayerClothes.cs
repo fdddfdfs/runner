@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class PlayerClothes
+public sealed class PlayerClothes
 {
     private readonly GameObject _player;
     private readonly Transform[] _bones;

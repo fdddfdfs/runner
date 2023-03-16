@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class FlyState : PlayerActivateState, IState
+public sealed class FlyState : PlayerActivateState, IState
 {
     private readonly Follower _follower;
     

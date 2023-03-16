@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization.Formatters;
 using UnityEngine;
 
 public sealed class LevelBlock : MonoBehaviour, IMapBlock

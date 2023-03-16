@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ClothesManager : MonoBehaviour
+public sealed class ClothesManager : MonoBehaviour
 {
-    private const string BONE_NAME = "petya";
+    private const string BONE_NAME = "Armature";
 
     public static List<GameObject> ApplyClother(
         GameObject character,

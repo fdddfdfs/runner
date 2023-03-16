@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Effects
+public sealed class Effects
 {
     private const int DefaultEffectTimeMilliseconds = 1000;
     

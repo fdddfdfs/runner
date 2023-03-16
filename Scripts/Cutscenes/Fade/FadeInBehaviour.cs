@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class FadeInBehaviour : StateMachineBehaviour
+public sealed class FadeInBehaviour : StateMachineBehaviour
 {
     public Fade Fade { get; set; }
 

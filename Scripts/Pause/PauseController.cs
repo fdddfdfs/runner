@@ -21,7 +21,7 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
     
     public void Pause()
     {
-        foreach (var pauseable in _pausables)
+        foreach (IPauseable pauseable in _pausables)
         {
             pauseable.Pause();
         }
@@ -29,7 +29,7 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
 
     public void UnPause()
     {
-        foreach (var pauseable in _pausables)
+        foreach (IPauseable pauseable in _pausables)
         {
             pauseable.UnPause();
         }

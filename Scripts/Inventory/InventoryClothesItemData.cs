@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "InventoryClothesItemData", menuName = "Inventory/InventoryClothesItemData")]
-public class InventoryClothesItemData : InventoryItemData
+public sealed class InventoryClothesItemData : InventoryItemData
 {
     [SerializeField] private ClotherType _clotherType;
 

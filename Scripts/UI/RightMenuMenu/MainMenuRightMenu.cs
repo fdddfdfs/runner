@@ -5,7 +5,7 @@ using Steamworks;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuRightMenu : Menu
+public sealed class MainMenuRightMenu : Menu
 {
     private const string UpgradeMenuResourceName = "UI/Upgrades/UpgradeMenu";
     private const string SettingsMenuResourceName = "UI/Settings/SettingsMenu";

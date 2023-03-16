@@ -1,4 +1,4 @@
-﻿public static class SettingsData
+﻿public static class SettingsStorage
 {
     private const float StartVolume = 0.5f;
     private const int DefaultGraphic = 5;

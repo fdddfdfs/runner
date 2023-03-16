@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class AcceptLoseEndCutscene : CutsceneWithEnvironment
+public sealed class AcceptLoseEndCutscene : CutsceneWithEnvironment
 {
     private Action _endCutsceneCallback;
 

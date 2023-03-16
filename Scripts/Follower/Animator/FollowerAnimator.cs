@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FollowerAnimator : BaseAnimator
+public sealed class FollowerAnimator : BaseAnimator
 {
     private const float RotationSmoothTime = 0.12f;
     

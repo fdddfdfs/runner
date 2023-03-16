@@ -35,11 +35,9 @@ public class LocalizedText : MonoBehaviour
 
     private void LocalizeText()
     {
-        Dictionary<string, string> localization = Localization.Instance.LocalizationDictionary;
-        
         foreach ((string baseTextLocalization, TMP_Text textObject) initialText in _initialTexts)
         {
-            initialText.textObject.text = localization[initialText.baseTextLocalization];
+            initialText.textObject.text = Localization.Instance[initialText.baseTextLocalization];
         }
     }
 }

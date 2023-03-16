@@ -1,7 +1,6 @@
-﻿using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Effect : MonoBehaviour
+public sealed class Effect : MonoBehaviour
 {
     [SerializeField] private ParticleSystem _particleSystem;
 

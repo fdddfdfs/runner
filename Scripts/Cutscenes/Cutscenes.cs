@@ -4,7 +4,7 @@ using StarterAssets;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Cutscenes : MonoBehaviour , IClothesChanger
+public sealed class Cutscenes : MonoBehaviour , IClothesChanger
 {
     private const string BaseStartCutsceneResourceName = "Cutscenes/BaseStartCutscene";
 

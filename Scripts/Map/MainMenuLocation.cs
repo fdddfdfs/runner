@@ -1,8 +1,6 @@
-﻿using StarterAssets;
-using UnityEngine;
-using Transform = UnityEngine.Transform;
+﻿using UnityEngine;
 
-public class MainMenuLocation : IRunnable
+public sealed class MainMenuLocation : IRunnable
 {
     private readonly GameObject _startLocation;
     private readonly Transform _player;

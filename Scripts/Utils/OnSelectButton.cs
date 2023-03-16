@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class OnSelectButton : MonoBehaviour, ISelectHandler
+public sealed class OnSelectButton : MonoBehaviour, ISelectHandler
 {
     private Action _onSelectAction;
     

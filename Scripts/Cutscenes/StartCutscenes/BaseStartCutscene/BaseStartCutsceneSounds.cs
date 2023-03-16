@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-public class BaseStartCutsceneSounds : MonoBehaviour
+public sealed class BaseStartCutsceneSounds : MonoBehaviour
 {
     private void PlayWrongDoorSounds()
     {

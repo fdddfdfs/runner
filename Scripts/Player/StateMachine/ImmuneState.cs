@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class ImmuneState : PlayerActivateState, IState
+public sealed class ImmuneState : PlayerActivateState, IState
 {
     public ImmuneState(ThirdPersonController player, ActiveItemsUI activeItemsUI) : base(player, activeItemsUI) { }
     

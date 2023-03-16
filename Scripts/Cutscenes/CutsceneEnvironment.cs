@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class CutsceneEnvironment : MonoBehaviour
+public sealed class CutsceneEnvironment : MonoBehaviour
 {
     [SerializeField] private GameObject _parent;
 

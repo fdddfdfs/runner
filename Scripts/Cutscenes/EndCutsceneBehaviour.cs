@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Animations;
 
-public class EndCutsceneBehaviour : StateMachineBehaviour
+public sealed class EndCutsceneBehaviour : StateMachineBehaviour
 {
     private Cutscene _cutscene;
     private float _endThreshold;

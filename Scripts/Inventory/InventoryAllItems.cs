@@ -1,27 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InventoryAllItems : MonoBehaviour
+public sealed class InventoryAllItems : MonoBehaviour
 {
     public const int PlaytimeGeneratorID = 1000;
     
     [SerializeField] private List<InventoryItemData> _inventoryItemsData;
 
-    private static InventoryAllItems _instance;
-
     public Dictionary<int, InventoryItemData> Items { get; private set; }
 
-    public static InventoryAllItems Instance => _instance;
+    public static InventoryAllItems Instance { get; private set; }
 
     private void Awake()
     {
-        if (_instance != null)
+        if (Instance != null)
         {
             Destroy(gameObject);
             return;
         }
 
-        _instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
 
         Items = new Dictionary<int, InventoryItemData>();

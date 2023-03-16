@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class DieBehaviour : StateMachineBehaviour
+public sealed class DieBehaviour : StateMachineBehaviour
 {
     private LoseDecideMenu _loseDecideMenu;
 

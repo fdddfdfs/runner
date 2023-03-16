@@ -1,4 +1,4 @@
-﻿public class IdleState : IState
+﻿public sealed class IdleState : IState
 {
     private readonly PlayerAnimator _playerAnimator;
 

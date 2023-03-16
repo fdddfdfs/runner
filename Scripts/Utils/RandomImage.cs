@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class RandomImage : MonoBehaviour
+public sealed class RandomImage : MonoBehaviour
 {
     [SerializeField] private Image _image;
     [SerializeField] private List<Sprite> _sprites;

@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 using TMPro;
 
 public abstract class InventoryGrid
@@ -31,7 +29,7 @@ public abstract class InventoryGrid
 
     private Sprite _invisibleSprite;
 
-    public bool IsActive { get; set; } = false;
+    public bool IsActive { get; set; }
 
     public InventoryGrid(
         InventorySteamworks inventorySteamworks,
@@ -68,9 +66,9 @@ public abstract class InventoryGrid
             _inventoryCellsStackText[^1].text = string.Empty;
         }
 
-        _inventorySteamworks.OnInventoryLoaded += InitializeInventory;
-        _inventorySteamworks.OnInventoryAddItem += AddItemInInventory;
-        _inventorySteamworks.OnInventoryRemoveItem += RemoveItemFromInventory;
+        _inventorySteamworks.InventoryLoaded += InitializeInventory;
+        _inventorySteamworks.InventoryAddItem += AddItemInInventory;
+        _inventorySteamworks.InventoryRemoveItem += RemoveItemFromInventory;
 
 
         if (!SteamManager.Initialized)
@@ -81,9 +79,9 @@ public abstract class InventoryGrid
 
     public void ClearEvents()
     {
-        _inventorySteamworks.OnInventoryLoaded -= InitializeInventory;
-        _inventorySteamworks.OnInventoryAddItem -= AddItemInInventory;
-        _inventorySteamworks.OnInventoryRemoveItem -= RemoveItemFromInventory;
+        _inventorySteamworks.InventoryLoaded -= InitializeInventory;
+        _inventorySteamworks.InventoryAddItem -= AddItemInInventory;
+        _inventorySteamworks.InventoryRemoveItem -= RemoveItemFromInventory;
     }
 
     protected void InitializeInventory(List<InventoryItem> inventoryItems)
@@ -190,12 +188,9 @@ public abstract class InventoryGrid
 
     public void ShowItems()
     {
-        //StackItems();
-
         int numberOfItems = Mathf.Min(_items.Count - _currentPage * _inventoryCells.Count, _inventoryCells.Count);
 
-
-        for (int i = 0; i < numberOfItems; i++)
+        for (var i = 0; i < numberOfItems; i++)
         {
             IsActive = true;
             _inventoryCellsImages[i].sprite = _items[i + _currentPage * _inventoryCells.Count].InventoryItemData.Icon;
@@ -280,9 +275,7 @@ public abstract class InventoryGrid
         ClearItems();
 
         _currentPage += dir;
-
-        //SoundManager.Instance.PlaySound(SoundType.RacePhrase, 2);
-
+        
         ShowItems();
     }
 
@@ -316,7 +309,7 @@ public abstract class InventoryGrid
         if (defaultItemsIDs == null)
             return;
 
-        for (int i = 0; i < defaultItemsIDs.Count; i++)
+        for (var i = 0; i < defaultItemsIDs.Count; i++)
         {
             _items.Add(new InventoryItem(0, InventoryAllItems.Instance.Items[defaultItemsIDs[i]]));
             _itemsCount.Add(1);

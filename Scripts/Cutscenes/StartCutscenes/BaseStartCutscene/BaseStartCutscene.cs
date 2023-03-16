@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class BaseStartCutscene : Cutscene
+public sealed class BaseStartCutscene : Cutscene
 {
     private Action _endCutsceneCallback;
 

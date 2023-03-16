@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class Coroutines : MonoBehaviour {
+public sealed class Coroutines : MonoBehaviour {
 
     #region CONSTANTS
 

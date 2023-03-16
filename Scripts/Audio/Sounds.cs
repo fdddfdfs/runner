@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
+public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
 {
     [SerializeField] private List<AudioSource> _soundsSources;
     [SerializeField] private List<AudioClip> _soundsClips;

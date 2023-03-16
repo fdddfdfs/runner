@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-public class EmptyObstacle : Obstacle
+public sealed class EmptyObstacle : Obstacle
 {
     public void InitItems(List<ItemParent> items)
     {

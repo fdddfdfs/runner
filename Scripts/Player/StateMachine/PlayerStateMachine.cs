@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using StarterAssets;
 
-public class PlayerStateMachine : IRunnable
+public sealed class PlayerStateMachine : IRunnable
 {
     private IState _currentState;
 

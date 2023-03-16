@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class FadeOutBehaviour : StateMachineBehaviour
+public sealed class FadeOutBehaviour : StateMachineBehaviour
 {
     public Fade Fade { get; set; }
 

@@ -1,4 +1,4 @@
-﻿public class AcceptLoseStartCutscene : DeclineLoseStartCutscene
+﻿public sealed class AcceptLoseStartCutscene : DeclineLoseStartCutscene
 {
     
 }

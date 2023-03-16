@@ -3,7 +3,7 @@ using System.Globalization;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class RoadBlockFactory : AbstractFactory<RoadBlock>
+public sealed class RoadBlockFactory : AbstractFactory<RoadBlock>
 {
     private readonly RoadBlockInfo _roadBlockInfo;
 

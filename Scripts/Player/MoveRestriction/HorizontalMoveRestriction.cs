@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public class HorizontalMoveRestriction
+﻿public class HorizontalMoveRestriction
 {
     protected int _currentMovingLine;
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class Fade : MonoBehaviour
+public sealed class Fade : MonoBehaviour
 {
     private const string FadeInTrigger = "FadeIn";
     private const string FadeOutTrigger = "FadeOut";

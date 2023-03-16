@@ -1,6 +1,4 @@
-﻿using StarterAssets;
-using UnityEngine;
-using Transform = UnityEngine.Transform;
+﻿using UnityEngine;
 
 public sealed class DefaultHorizontalMoveAnimation : IFloatAnimation
 {

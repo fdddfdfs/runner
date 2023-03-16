@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class Cutscene : MonoBehaviour
@@ -45,7 +44,7 @@ public abstract class Cutscene : MonoBehaviour
 
         _isEnded = false;
         
-        PlayerClothes.AddClothes(ClothesData.PlayerClothes.Value);
+        PlayerClothes.AddClothes(ClothesStorage.PlayerClothes.Value);
     }
 
     public virtual void HideCutscene()

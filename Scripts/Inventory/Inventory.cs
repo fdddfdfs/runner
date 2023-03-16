@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Inventory : Menu
+public sealed class Inventory : Menu
 {
     [SerializeField] private List<GameObject> _inventoryCells;
     [SerializeField] private TMP_Text _nameText;
@@ -49,8 +49,7 @@ public class Inventory : Menu
             _button,
             _nextPageButton,
             _previousPageButton,
-            _chest,
-            _invisibleSprite);
+             _invisibleSprite);
          var inventoryClothes = new InventoryClothes(
              _inventorySteamworks,
              _inventoryCells,

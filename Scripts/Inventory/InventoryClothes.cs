@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InventoryClothes : InventoryGrid
+public sealed class InventoryClothes : InventoryGrid
 {
     private readonly IClothesChanger _clothesChanger;
 
@@ -27,8 +27,6 @@ public class InventoryClothes : InventoryGrid
             previousPageButton,
             invisibleSprite)
     {
-        //defaultItemsIDs = new List<int> { InventoryAllItems.GetDefaultClother() };
-
         _inventoryItemsType = InventoryItemType.Clothes;
 
         _clothesChanger = clothesChanger;
@@ -47,11 +45,9 @@ public class InventoryClothes : InventoryGrid
         _button.onClick.AddListener(() =>
         {
             PutOnClother(clotherNumber);
-
-            //SoundManager.Instance.PlaySound(SoundType.CustomizeInventory, 0);
         });
 
-        //_buttonText.text = LanguageController.CurrentLanguage[MenuInformationManager.ClothersButtonText];
+        _buttonText.text = Localization.Instance[AllTexts.PutClothes];
     }
 
     private void PutOnClother(int clotherNumber)

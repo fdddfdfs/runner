@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [Serializable]
-public class RoadLine
+public sealed class RoadLine
 {
     [SerializeField] private GameObject _leftBorder;
     [SerializeField] private GameObject _road;

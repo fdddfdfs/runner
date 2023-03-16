@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class BoardState : PlayerActivateState, IState
+public sealed class BoardState : PlayerActivateState, IState
 {
     public BoardState(ThirdPersonController player, ActiveItemsUI activeItemsUI) : base(player, activeItemsUI) { }
 

@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class RunState : PlayerState, IState
+public sealed class RunState : PlayerState, IState
 {
     public RunState(ThirdPersonController player) : base(player) { }
     

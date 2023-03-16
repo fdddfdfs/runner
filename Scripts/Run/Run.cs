@@ -45,9 +45,6 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 
     public void Lose()
     {
-        //_map.Level?.HideCurrentEnteredBlock();
-        
-        //Time.timeScale = 0;
         _player.Pause();
         
         Cursor.visible = true;

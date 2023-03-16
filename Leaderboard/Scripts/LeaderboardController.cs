@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using Steamworks;
-using UnityEngine.UI;
+using TMPro;
 
 namespace fdddfdfs.Leaderboard
 {
@@ -12,8 +12,6 @@ namespace fdddfdfs.Leaderboard
 
         [SerializeField] private List<LeaderboardEntityData> _leaderboardEntityData;
         [SerializeField] private RectTransform _leaderboardEntitiesParent;
-        [SerializeField] private Text _nickname;
-        [SerializeField] private Text _score;
 
         private LeaderboardEntityData[] _sortedLeaderboardEntities;
         private LeaderboardEntity _leaderboardEntityPrefab;
@@ -106,15 +104,11 @@ namespace fdddfdfs.Leaderboard
             {
                 SetPlayerInfoInLeaderboard(i, _sortedLeaderboardEntities[i]);
             }
-
-            _score.text = "Score";
-            _nickname.text = "Nickname";
         }
 
         private void LeaderboardUpdated(LeaderboardScoreUploaded_t leaderboardScoreUploadedT, bool bIOFailure)
         {
-            Debug.Log("success: " + leaderboardScoreUploadedT.m_bSuccess);
-            Debug.Log("changed: " + leaderboardScoreUploadedT.m_bScoreChanged);
+
         }
 
         private void GetLeaderboard(LeaderboardFindResult_t respond, bool success)

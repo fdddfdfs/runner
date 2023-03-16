@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class DataFloat
+public sealed class DataFloat
 {
     private readonly string _key;
 

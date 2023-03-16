@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class FollowerDefaultAnimator : PlayerBaseAnimator
+public sealed class FollowerDefaultAnimator : PlayerBaseAnimator
 {
     protected override string AnimatorResourceName => "FollowerDefaultAnimator";
     

@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class PlayerActivateState : PlayerState
+public abstract class PlayerActivateState : PlayerState
 {
     protected readonly ActiveItemsUI _activeItemsUI;
     

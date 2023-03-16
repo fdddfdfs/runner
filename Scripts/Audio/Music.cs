@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class Music : ResourcesSingleton<Music, MusicResourceName>
+public sealed class Music : ResourcesSingleton<Music, MusicResourceName>
 {
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private List<AudioClip> _audioClips;

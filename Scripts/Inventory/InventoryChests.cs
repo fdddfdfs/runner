@@ -3,10 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InventoryChests : InventoryGrid
+public sealed class InventoryChests : InventoryGrid
 {
-    //private Chests _chests;
-    private bool _isChestOpened = false;
+    private bool _isChestOpened;
 
     public InventoryChests(
         InventorySteamworks inventorySteamworks,
@@ -16,12 +15,17 @@ public class InventoryChests : InventoryGrid
         Button button,
         Button nextPageButton,
         Button previousPageButton,
-        GameObject chest,
         Sprite invisibleSprite)
-        : base(inventorySteamworks, inventoryCells, nameText, descriptionText, button, nextPageButton, previousPageButton, invisibleSprite)
+        : base(inventorySteamworks,
+            inventoryCells,
+            nameText,
+            descriptionText,
+            button,
+            nextPageButton,
+            previousPageButton,
+            invisibleSprite)
     {
         _inventoryItemsType = InventoryItemType.Chest;
-        //_chests = new Chests(chest);
     }
 
     protected override void ShowItemInfo(int chestNumber)
@@ -37,20 +41,18 @@ public class InventoryChests : InventoryGrid
         _button.onClick.AddListener(() =>
         {
             OpenChest(chestNumber);
-
-            //oundManager.Instance.PlaySound(SoundType.CustomizeInventory, 2);
         });
 
-        //_buttonText.text = LanguageController.CurrentLanguage[MenuInformationManager.ChestsButtonText];
+        _buttonText.text = Localization.Instance[AllTexts.OpenChest];
     }
 
     protected override void AddItemInInventory(List<InventoryItem> addedItems)
     {
-        List<int> openedItems = new List<int>();
+        List<int> openedItems = new ();
 
         if (_isChestOpened)
         {
-            for (int i = 0; i < addedItems.Count; i++)
+            for (var i = 0; i < addedItems.Count; i++)
             {
                 if (addedItems[i].InventoryItemData.InventoryItemType != _inventoryItemsType)
                 {
@@ -73,7 +75,6 @@ public class InventoryChests : InventoryGrid
     {
         _button.gameObject.SetActive(false);
         _inventorySteamworks.OpenChest(_itemsIDs[chestNumber][^1]);
-        //_chests.PickChest(_items[chestNumber].ID);
         _isChestOpened = true;
     }
 }
