@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 public sealed class UpgradeMenu : Menu
 {
     private const string UpgradeItemResourceName = "UI/Upgrades/UpgradeItem";
     
     [SerializeField] private RectTransform _parent;
-    [SerializeField] private List<ItemType> _itemTypes;
-    [SerializeField] private List<Sprite> _itemSprites;
+    [SerializeField] private List<ItemData> _itemsData;
     [SerializeField] private ScrollRect _scrollRect;
     
     private Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)> _upgradeActions;
@@ -42,41 +40,30 @@ public sealed class UpgradeMenu : Menu
             { ItemType.Board, (() => Stats.BoardLevel.Value, () => Stats.BoardLevel.Value += 1) },
         };
 
-        Dictionary<ItemType, (string name, string description)> itemInfo = new()
-        {
-            [ItemType.Fly] = ("Plane", "Allow you to fly"),
-            [ItemType.Immune] = ("Immune", "Makes you invulnerable"),
-            [ItemType.Magnet] = ("Magnet", "Magnet for coins"),
-            [ItemType.DoubleMoney] = ("DoubleMoney", "Increase your money gain by 2 times"),
-            [ItemType.HighJump] = ("HighJump", "Makes you jump higher"),
-            [ItemType.DoubleScore] = ("DoubleScore", "Increase your score gain by 2 times"),
-            [ItemType.Board] = ("Board", "Allow you to take one hit"),
-        };
-
         var parentVerticalLayoutGroup = _parent.GetComponent<VerticalLayoutGroup>();
         _parent.SetSizeWithCurrentAnchors(
             RectTransform.Axis.Vertical,
             (upgradeItemPrefab.GetComponent<RectTransform>().rect.height +
              parentVerticalLayoutGroup.spacing) *
-            _itemTypes.Count +
+            _itemsData.Count +
             parentVerticalLayoutGroup.padding.bottom +
             parentVerticalLayoutGroup.padding.top);
 
-        for (int i = 0; i < _itemTypes.Count; i++)
+        for (int i = 0; i < _itemsData.Count; i++)
         {
-            if (!_upgradeActions.ContainsKey(_itemTypes[i]))
+            if (!_upgradeActions.ContainsKey(_itemsData[i].Type))
             {
-                throw new Exception($"Upgrade actions not implemented for type {_itemTypes[i]}");
+                throw new Exception($"Upgrade actions not implemented for type {_itemsData[i].Type}");
             }
 
             GameObject newUpgrade = Instantiate(upgradeItemPrefab, _parent);
             var upgradeItem = newUpgrade.GetComponent<UpgradeItem>();
             upgradeItem.Init(
-                _itemSprites[i],
-                itemInfo[_itemTypes[i]].name,
-                itemInfo[_itemTypes[i]].description,
-                _upgradeActions[_itemTypes[i]].getLevel,
-                _upgradeActions[_itemTypes[i]].increaseLevel,
+                _itemsData[i].Icon,
+                _itemsData[i].Name,
+                _itemsData[i].Description,
+                _upgradeActions[_itemsData[i].Type].getLevel,
+                _upgradeActions[_itemsData[i].Type].increaseLevel,
                 i);
             
             upgradeItem.OnSelect += SetVerticalPosition;
@@ -93,6 +80,6 @@ public sealed class UpgradeMenu : Menu
     {
         if (Gamepad.current == null) return;
         
-        _scrollRect.verticalScrollbar.value = 1 - (float)index / (_itemTypes.Count - 1);
+        _scrollRect.verticalScrollbar.value = 1 - (float)index / (_itemsData.Count - 1);
     }
 }

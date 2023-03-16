@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
 {
-    [SerializeField] private List<ItemType> _itemTypes;
-    [SerializeField] private List<Sprite> _itemSprites;
+    [SerializeField] private List<ItemData> _itemsData;
     [SerializeField] private Transform _parent;
     [SerializeField] private GameObject _prefab;
-    
+
     private PoolMono<ActiveItem> _activeItems;
-    private Dictionary<ItemType, Sprite> _items;
     private Dictionary<ItemType, ActiveItem> _currentlyActiveItems;
+    private Dictionary<ItemType, ItemData> _items;
 
     public void ShowNewItemEffect(ItemType itemType, float time)
     {
@@ -19,8 +19,8 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
             ? _currentlyActiveItems[itemType] 
             : _activeItems.GetItem();
         
-        item.ItemImage.sprite = _items[itemType];
-        foreach (var progressImage in item.ProgressImages)
+        item.ItemImage.sprite = _items[itemType].Icon;
+        foreach (Image progressImage in item.ProgressImages)
         {
             progressImage.DOKill();
             progressImage.fillAmount = 1;
@@ -56,7 +56,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
 
     public void EndRun()
     {
-        foreach (ItemType itemType in _itemTypes)
+        foreach (ItemType itemType in _items.Keys)
         {
             HideEffect(itemType);
         }
@@ -65,11 +65,11 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
     private void Awake()
     {
         _currentlyActiveItems = new Dictionary<ItemType, ActiveItem>();
-        
-        _items = new Dictionary<ItemType, Sprite>();
-        for (var i = 0; i < _itemTypes.Count; i++)
+
+        _items = new Dictionary<ItemType, ItemData>();
+        foreach (ItemData itemData in _itemsData)
         {
-            _items.Add(_itemTypes[i], _itemSprites[i]);
+            _items[itemData.Type] = itemData;
         }
 
         _activeItems = new GameObjectPoolMono<ActiveItem>(_prefab, _parent, true, 5);
