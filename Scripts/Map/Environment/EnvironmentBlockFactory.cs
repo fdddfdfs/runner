@@ -25,6 +25,8 @@ public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
         
         _count++;
         
+        StaticBatchingUtility.Combine(environmentBlockObject);
+        
         return environmentBlock;
     }
 }

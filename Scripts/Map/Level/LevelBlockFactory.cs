@@ -28,19 +28,25 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
     {
         GameObject parent = new($"LevelBlock_{_levelBlockInfo.name}_{_count.ToString()}");
         var obstacleBlock = parent.AddComponent<LevelBlock>();
-        CreateBlock(_levelBlockInfo, obstacleBlock);
+        bool isBlockStatic = CreateBlock(_levelBlockInfo, obstacleBlock);
         _count++;
+
+        if (isBlockStatic)
+        {
+            StaticBatchingUtility.Combine(parent);
+        }
 
         return obstacleBlock;
     }
 
-    private void CreateBlock(LevelBlockInfo levelBlockInfo, LevelBlock levelBlock)
+    private bool CreateBlock(LevelBlockInfo levelBlockInfo, LevelBlock levelBlock)
     {
         List<(Obstacle obstacle, bool needSpawnItems)> createdObstacles = new();
         float[] spawnPositionsX = Map.AllLinesCoordsX;
         var obstaclesPrefabs = new GameObject[Map.LinesCount];
         var obstaclesNeedSpawnItems = new bool[Map.LinesCount];
         var currentPositionsZ = new float[Map.LinesCount];
+        var isBlockStatic = true;
         
         for (int i = levelBlockInfo.Line.Count - 1; i >= 0; i--)
         {
@@ -56,7 +62,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 
             for (var j = 0; j < obstaclesPrefabs.Length; j++)
             {
-                (Obstacle newObstacle, float positionZ) = SpawnObstacle(
+                (Obstacle newObstacle, float positionZ, bool isObstacleStatic) = SpawnObstacle(
                     obstaclesPrefabs[j],
                     obstaclesNeedSpawnItems[j],
                     levelBlock.transform,
@@ -67,13 +73,17 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
                 {
                     createdObstacles.Add((newObstacle, obstaclesNeedSpawnItems[j]));
                 }
+
+                isBlockStatic = isBlockStatic && isObstacleStatic;
             }
         }
         
         levelBlock.Init(createdObstacles, _factories, _runProgress, currentPositionsZ.Max());
+
+        return isBlockStatic;
     }
 
-    private (Obstacle obstacle, float z) SpawnObstacle(
+    private (Obstacle obstacle, float z, bool isObstacleStatic) SpawnObstacle(
         GameObject obstaclePrefab,
         bool needSpawnItems,
         Transform parent,
@@ -83,11 +93,11 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
         switch (obstaclePrefab ? obstaclePrefab.name : NullObstacleName)
         {
             case NullObstacleName when !needSpawnItems:
-                return (null, EmptyFieldSizeZ);
+                return (null, EmptyFieldSizeZ, true);
             case EmptyObstacleName when !needSpawnItems:
-                return (null, 0);
+                return (null, 0, true);
             case EmptyObstacleName or NullObstacleName:
-                return (InstantiateEmptyObjectWithItems(parent, spawnPosX, spawnPosZ), EmptyFieldSizeZ);
+                return (InstantiateEmptyObjectWithItems(parent, spawnPosX, spawnPosZ), EmptyFieldSizeZ, true);
         }
         
         GameObject createdObstacle = InstantiateObstacle(
@@ -98,7 +108,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 
         var obstacle = createdObstacle.GetComponent<Obstacle>();
 
-        return (obstacle, GetSizeZ(createdObstacle));
+        return (obstacle, GetSizeZ(createdObstacle), obstacle is MovingObstacle);
     }
 
     private GameObject InstantiateObstacle(GameObject prefab, Transform parent,float spawnPosX, float spawnPosZ)
@@ -134,7 +144,7 @@ public sealed class LevelBlockFactory: AbstractFactory<LevelBlock>
 
     private static float GetSizeZ(GameObject obstacle)
     {
-        var colliders = obstacle.GetComponentsInChildren<BoxCollider>();
+        BoxCollider[] colliders = obstacle.GetComponentsInChildren<BoxCollider>();
         float sizeZ = colliders.Sum(collider => collider.size.z);
         return sizeZ > EmptyFieldSizeZ ? sizeZ : EmptyFieldSizeZ;
     }

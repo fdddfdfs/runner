@@ -43,6 +43,8 @@ public sealed class RoadBlockFactory : AbstractFactory<RoadBlock>
         
         _count++;
         
+        StaticBatchingUtility.Combine(parent);
+        
         return roadBlock;
     }
 
