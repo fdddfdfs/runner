@@ -7,8 +7,7 @@ using UnityEngine;
 public sealed class PlayerHittable : IHittable
 {
     private const float RecoverTime = 20f;
-    private const int RecoverTimeMilliseconds = (int)(RecoverTime * 1000);
-    
+
     private readonly ThirdPersonController _player;
     private readonly Follower _follower;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
@@ -25,8 +24,7 @@ public sealed class PlayerHittable : IHittable
         _player = player;
         _follower = follower;
         _cancellationTokenProvider = cancellationTokenProvider;
-        _linkedTokens = new[] { cancellationTokenProvider.GetCancellationToken() };
-        _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+        _linkedTokens = new CancellationToken[1];
     }
     
     public bool Hit(HitType hitType)
@@ -60,17 +58,27 @@ public sealed class PlayerHittable : IHittable
     {
         _isRecovery = true;
         _follower.FollowForTime(_player.gameObject, RecoverTime);
+        
+        if (_recoverCancellationSource == null || _recoverCancellationSource.IsCancellationRequested)
+        {
+            CreateCancellationToken();
+        }
 
-        await AsyncUtils.Wait(RecoverTimeMilliseconds, _recoverCancellationSource.Token);
+        await AsyncUtils.Wait(RecoverTime, _recoverCancellationSource.Token);
 
         if (_recoverCancellationSource.IsCancellationRequested)
         {
             _follower.StopFollowing();
-            _recoverCancellationSource.Dispose();
-            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
-            _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+            CreateCancellationToken();
         }
 
         _isRecovery = false;
+    }
+
+    private void CreateCancellationToken()
+    {
+        _recoverCancellationSource?.Dispose();
+        _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
+        _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
     }
 }
