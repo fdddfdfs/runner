@@ -266,8 +266,8 @@ public abstract class InventoryGrid
 
     protected virtual void ShowItemInfo(int chestNumber)
     {
-        _nameText.text = _items[chestNumber].InventoryItemData.Name;
-        _descriptionText.text = _items[chestNumber].InventoryItemData.Description;
+        _nameText.text = Localization.Instance[_items[chestNumber].InventoryItemData.Name];
+        _descriptionText.text = Localization.Instance[_items[chestNumber].InventoryItemData.Description];
     }
 
     private void ChangePage(int dir)
