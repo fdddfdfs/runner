@@ -20,7 +20,15 @@ public sealed class LoseMenu : MonoBehaviour
         _score.text = score.ToString();
         _money.text = $"+{money.ToString()}";
         _restart.Select();
+    }
 
+    private void ChangeMenuVisible(bool visible)
+    {
+        _menu.SetActive(visible);
+    }
+
+    private void Awake()
+    {
         _restart.onClick.AddListener(() =>
         {
             ChangeMenuVisible(false);
@@ -33,10 +41,5 @@ public sealed class LoseMenu : MonoBehaviour
             ChangeMenuVisible(false);
             _run.ShowLoseDecideMenu();
         });
-    }
-
-    private void ChangeMenuVisible(bool visible)
-    {
-        _menu.SetActive(visible);
     }
 }
