@@ -11,8 +11,10 @@
 
     public void EnterBlock() { }
 
-    public void HideBlock()
+    public async void HideBlock()
     {
+        await AsyncUtils.Wait(0.1f, AsyncUtils.Instance.GetCancellationToken());
+        
         gameObject.SetActive(false);
     }
 }
