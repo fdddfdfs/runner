@@ -7,12 +7,18 @@ public sealed class MagnetItemFactory<T> : ItemFactory<T> where T : Item
     private readonly Run _run;
     private readonly ActiveItemsUI _activeItemsUI;
     private readonly ItemsActiveStates _itemsActiveStates;
+    private readonly Effects _effects;
     
-    public MagnetItemFactory(ActiveItemsUI activeItemsUI, Run run, ItemsActiveStates itemsActiveStates)
+    public MagnetItemFactory(
+        ActiveItemsUI activeItemsUI,
+        Run run,
+        ItemsActiveStates itemsActiveStates,
+        Effects effects)
     {
         _activeItemsUI = activeItemsUI;
         _run = run;
         _itemsActiveStates = itemsActiveStates;
+        _effects = effects;
     }
 
     public override T CreateItem()

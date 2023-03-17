@@ -1,16 +1,29 @@
-﻿public sealed class ImmuneHittable : IHittable
+﻿using UnityEngine;
+
+public sealed class ImmuneHittable : IHittable
 {
-    private readonly Map _map;
+    private const float EffectYOffset = 1;
+    private const int EffectTimeMilliseconds = 5000;
     
-    public ImmuneHittable(Map map)
+    private readonly Map _map;
+    private readonly Effects _effects;
+    private readonly Transform _player;
+    
+    public ImmuneHittable(Map map, Effects effects, Transform player)
     {
         _map = map;
+        _effects = effects;
+        _player = player;
     }
     
     public bool Hit(HitType hitType)
     {
         if (hitType == HitType.Hard)
         {
+            _effects.ActivateEffect(
+                EffectType.Explosion,
+                _player.position + EffectYOffset * Vector3.up,
+                EffectTimeMilliseconds);
             _map.Level.HideCurrentEnteredBlock();
         }
 

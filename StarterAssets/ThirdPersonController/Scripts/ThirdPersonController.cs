@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cinemachine;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
@@ -11,6 +10,12 @@ namespace StarterAssets
     [RequireComponent(typeof(CharacterController))]
     public class ThirdPersonController : MonoBehaviour, IPauseable, IRunnable
     {
+        private const float CameraShakeIntensity = 5f;
+        private const float CameraShakeTime = 0.3f;
+        private const int JumpEffectTimeMilliseconds = 5000;
+        private const float ExplosionEffectYOffset = 1f;
+        private const int ExplosionEffectTimeMilliseconds = 5000;
+        
         [SerializeField] private RunProgress _runProgress;
         [SerializeField] private Map _map;
         [SerializeField] private ActiveItemsUI _activeItemsUI;
@@ -123,6 +128,8 @@ namespace StarterAssets
         private PlayerRunInput _playerRunInput;
         private PlayerCamera _playerCamera;
 
+        public Effects Effects { get; private set; }
+
         public Dictionary<Type, IHittable> Hittables => _hittables;
 
         public Dictionary<Type, IGravitable> Gravitables => _gravitables;
@@ -165,6 +172,10 @@ namespace StarterAssets
         public void Resurrect()
         {
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Resurrect);
+            Effects.ActivateEffect(
+                EffectType.Explosion, 
+                transform.position + ExplosionEffectYOffset * Vector3.up,
+                ExplosionEffectTimeMilliseconds);
         }
 
         public void ChangeHittable(IHittable newHittable)
@@ -190,6 +201,10 @@ namespace StarterAssets
 
         public void StartRun()
         {
+            transform.position = _startPosition;
+            Controller.enabled = true;
+            //Controller.Move(_startPosition - transform.localPosition);
+            
             PlayerStateMachine.StartRun();
             _playerRunInput.StartRun();
             _playerCamera.StartRun();
@@ -209,8 +224,9 @@ namespace StarterAssets
             PlayerStateMachine.EndRun();
             _playerRunInput.EndRun();
             _playerCamera.EndRun();
-            
-            Controller.Move(_startPosition - transform.localPosition);
+
+            Controller.enabled = false;
+            //Controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
             _isMovingX = false;
             _movingXDir = 0;
@@ -247,6 +263,8 @@ namespace StarterAssets
 
         private void Awake()
         {
+            Effects = new Effects(AsyncUtils.Instance);
+            
             InputActionMap inputActionMap = _inputActionAsset.FindActionMap("Player", true);
             _playerRunInput = new PlayerRunInput(inputActionMap, AsyncUtils.Instance);
             inputActionMap.Enable();
@@ -277,7 +295,7 @@ namespace StarterAssets
             Controller = GetComponent<CharacterController>();
 
             PlayerAnimator = new PlayerAnimator(_animator, this);
-            _playerCamera = new PlayerCamera(_playerRunCamera, _runCamera, _idleCamera);
+            _playerCamera = new PlayerCamera(_playerRunCamera, _runCamera, _idleCamera, _run);
 
             _gravitables = new Dictionary<Type, IGravitable>
             {
@@ -320,12 +338,12 @@ namespace StarterAssets
                 },
             };
             
-            _board = new Board(this, _map, _run);
+            _board = new Board(this, _map, _run, Effects);
             _hittables = new Dictionary<Type, IHittable>
             {
                 { typeof(Board), _board },
                 { typeof(PlayerHittable), new PlayerHittable(this, _follower, _run) },
-                { typeof(ImmuneHittable), new ImmuneHittable(_map) },
+                { typeof(ImmuneHittable), new ImmuneHittable(_map, Effects, transform) },
             };
 
             PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower);
@@ -363,11 +381,18 @@ namespace StarterAssets
         private void GroundedCheck()
         {
             Vector3 position = transform.position;
-            Vector3 spherePosition = new Vector3(position.x, position.y - GroundedOffset, position.z);
-            Grounded = Physics.CheckSphere(
+            Vector3 spherePosition = new (position.x, position.y - GroundedOffset, position.z);
+            bool isGrounded = Physics.CheckSphere(
                 spherePosition, GroundedRadius,
                 GroundLayers,
                 QueryTriggerInteraction.Ignore);
+
+            if (isGrounded && !Grounded)
+            {
+                Effects.ActivateEffect(EffectType.Jump, spherePosition, JumpEffectTimeMilliseconds);
+            }
+            
+            Grounded = isGrounded;
             
             PlayerAnimator.ChangeAnimationBool(AnimationType.Land, Grounded);
         }
@@ -547,6 +572,7 @@ namespace StarterAssets
                     _movingDestination = _previousMovingDestination;
                     _movingXDir *= -1;
                     _horizontalMoveRestriction.CheckHorizontalMoveRestriction(_movingXDir);
+                    _playerCamera.ShakeCamera(CameraShakeIntensity, CameraShakeTime);
                     
                     PlayerAnimator.ChangeAnimationTrigger(
                         hit.normal.x < 0 ? AnimationType.SoftHitLeft : AnimationType.SoftHitRight);

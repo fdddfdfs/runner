@@ -1,22 +1,26 @@
 ﻿using System.Threading;
 using StarterAssets;
-using UnityEngine;
-using Task = System.Threading.Tasks.Task;
 
 public abstract class ActivatableItem : Item
 {
+    private const int PickupItemEffectTimeMilliseconds = 5000;
+    
     private ActiveItemsUI _activeItemsUI;
     private ItemsActiveStates _itemsActiveStates;
+    private Effects _effects;
     
     public void Init(
         ActiveItemsUI activeItemsUI,
         ICancellationTokenProvider cancellationTokenProvider,
-        ItemsActiveStates itemsActiveStates)
+        ItemsActiveStates itemsActiveStates,
+        Effects effects)
     {
         base.Init(cancellationTokenProvider);
         
         _activeItemsUI = activeItemsUI;
         _itemsActiveStates = itemsActiveStates;
+        
+        _effects = effects;
     }
 
     public override void PickupItem(ThirdPersonController player)
@@ -25,6 +29,7 @@ public abstract class ActivatableItem : Item
 
         _activeItemsUI.ShowNewItemEffect(ActiveItemType, ActiveTime);
         ActivateTime();
+        _effects.ActivateEffect(EffectType.PickupItem, transform.position, PickupItemEffectTimeMilliseconds);
     }
 
     protected abstract float ActiveTime { get; }

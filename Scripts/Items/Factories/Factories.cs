@@ -35,22 +35,25 @@ public sealed class Factories : MonoBehaviour
                 _player,
                 _activeItemsUI,
                 _run,
-                itemsActiveStates),
+                itemsActiveStates,
+                _player.Effects),
             [ItemType.DoubleMoney] = new DoubleMoneyItemFactory<Item>(
                 _runProgress,
                 _activeItemsUI,
                 _run,
-                itemsActiveStates),
+                itemsActiveStates,
+                _player.Effects),
             [ItemType.DoubleScore] = new DoubleScoreItemFactory<Item>(
                 _runProgress,
                 _activeItemsUI,
                 _run,
-                itemsActiveStates),
+                itemsActiveStates,
+                _player.Effects),
             [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, _run, false, false),
-            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates),
-            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates),
-            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates),
-            [ItemType.Spring] = new SpringItemFactory<Item>(_run),
+            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
+            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
+            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
+            [ItemType.Spring] = new SpringItemFactory<Item>(_run,  _player.Effects),
         };
         
         _itemFactories.Add(ItemType.RandomBoost, new RandomItemFactory<Item>(this));
