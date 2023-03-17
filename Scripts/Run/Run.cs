@@ -26,12 +26,17 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     private bool _isCutsceneChanged;
 
     private CancellationTokenSource _endRunTokenSource = new();
+    private CancellationToken[] _linkedTokens;
 
     public void StartRun()
     {
-        _endRunTokenSource?.Dispose();
-        _endRunTokenSource = new CancellationTokenSource();
-        
+        if (_endRunTokenSource.IsCancellationRequested)
+        {
+            _endRunTokenSource?.Dispose();
+            _linkedTokens[0] = AsyncUtils.Instance.GetCancellationToken();
+            _endRunTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+        }
+
         foreach (IRunnable runnable in _runnables)
         {
             runnable.StartRun();
@@ -111,7 +116,6 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-
         foreach (IRunnable runnable in _runnables)
         {
             runnable.EndRun();
@@ -129,7 +133,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     public void BackToMenu(bool playCutscene = true)
     {
         EndRun();
-
+        
         if (playCutscene && _isCutsceneChanged)
         {
             _cutscenes.ChangeCurrentCutscene(_cutsceneType);
@@ -154,6 +158,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     private void Awake()
     {
         _runnables = new List<IRunnable> { _player, _map, _runProgress, _follower, _activeItemsUI, _pauseController };
+        SetMainMenuCutscene(typeof(BaseStartCutscene));
     }
 
     private void OnDisable()
@@ -162,6 +167,12 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         {
             _endRunTokenSource.Cancel();
         }
+    }
+
+    private void Start()
+    {
+        _linkedTokens = new[] { AsyncUtils.Instance.GetCancellationToken() };
+        _endRunTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
     }
 
     public CancellationToken GetCancellationToken()
