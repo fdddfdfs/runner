@@ -78,4 +78,12 @@ public sealed class Inventory : Menu
         newInventory.ShowItems();
         _currentInventoryGrid = newInventory;
     }
+
+    private void OnDestroy()
+    {
+        foreach (KeyValuePair<Type,InventoryGrid> inventoryGrid in _inventories)
+        {
+            inventoryGrid.Value.ClearEvents();
+        }
+    }
 }
