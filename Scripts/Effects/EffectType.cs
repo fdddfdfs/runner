@@ -2,4 +2,6 @@
 {
     Jump,
     Explosion,
+    PickupItem,
+    
 }
