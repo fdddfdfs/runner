@@ -1,7 +1,5 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DG.Tweening;
 using StarterAssets;
 using UnityEngine;
 
@@ -14,7 +12,7 @@ public sealed class Money : Item
     private bool _isPicked;
 
     public static int Weight => 20;
-
+    
     public void Init(RunProgress runProgress, ICancellationTokenProvider cancellationTokenProvider, bool isAutoShowing)
     {
         base.Init(cancellationTokenProvider, isAutoShowing);

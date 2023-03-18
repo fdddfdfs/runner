@@ -25,7 +25,7 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
         Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, value);
     }
 
-    private void Awake() // TODO: might be error if AsyncUtils load after this try to change to start
+    private void Awake()
     {
         Text = GetComponent<TMP_Text>();
         _linkedTokens = new[] { AsyncUtils.Instance.GetCancellationToken() };

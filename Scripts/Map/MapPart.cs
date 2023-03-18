@@ -41,7 +41,6 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         float nextBlockDistancePercentToHide = 0,
         float nextBlockDistancePercentToTrigger = 0.2f)
     {
-        // TODO: change it to false when make more SO
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
         _blocksPositions = new Queue<TBlock>();
         _player = player;
