@@ -14,8 +14,10 @@ public sealed class Effect : MonoBehaviour
         }
         finally
         {
-            _particleSystem.Stop();
-            gameObject.SetActive(false);
+            if (!AsyncUtils.Instance.GetCancellationToken().IsCancellationRequested);
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }
