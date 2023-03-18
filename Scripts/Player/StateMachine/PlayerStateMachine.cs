@@ -8,13 +8,17 @@ public sealed class PlayerStateMachine : IRunnable
 
     private readonly Dictionary<Type, IState> _states;
 
-    public PlayerStateMachine(ThirdPersonController player, ActiveItemsUI activeItemsUI, Follower follower)
+    public PlayerStateMachine(
+        ThirdPersonController player,
+        ActiveItemsUI activeItemsUI,
+        Follower follower,
+        Effects effects)
     {
         _states = new Dictionary<Type, IState>
         {
             [typeof(RunState)] = new RunState(player),
-            [typeof(FlyState)] = new FlyState(player, activeItemsUI, follower),
-            [typeof(ImmuneState)] = new ImmuneState(player, activeItemsUI),
+            [typeof(FlyState)] = new FlyState(player, activeItemsUI, follower, effects),
+            [typeof(ImmuneState)] = new ImmuneState(player, activeItemsUI, effects),
             [typeof(BoardState)] = new BoardState(player, activeItemsUI),
             [typeof(IdleState)] = new IdleState(player.PlayerAnimator),
         };

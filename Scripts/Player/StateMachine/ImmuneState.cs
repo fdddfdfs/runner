@@ -1,14 +1,27 @@
 ﻿using StarterAssets;
+using UnityEngine;
 
 public sealed class ImmuneState : PlayerActivateState, IState
 {
-    public ImmuneState(ThirdPersonController player, ActiveItemsUI activeItemsUI) : base(player, activeItemsUI) { }
+    private const int ChangeVisualEffectTimeMilliseconds = 5000;
+    private const float EffectPositionYOffset = 2;
+    
+    private readonly Effects _effects;
+
+    public ImmuneState(ThirdPersonController player, ActiveItemsUI activeItemsUI, Effects effects)
+        : base(player, activeItemsUI)
+    {
+        _effects = effects;
+    }
     
     public void EnterState()
     {
         _player.ChangeHittable(_player.Hittables[typeof(ImmuneHittable)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerImmuneAnimator));
-        _activeItemsUI.ShowNewItemEffect(ItemType.Immune, 10); //TODO : make it affected by time in item
+        _effects.ActivateEffect(
+            EffectType.ChangeVisual,
+            _player.transform.position + EffectPositionYOffset * Vector3.up,
+            ChangeVisualEffectTimeMilliseconds);
     }
 
     public void ExitState()
@@ -16,5 +29,9 @@ public sealed class ImmuneState : PlayerActivateState, IState
         _player.ChangeHittable(_player.Hittables[typeof(PlayerHittable)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
         _activeItemsUI.HideEffect(ItemType.Immune);
+        _effects.ActivateEffect(
+            EffectType.ChangeVisual,
+            _player.transform.position + EffectPositionYOffset * Vector3.up,
+            ChangeVisualEffectTimeMilliseconds);
     }
 }

@@ -3,5 +3,5 @@
     Jump,
     Explosion,
     PickupItem,
-    
+    ChangeVisual,
 }

@@ -346,7 +346,7 @@ namespace StarterAssets
                 { typeof(ImmuneHittable), new ImmuneHittable(_map, Effects, transform) },
             };
 
-            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower);
+            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower, Effects);
         }
 
         private void FixedUpdate()

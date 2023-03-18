@@ -1,13 +1,19 @@
 ﻿using StarterAssets;
+using UnityEngine;
 
 public sealed class FlyState : PlayerActivateState, IState
 {
+    private const int ChangeVisualEffectTimeMilliseconds = 5000;
+    private const float EffectPositionYOffset = 2;
+
     private readonly Follower _follower;
+    private readonly Effects _effects;
     
-    public FlyState(ThirdPersonController player, ActiveItemsUI activeItemsUI, Follower follower)
+    public FlyState(ThirdPersonController player, ActiveItemsUI activeItemsUI, Follower follower, Effects effects)
         : base(player, activeItemsUI)
     {
         _follower = follower;
+        _effects = effects;
     }
 
     public void EnterState()
@@ -17,7 +23,10 @@ public sealed class FlyState : PlayerActivateState, IState
         _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
-        _activeItemsUI.ShowNewItemEffect(ItemType.Fly, 10); //TODO : make it affected by time in item
+        _effects.ActivateEffect(
+            EffectType.ChangeVisual,
+            _player.transform.position + EffectPositionYOffset * Vector3.up,
+            ChangeVisualEffectTimeMilliseconds);
     }
 
     public void ExitState()
@@ -26,5 +35,9 @@ public sealed class FlyState : PlayerActivateState, IState
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
         _activeItemsUI.HideEffect(ItemType.Fly);
+        _effects.ActivateEffect(
+            EffectType.ChangeVisual,
+            _player.transform.position + EffectPositionYOffset * Vector3.up,
+            ChangeVisualEffectTimeMilliseconds);
     }
 }

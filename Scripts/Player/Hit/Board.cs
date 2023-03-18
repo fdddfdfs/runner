@@ -5,11 +5,12 @@ using UnityEngine;
 
 public sealed class Board : IHittable
 {
-    private const float ActiveTime = 10f;
+    private const float BaseDuration = 10f;
+    private const float AddedSecondsPerLevel = 2;
     private const float RecoverTime = 3f;
-    private const float EffectYOffset = 1;
+    private const float EffectYOffset = 1.5f;
     private const int EffectTimeMilliseconds = 5000;
-    
+
     private readonly ThirdPersonController _player;
     private readonly Map _map;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
@@ -20,6 +21,8 @@ public sealed class Board : IHittable
 
     private bool _isActive;
     private bool _isRecovery;
+    
+    public static float BoardDuration => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
 
     public Board(
         ThirdPersonController player,
@@ -42,7 +45,7 @@ public sealed class Board : IHittable
             _cancellationTokenSource.Cancel();
             RecreateCancellationToken();
             
-            Deactivate();
+            Deactivate(false);
             _isActive = false;
         }
         else if(_cancellationTokenSource.IsCancellationRequested)
@@ -52,6 +55,11 @@ public sealed class Board : IHittable
         
         Activated();
         _player.ChangeHittable(this);
+        
+        _effects.ActivateEffect(
+            EffectType.ChangeVisual,
+            _player.transform.position + EffectYOffset * Vector3.up,
+            EffectTimeMilliseconds);
     }
 
     public bool Hit(HitType hitType)
@@ -67,7 +75,7 @@ public sealed class Board : IHittable
                     EffectType.Explosion,
                     _player.transform.position + EffectYOffset * Vector3.up,
                     EffectTimeMilliseconds);
-                Deactivate();
+                Deactivate(false);
                 break;
             case HitType.Soft:
                 Recover();
@@ -80,7 +88,7 @@ public sealed class Board : IHittable
                     EffectType.Explosion,
                     _player.transform.position + EffectYOffset * Vector3.up,
                     EffectTimeMilliseconds);
-                Deactivate();
+                Deactivate(false);
                 break;
             case HitType.Hard:
                 return true;
@@ -91,7 +99,7 @@ public sealed class Board : IHittable
         return false;
     }
 
-    private void Deactivate()
+    private void Deactivate(bool activateEffect)
     {
         _player.PlayerStateMachine.ChangeStateSafely(typeof(BoardState), typeof(RunState));
 
@@ -100,17 +108,25 @@ public sealed class Board : IHittable
             _cancellationTokenSource.Cancel();
             _isRecovery = false;
         }
+
+        if (activateEffect)
+        {
+            _effects.ActivateEffect(
+                EffectType.ChangeVisual,
+                _player.transform.position + EffectYOffset * Vector3.up,
+                EffectTimeMilliseconds);
+        }
     }
     
     private async void Activated()
     {
         _isActive = true;
 
-        await AsyncUtils.Wait(ActiveTime, _cancellationTokenSource.Token);
+        await AsyncUtils.Wait(BoardDuration, _cancellationTokenSource.Token);
 
         if (_cancellationTokenSource.IsCancellationRequested) return;
         
-        Deactivate();
+        Deactivate(true);
         _isActive = false;
     }
 
