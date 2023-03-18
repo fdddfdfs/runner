@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using StarterAssets;
 using UnityEngine;
@@ -7,7 +6,8 @@ using Task = System.Threading.Tasks.Task;
 
 public sealed class Magnet : Item
 {
-    private const float ActiveTime = 10;
+    private const float AddedSecondsPerLevel = 2;
+    private const float BaseDuration = 10;
 
     private readonly Vector3 _overlapHalfSize = new(Map.ColumnOffset, 20, 2);
     private readonly Collider[] _overlappedColliders = new Collider[10];
@@ -22,6 +22,8 @@ public sealed class Magnet : Item
     public static int Weight => 1;
 
     private static ItemType ActiveItemType => ItemType.Magnet;
+    
+    private static float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
 
     public void Init(
         ActiveItemsUI activeItemsUI,

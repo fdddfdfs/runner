@@ -11,7 +11,7 @@ public sealed class BoardState : PlayerActivateState, IState
         _player.ChangeHittable(boardHittable);
         
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerBoardAnimator));
-        _activeItemsUI.ShowNewItemEffect(ItemType.Board, 10);
+        _activeItemsUI.ShowNewItemEffect(ItemType.Board, Board.BoardDuration);
     }
 
     public void ExitState()

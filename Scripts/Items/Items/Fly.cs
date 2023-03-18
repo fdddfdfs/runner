@@ -1,14 +1,16 @@
 ﻿using System;
 using StarterAssets;
-using UnityEngine;
 
 public sealed class Fly : ActivatableItem
 {
+    private const float AddedSecondsPerLevel = 2;
+    private const float BaseDuration = 10;
+    
     private static ThirdPersonController _player;
     
     public static int Weight => 1;
     
-    protected override float ActiveTime => 10;
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
 
     protected override ItemType ActiveItemType => ItemType.Fly;
 

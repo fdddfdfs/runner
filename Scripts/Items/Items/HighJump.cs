@@ -2,6 +2,9 @@
 
 public sealed class HighJump : ActivatableItem
 {
+    private const float AddedSecondsPerLevel = 2;
+    private const float BaseDuration = 10;
+    
     public static int Weight => 1;
     
     private const float Multiplayer = 3;
@@ -9,6 +12,10 @@ public sealed class HighJump : ActivatableItem
     private static float _baseHeight = -1;
 
     private ThirdPersonController _player;
+    
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    
+    protected override ItemType ActiveItemType => ItemType.HighJump;
 
     public void Init(
         float baseJumpHeight,
@@ -28,9 +35,7 @@ public sealed class HighJump : ActivatableItem
         
         base.PickupItem(player);
     }
-
-    protected override float ActiveTime => 10;
-    protected override ItemType ActiveItemType => ItemType.HighJump;
+    
     protected override void Activate()
     {
         _player.JumpHeight = _baseHeight * Multiplayer;
