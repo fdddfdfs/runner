@@ -46,6 +46,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        AsyncUtils.TimeScale = 1;
     }
 
     public void Lose()
@@ -56,6 +57,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         Cursor.lockState = CursorLockMode.None;
         
         _resurrectMenu.ShowMenu(_runProgress.Score);
+        AsyncUtils.TimeScale = 0;
         _pauseController.ChangeAllowingPause(false);
     }
 
@@ -105,15 +107,14 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         _player.UnPause();
         _player.Resurrect();
         _pauseController.ChangeAllowingPause(true);
+        AsyncUtils.TimeScale = 1;
     }
 
     public void EndRun()
     {
-        // TODO: here will be problem with hidden items
         DOTween.KillAll();
         Coroutines.StopAllRoutines();
-        Time.timeScale = 1;
-        
+
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         foreach (IRunnable runnable in _runnables)
@@ -150,8 +151,8 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     {
         if (_isRun)
         {
-            _runProgress.AddScore(Time.deltaTime);
-            _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime);
+            _runProgress.AddScore(Time.deltaTime * AsyncUtils.TimeScale);
+            _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime * AsyncUtils.TimeScale);
         }
     }
 

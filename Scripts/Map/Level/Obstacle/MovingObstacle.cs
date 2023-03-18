@@ -40,7 +40,8 @@ public sealed class MovingObstacle : Obstacle
     {
         if (_isEntered)
         {
-            transform.localPosition += _movingDirection * (_runProgress.SpeedMultiplier * Time.deltaTime);
+            transform.localPosition += _movingDirection * 
+                                       (_runProgress.SpeedMultiplier * Time.deltaTime * AsyncUtils.TimeScale);
         }
     }
 }

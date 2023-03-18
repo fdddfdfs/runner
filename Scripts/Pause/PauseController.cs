@@ -44,12 +44,14 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
             UnPause();
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+            AsyncUtils.TimeScale = 1;
         }
         else
         {
             Pause();
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+            AsyncUtils.TimeScale = 0;
         }
 
         _isPause = !_isPause;
@@ -60,7 +62,7 @@ public sealed class PauseController : MonoBehaviour, IPauseable, IRunnable
     private void Awake()
     {
         _pausables = new List<IPauseable>();
-        foreach (var pauseableObject in _pauseableObjects)
+        foreach (GameObject pauseableObject in _pauseableObjects)
         {
             _pausables.Add(pauseableObject.GetComponent<IPauseable>());
         }

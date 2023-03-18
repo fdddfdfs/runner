@@ -17,6 +17,8 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
 
+    private float _runTime;
+
     public float SpeedMultiplier { get; private set; } = DefaultSpeedMultiplier;
 
     public float HalfSpeedMultiplier { get; private set; } = DefaultSpeedMultiplier;
@@ -39,9 +41,11 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void IncreaseSpeedMultiplayerInTime(float time)
     {
-        float delta = SpeedMultiplayerFunc(time);
-        SpeedMultiplier += delta;
-        HalfSpeedMultiplier += delta / 2;
+        if (time == 0) return;
+
+        _runTime += time;
+        SpeedMultiplier = SpeedMultiplayerFunc(_runTime);
+        HalfSpeedMultiplier = SpeedMultiplier / 2;
     }
 
     public void ChangeMoneyMultiplier(int multiplier = DefaultMoneyMultiplier)
@@ -76,6 +80,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         HalfSpeedMultiplier = DefaultSpeedMultiplier;
         _scoreMultiplier = DefaultScoreMultiplier;
         _moneyMultiplier = DefaultMoneyMultiplier;
+        _runTime = 0;
 
         if (SteamManager.Initialized)
         {
@@ -115,6 +120,9 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     
     private static float SpeedMultiplayerFunc(float time)
     {
-        return time / 60;
+        float speedMultiplayer = 1 * Mathf.Log(time / 10f);
+        speedMultiplayer = 1.5f + (speedMultiplayer < 0 ? 0 : speedMultiplayer);
+        Debug.Log(speedMultiplayer);
+        return speedMultiplayer;
     }
 }
