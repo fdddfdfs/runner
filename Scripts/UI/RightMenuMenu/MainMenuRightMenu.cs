@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using fdddfdfs.Leaderboard;
 using Steamworks;
@@ -21,7 +22,7 @@ public sealed class MainMenuRightMenu : Menu
     private List<Menu> _submenus;
     private Menu _currentSubmenu;
 
-    private Inventory _inventory;
+    public Inventory Inventory { get; private set; }
 
     public LeaderboardController LeaderboardController {get; private set;}
 
@@ -37,7 +38,13 @@ public sealed class MainMenuRightMenu : Menu
 
     public void SetInventoryResult(SteamInventoryResult_t inventoryResult)
     {
-        _inventory.SetInventoryResult(inventoryResult);
+        Inventory.SetInventoryResult(inventoryResult);
+    }
+
+    private void Awake()
+    {
+        Inventory = SpawnMenu<Inventory>(InventoryMenuResourceName);
+        Inventory.Init(_cutscenes);
     }
 
     private void Start()
@@ -45,16 +52,13 @@ public sealed class MainMenuRightMenu : Menu
         LeaderboardController = SpawnMenu<LeaderboardController>(LeaderboardMenuResourceName);
         LeaderboardController.SetCurrentLeaderboard(LeaderboardName);
 
-        _inventory = SpawnMenu<Inventory>(InventoryMenuResourceName);
-        _inventory.Init(_cutscenes);
-        
         _submenus = new List<Menu>
         {
             SpawnMenu<UpgradeMenu>(UpgradeMenuResourceName),
             SpawnMenu<SettingsMenu>(SettingsMenuResourceName),
             LeaderboardController,
-            _inventory,
-            _inventory,
+            Inventory,
+            Inventory,
         };
 
         if (_submenuButtons.Count != _submenus.Count)
@@ -68,8 +72,8 @@ public sealed class MainMenuRightMenu : Menu
             _submenuButtons[i].onClick.AddListener(() => ChangeCurrentSubmenu(index));
         }
         
-        _submenuButtons[3].onClick.AddListener(() => _inventory.OpenInventory(typeof(InventoryClothes)));
-        _submenuButtons[4].onClick.AddListener(() => _inventory.OpenInventory(typeof(InventoryChests)));
+        _submenuButtons[3].onClick.AddListener(() => Inventory.OpenInventory(typeof(InventoryClothes)));
+        _submenuButtons[4].onClick.AddListener(() => Inventory.OpenInventory(typeof(InventoryChests)));
 
         ChangeCurrentSubmenu(0);
     }

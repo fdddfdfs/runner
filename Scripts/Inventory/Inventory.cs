@@ -12,16 +12,14 @@ public sealed class Inventory : Menu
     [SerializeField] private TMP_Text _descriptionText;
     [SerializeField] private Button _button;
     [SerializeField] private Button _nextPageButton, _previousPageButton;
-    [SerializeField] private Button _openChests;
-
-    [SerializeField] private GameObject _chest;
 
     [SerializeField] private Sprite _invisibleSprite;
     
     private Dictionary<Type, InventoryGrid> _inventories;
     private InventoryGrid _currentInventoryGrid;
     private IClothesChanger _clothesChanger;
-    private InventorySteamworks _inventorySteamworks;
+
+    public InventorySteamworks InventorySteamworks { get; private set; }
 
     public void Init(IClothesChanger clothesChanger)
     {
@@ -35,14 +33,14 @@ public sealed class Inventory : Menu
 
     public void SetInventoryResult(SteamInventoryResult_t inventoryResult)
     {
-        _inventorySteamworks.SetInventoryResult(inventoryResult);
+        InventorySteamworks.SetInventoryResult(inventoryResult);
     }
 
     private void Awake()
     {
-         _inventorySteamworks = new InventorySteamworks();
+         InventorySteamworks = new InventorySteamworks();
          var inventoryChests = new InventoryChests(
-             _inventorySteamworks,
+             InventorySteamworks,
             _inventoryCells,
             _nameText,
             _descriptionText,
@@ -51,7 +49,7 @@ public sealed class Inventory : Menu
             _previousPageButton,
              _invisibleSprite);
          var inventoryClothes = new InventoryClothes(
-             _inventorySteamworks,
+             InventorySteamworks,
              _inventoryCells,
              _nameText,
              _descriptionText,
