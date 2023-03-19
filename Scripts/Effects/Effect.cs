@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Threading;
+using UnityEngine;
 
 public sealed class Effect : MonoBehaviour
 {
@@ -8,13 +9,15 @@ public sealed class Effect : MonoBehaviour
     {
         _particleSystem.Play();
 
+        CancellationToken token = cancellationTokenProvider.GetCancellationToken();
+
         try
         {
-            await AsyncUtils.Wait(timeMilliseconds, cancellationTokenProvider.GetCancellationToken());
+            await AsyncUtils.Wait(timeMilliseconds, token);
         }
         finally
         {
-            if (!AsyncUtils.Instance.GetCancellationToken().IsCancellationRequested);
+            if (!token.IsCancellationRequested);
             {
                 Destroy(gameObject);
             }
