@@ -11,16 +11,10 @@ public sealed class Effect : MonoBehaviour
 
         CancellationToken token = cancellationTokenProvider.GetCancellationToken();
 
-        try
-        {
-            await AsyncUtils.Wait(timeMilliseconds, token);
-        }
-        finally
-        {
-            if (!token.IsCancellationRequested);
-            {
-                Destroy(gameObject);
-            }
-        }
+        await AsyncUtils.Wait(timeMilliseconds, token);
+
+        if (token.IsCancellationRequested) return;
+        
+        Destroy(gameObject);
     }
 }

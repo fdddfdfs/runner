@@ -76,7 +76,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
 
     private void Start()
     {
-        _level = _needSpawnLevel? new Level(_levelBlocks, _startLevelBlock, _factories, _player, _runProgress) : null;
+        _level = _needSpawnLevel ? new Level(_levelBlocks, _startLevelBlock, _factories, _player, _runProgress) : null;
         _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
         _road = new Road(_roadBlockInfos, _player);
         _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player);

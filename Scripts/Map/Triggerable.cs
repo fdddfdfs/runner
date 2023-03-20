@@ -27,7 +27,7 @@ public abstract class Triggerable : MonoBehaviour, ITriggerable
     
     public void Trigger()
     {
-        foreach (var triggerable in _triggerables)
+        foreach (ITriggerable triggerable in _triggerables)
         {
             triggerable.Trigger();
         }
