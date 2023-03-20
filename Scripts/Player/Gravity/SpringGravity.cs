@@ -10,6 +10,7 @@ public sealed class SpringGravity : IGravitable, IRollable
     private readonly MoneySpawner _moneySpawner;
     private readonly Map _map;
     private readonly Follower _follower;
+    private readonly PlayerAnimator _playerAnimator;
 
     private float _verticalVelocity;
 
@@ -22,13 +23,13 @@ public sealed class SpringGravity : IGravitable, IRollable
         Map map,
         RunProgress runProgress,
         Run run,
-        PlayerAnimator playerAnimator,
-        Follower follower)
+        PlayerAnimator playerAnimator)
     {
         _springGravity = springGravity;
         _springHeight = springHeight;
         _player = player;
         _map = map;
+        _playerAnimator = playerAnimator;
 
         _roll = new Roll(player, playerRunInput, springGravity * 10, playerAnimator);
         _moneySpawner = new MoneySpawner(
@@ -55,6 +56,8 @@ public sealed class SpringGravity : IGravitable, IRollable
     
     public float VerticalVelocity(bool isGrounded)
     {
+        _playerAnimator.ChangeAnimationBool(AnimationType.Fall, true);
+        
         if (isGrounded && _verticalVelocity < 0)
         {
             _player.ChangeGravitable(_player.Gravitables[typeof(DefaultGravity)]);
@@ -79,5 +82,6 @@ public sealed class SpringGravity : IGravitable, IRollable
     {
         EndRoll();
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+        _playerAnimator.ChangeAnimationBool(AnimationType.Fall, false);
     }
 }

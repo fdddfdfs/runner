@@ -333,8 +333,7 @@ namespace StarterAssets
                         _map,
                         _runProgress,
                         _run,
-                        PlayerAnimator,
-                        _follower)
+                        PlayerAnimator)
                 },
             };
             
