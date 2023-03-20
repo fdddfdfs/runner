@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Obstacle: MonoBehaviour
+public class Obstacle: MonoBehaviour, ITriggerable
 {
     [SerializeField] protected List<ItemParent> _items;
 
@@ -39,6 +39,11 @@ public class Obstacle: MonoBehaviour
     }
 
     public virtual void EnterObstacle()
+    {
+        
+    }
+
+    public virtual void Trigger()
     {
         if (!_needShowItems) return;
         

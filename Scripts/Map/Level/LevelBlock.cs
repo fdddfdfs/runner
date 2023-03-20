@@ -2,10 +2,12 @@
 using System.Linq;
 using UnityEngine;
 
-public sealed class LevelBlock : MonoBehaviour, IMapBlock
+public sealed class LevelBlock : MonoBehaviour, IMapBlock, ITriggerable
 {
     private List<Obstacle> _obstacles;
     private bool _needShowItems;
+
+    private List<ITriggerable> _triggerables;
 
     public float BlockSize { get; private set; }
 
@@ -17,6 +19,7 @@ public sealed class LevelBlock : MonoBehaviour, IMapBlock
     {
         _obstacles = obstacles.Select(tuple => tuple.obstacle).ToList();
         BlockSize = blockSize;
+        _triggerables = new List<ITriggerable>();
         
         foreach ((Obstacle obstacle,bool needSpawnItems) obstacle in obstacles)
         {
@@ -28,6 +31,8 @@ public sealed class LevelBlock : MonoBehaviour, IMapBlock
             {
                 obstacle.obstacle.Init(factories, obstacle.needSpawnItems);
             }
+            
+            _triggerables.Add(obstacle.obstacle);
         }
     }
 
@@ -46,6 +51,14 @@ public sealed class LevelBlock : MonoBehaviour, IMapBlock
         foreach (Obstacle obstacle in _obstacles)
         {
             obstacle.EnterObstacle();
+        }
+    }
+
+    public void Trigger()
+    {
+        foreach (ITriggerable triggerable in _triggerables)
+        {
+            triggerable.Trigger();
         }
     }
 }

@@ -29,19 +29,19 @@ public sealed class MovingObstacle : Obstacle
         _isEntered = false;
     }
 
-    public override void EnterObstacle()
-    {
-        base.EnterObstacle();
-        
-        _isEntered = true;
-    }
-
     private void Update()
     {
         if (_isEntered)
         {
             transform.localPosition += _movingDirection * 
-                                       (_runProgress.SpeedMultiplier * Time.deltaTime * AsyncUtils.TimeScale);
+                                       (_runProgress.HalfSpeedMultiplier * Time.deltaTime * AsyncUtils.TimeScale);
         }
+    }
+
+    public override void Trigger()
+    {
+        _isEntered = true;
+        
+        base.Trigger();
     }
 }
