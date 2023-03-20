@@ -126,8 +126,8 @@ public sealed class MoneySpawner
                  position.y + currentGravity + _playerHalfHeight,
                 position.z + MoneyDistance);
             RuntimeItemParent itemParent = _moneyPool.GetItem();
-            itemParent.HideObstacle();
             itemParent.SetStartRotationOffset(Quaternion.Euler(0, counter * RotationOffsetY, 0));
+            itemParent.HideObstacle();
             itemParent.EnterObstacle();
             itemParent.transform.position = tempPosition;
             itemParent.ItemObject.DeactivateInTime();
