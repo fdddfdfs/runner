@@ -51,6 +51,11 @@ public sealed class UpgradeItem : MonoBehaviour
 
             Instantiate(_firstLevel, _firstLevel.transform.parent);
             _price.text = CalculateUpgradePrice(level + 1).ToString();
+            
+            if (level + 1 == Stats.MaxLevel)
+            {
+                _buy.gameObject.SetActive(false);
+            }
         });
 
         _buy.AddComponent<OnSelectButton>().Init(() => OnSelect?.Invoke(index));
