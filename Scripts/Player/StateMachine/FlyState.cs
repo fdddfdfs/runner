@@ -23,6 +23,7 @@ public sealed class FlyState : PlayerActivateState, IState
         _player.ChangeGravitable(_player.Gravitables[typeof(FlyGravity)]);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(FlyHorizontalRestriction)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerFlyAnimator));
+        _player.ChangeHittable(_player.Hittables[typeof(ImmuneHittable)]);
         _effects.ActivateEffect(
             EffectType.ChangeVisual,
             _player.transform.position + EffectPositionYOffset * Vector3.up,
@@ -34,6 +35,7 @@ public sealed class FlyState : PlayerActivateState, IState
         _player.ChangeGravitable(_player.Gravitables[typeof(DefaultGravity)]);
         _player.ChangeHorizontalMoveRestriction(_player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
+        _player.ChangeHittable(_player.Hittables[typeof(PlayerHittable)]);
         _activeItemsUI.HideEffect(ItemType.Fly);
         _effects.ActivateEffect(
             EffectType.ChangeVisual,
