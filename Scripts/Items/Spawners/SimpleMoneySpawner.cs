@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class SimpleMoneySpawner
 {
-    private const float MoneyDistance = 2.5f;
+    private const float MoneyDistance = 5f;
 
     public static List<ItemParent> SpawnMoneys(Transform parent, Vector3 startPosition, float sizeZ)
     {

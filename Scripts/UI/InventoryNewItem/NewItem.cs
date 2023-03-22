@@ -43,7 +43,6 @@ public class NewItem : MonoBehaviour
         
         _animator.GetBehaviour<EndStateBehaviour>().Init(() =>
         {
-            Debug.Log("ended");
             gameObject.SetActive(false);
         });
     }

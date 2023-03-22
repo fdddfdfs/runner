@@ -65,7 +65,7 @@ public sealed class PlayerHittable : IHittable
         }
 
         await AsyncUtils.Wait(RecoverTime, _recoverCancellationSource.Token);
-
+        
         if (_recoverCancellationSource.IsCancellationRequested)
         {
             _follower.StopFollowing();
