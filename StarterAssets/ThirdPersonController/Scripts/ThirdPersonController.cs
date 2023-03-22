@@ -143,6 +143,8 @@ namespace StarterAssets
         public PlayerAnimator PlayerAnimator { get; private set; }
         
         public PlayerStateMachine PlayerStateMachine { get; private set; }
+        
+        public bool IsDie { get; private set; }
 
         public bool IsRoll { get; private set; }
 
@@ -176,6 +178,8 @@ namespace StarterAssets
                 EffectType.Explosion, 
                 transform.position + ExplosionEffectYOffset * Vector3.up,
                 ExplosionEffectTimeMilliseconds);
+
+            IsDie = false;
         }
 
         public void ChangeHittable(IHittable newHittable)
@@ -211,12 +215,15 @@ namespace StarterAssets
 
             _isPause = false;
             _isFall = false;
+            IsDie = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
             ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
             _horizontalMoveRestriction.Init(0);
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
             
             _playerMesh.SetActive(true);
+            
+            PlayerAnimator.ChangeAnimationTrigger(AnimationType.Reset);
         }
 
         public void EndRun()
@@ -229,12 +236,13 @@ namespace StarterAssets
             //Controller.Move(_startPosition - transform.localPosition);
             _isPause = true;
             _isMovingX = false;
+            IsDie = false;
             _movingXDir = 0;
             _previousMovingDestination = 0;
             _movingDestination = 0; 
             _movingXQueue = 0;
             CinemachineCameraTarget.transform.localRotation = Quaternion.identity;
-            
+
             _playerMesh.SetActive(false);
         }
 
@@ -389,6 +397,7 @@ namespace StarterAssets
             if (isGrounded && !Grounded)
             {
                 Effects.ActivateEffect(EffectType.Jump, spherePosition, JumpEffectTimeMilliseconds);
+                Sounds.Instance.PlaySound(1, "Landing");
             }
             
             Grounded = isGrounded;
@@ -591,8 +600,10 @@ namespace StarterAssets
                 Mathf.Abs(hitNormal.x) < 0.5f ? AnimationType.Die :
                 hitNormal.x < 0 ? AnimationType.DieLeft : 
                 AnimationType.DieRight;
+            PlayerAnimator.ChangeAnimator(typeof(PlayerDefaultAnimator));
             PlayerAnimator.ChangeAnimationTrigger(dieAnimationType);
             _isFall = true;
+            IsDie = true;
         }
 
         private void Fall()

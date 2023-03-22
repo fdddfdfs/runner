@@ -14,4 +14,5 @@
     SoftHitRight,
     Lose,
     HitSpeed,
+    Reset,
 }
