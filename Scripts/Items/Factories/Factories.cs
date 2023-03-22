@@ -49,7 +49,12 @@ public sealed class Factories : MonoBehaviour
                 _run,
                 itemsActiveStates,
                 _player.Effects),
-            [ItemType.Money] = new MoneyItemFactory<Item>(_runProgress, _run, false, false),
+            [ItemType.Money] = new MoneyItemFactory<Item>(
+                _runProgress,
+                _run,
+                false,
+                false,
+                _player.Effects),
             [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
             [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
             [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),

@@ -4,4 +4,5 @@
     Explosion,
     PickupItem,
     ChangeVisual,
+    PickupMoney,
 }

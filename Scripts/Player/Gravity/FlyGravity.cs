@@ -36,7 +36,8 @@ public sealed class FlyGravity : IGravitable
             speed,
             player.Controller.height,
             runProgress,
-            run);
+            run,
+            player.Effects);
     }
 
     public void SetGravityLength(float length)
@@ -48,7 +49,7 @@ public sealed class FlyGravity : IGravitable
     {
         _verticalVelocity = Mathf.Sqrt(_flyHeight * -2f * _gravity);
         float endGravityPositionZ = _moneySpawner.SpawnMoneys(_player.gameObject.transform.position, _length);
-        _map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
+        //_map.Level.HideBlocksBeforePositionZ(endGravityPositionZ);
     }
 
     public void LeaveGravity()

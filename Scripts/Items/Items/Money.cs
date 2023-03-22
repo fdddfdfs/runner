@@ -10,15 +10,21 @@ public sealed class Money : Item
     private Vector3 _startPosition;
     private RunProgress _runProgress;
     private bool _isPicked;
+    private Effects _effects;
 
     public static int Weight => 20;
     
-    public void Init(RunProgress runProgress, ICancellationTokenProvider cancellationTokenProvider, bool isAutoShowing)
+    public void Init(
+        RunProgress runProgress,
+        ICancellationTokenProvider cancellationTokenProvider,
+        bool isAutoShowing,
+        Effects effects)
     {
         base.Init(cancellationTokenProvider, isAutoShowing);
         
         _runProgress = runProgress;
         _startPosition = transform.localPosition;
+        _effects = effects;
     }
     
     public override void PickupItem(ThirdPersonController player)
@@ -31,7 +37,11 @@ public sealed class Money : Item
         
         _runProgress.AddMoney();
         
+        _effects.ActivateEffect(EffectType.PickupMoney, transform.position);
+        
         transform.localPosition = _startPosition;
+        
+        Sounds.Instance.PlaySound(0, "PickupMoney");
     }
 
     public async void MoveToPlayerAsync(ThirdPersonController player)

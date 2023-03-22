@@ -3,12 +3,13 @@ using UnityEngine;
 
 public sealed class Effects
 {
-    private const int DefaultEffectTimeMilliseconds = 1000;
+    private const int DefaultEffectTimeMilliseconds = 5000;
     
     private const string JumpEffectResourceName = "Effects/JumpEffect";
     private const string ExplosionEffectResourceName = "Effects/ExplosionEffect";
     private const string PickupItemEffectResourceName = "Effects/PickupItemEffect";
     private const string ChangeVisualEffectResourceName = "Effects/ChangeVisualEffect";
+    private const string PickupMoneyEffectResourceName = "Effects/PickupMoneyEffect";
     
     private readonly Dictionary<EffectType, GameObject> _effects;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
@@ -26,6 +27,7 @@ public sealed class Effects
             [EffectType.Explosion] = ResourcesLoader.LoadObject(ExplosionEffectResourceName),
             [EffectType.PickupItem] = ResourcesLoader.LoadObject(PickupItemEffectResourceName),
             [EffectType.ChangeVisual] = ResourcesLoader.LoadObject(ChangeVisualEffectResourceName),
+            [EffectType.PickupMoney] = ResourcesLoader.LoadObject(PickupMoneyEffectResourceName),
         };
     }
 

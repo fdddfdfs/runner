@@ -3,7 +3,7 @@ using UnityEngine;
 
 public sealed class MoneySpawner
 {
-    private const float MoneyDistance = 2.5f;
+    private const float MoneyDistance = 5f;
     private const int MaxIterationsCount = 1000;
     private const int RotationOffsetY = 5;
     
@@ -24,9 +24,10 @@ public sealed class MoneySpawner
         float playerHeight,
         RunProgress runProgress,
         Run run,
+        Effects effects,
         float[] spawnLines = null)
     {
-        MoneyItemFactory<Item> moneyItemFactory = new(runProgress, run, false, true);
+        MoneyItemFactory<Item> moneyItemFactory = new(runProgress, run, false, true, effects);
         _height = height;
         _gravity = gravity;
         _speed = speed;

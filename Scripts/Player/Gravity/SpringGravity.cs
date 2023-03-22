@@ -39,6 +39,7 @@ public sealed class SpringGravity : IGravitable, IRollable
             player.Controller.height,
             runProgress,
             run,
+            player.Effects,
             new float[] { -Map.ColumnOffset, 0, Map.ColumnOffset });
     }
 
