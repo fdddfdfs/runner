@@ -4,6 +4,8 @@ using StarterAssets;
 
 public sealed class PlayerStateMachine : IRunnable
 {
+    private readonly ThirdPersonController _player;
+    
     private IState _currentState;
 
     private readonly Dictionary<Type, IState> _states;
@@ -14,6 +16,8 @@ public sealed class PlayerStateMachine : IRunnable
         Follower follower,
         Effects effects)
     {
+        _player = player;
+        
         _states = new Dictionary<Type, IState>
         {
             [typeof(RunState)] = new RunState(player),
@@ -22,13 +26,15 @@ public sealed class PlayerStateMachine : IRunnable
             [typeof(BoardState)] = new BoardState(player, activeItemsUI),
             [typeof(IdleState)] = new IdleState(player.PlayerAnimator),
         };
-
+        
         _currentState = _states[typeof(IdleState)];
         _currentState.EnterState();
     }
 
     public void ChangeState(Type newState)
     {
+        if (_player.IsDie) return;
+        
         _currentState.ExitState();
         _currentState = _states[newState];
         _currentState.EnterState();
