@@ -29,6 +29,8 @@ public sealed class PlayerAnimator : BaseAnimator
 
     public override void ChangeAnimator(Type animatorType)
     {
+        if (CurrentAnimatorType == animatorType) return;
+        
         CurrentAnimatorType = animatorType;
         
         base.ChangeAnimator(animatorType);
@@ -56,6 +58,7 @@ public sealed class PlayerAnimator : BaseAnimator
             { AnimationType.SoftHitLeft, Animator.StringToHash("SoftHitLeft")},
             { AnimationType.SoftHitRight, Animator.StringToHash("SoftHitRight")},
             { AnimationType.Lose, Animator.StringToHash("Lose")},
+            { AnimationType.Reset, Animator.StringToHash("Reset")},
         };
     }
 }
