@@ -5,7 +5,7 @@ using UnityEngine;
 
 public sealed class Follower : MonoBehaviour, IRunnable
 {
-    private const float FollowDelay = 0.2f;
+    private const float FollowDelay = 0.3f;
 
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private Run _run;
@@ -59,13 +59,13 @@ public sealed class Follower : MonoBehaviour, IRunnable
         if (_isFollowing)
         {
             _followCancellation.Cancel();
-            transform.position = _startPosition;
         }
     }
 
     public void Lose(ThirdPersonController player)
     {
         transform.position = player.transform.position;
+        transform.rotation = player.PlayerBones.rotation;
         _followerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
     }
 
@@ -76,7 +76,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
         _followerAnimator.ChangeAnimationFloat(AnimationType.Speed ,_runProgress.HalfSpeedMultiplier);
         
         _targetPositions.Enqueue(_target.transform.position);
-
+        
         if (!_isFollowingDelay)
         {
             Vector3 deltaPosition = _targetPositions.Peek() - transform.position;
@@ -85,7 +85,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
         }
         else
         {
-            Appear(Time.fixedDeltaTime);
+            Appear(Time.fixedDeltaTime * AsyncUtils.TimeScale);
         }
     }
 
@@ -145,17 +145,31 @@ public sealed class Follower : MonoBehaviour, IRunnable
         _isFollowingDelay = true;
 
         CancellationToken token = _followCancellation.Token;
-
+        CancellationToken closeGameToken = AsyncUtils.Instance.GetCancellationToken();
+        
         await AsyncUtils.Wait(FollowDelay / _runProgress.SpeedMultiplier, token);
-        _isFollowingDelay = false; 
+        
+        _isFollowingDelay = false;
+
+        if (closeGameToken.IsCancellationRequested) return;
+        
         if (token.IsCancellationRequested)
         {
             _isFollowing = false;
             _targetPositions.Clear();
+            transform.position = _startPosition;
+
             return;
         }
 
         await AsyncUtils.Wait(followTimeMilliseconds, token);
+        
+        if (closeGameToken.IsCancellationRequested) return;
+
+        if (token.IsCancellationRequested)
+        {
+            transform.position = _startPosition;
+        }
 
         _isFollowing = false;
         _targetPositions.Clear();
