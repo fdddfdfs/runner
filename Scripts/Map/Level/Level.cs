@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
 {
+    private const float HideLevelDistancePercent = 0.2f;
+    private const float TriggerLevelDistance = -20f;
+    
     private readonly Factories _factories;
     private readonly RunProgress _runProgress;
     private readonly List<LevelBlockInfo> _levelBlock;
@@ -14,7 +17,13 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
         Factories factories,
         Transform player,
         RunProgress runProgress) :
-        base(levelBlocks, player, true, 0.2f, -0.5f)
+        base(
+            levelBlocks,
+            player,
+            true,
+            HideLevelDistancePercent,
+            TriggerLevelDistance,
+            false)
     {
         _factories = factories;
         _runProgress = runProgress;

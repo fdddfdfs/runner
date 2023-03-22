@@ -13,21 +13,25 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private Dictionary<int, FactoryPoolMono<TBlock>> _blockPools;
 
     private readonly Queue<TBlock> _blocksPositions;
+    private readonly Queue<TBlock> _blocksToTrigger;
     private readonly WeightRandom _weightRandom;
     private readonly Transform _player;
     private readonly TBlockInfo _startBlock;
     private readonly bool _haveStartBlock;
     private readonly float _nextBlockDistancePercentToHide;
-    private readonly float _nextBlockDistancePercentToTrigger;
+    private readonly float _nextBlockDistanceToTrigger;
+    private readonly bool _isTriggerDistancePercents;
     private readonly float _viewDistance;
     
     private TBlock _firstBlock;
     private float _lastBlockPosition;
     private float _firstBlockPosition;
-
-    private readonly Queue<TBlock> _blocksToTrigger;
+    
     private TBlock _firstTriggerableBlock;
     private float _firstTriggerablePosition;
+
+    private float _hideBlockPosition;
+    private float _triggerBlockPosition;
 
     private Dictionary<int, FactoryPoolMono<TBlock>> BlockPools
     {
@@ -43,7 +47,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         Transform player,
         bool haveStartBlock = false,
         float nextBlockDistancePercentToHide = 0,
-        float nextBlockDistancePercentToTrigger = 0.2f,
+        float nextBlockDistanceToTrigger = 0.2f,
+        bool isTriggerDistanceInPercents = true,
         float viewDistance = DefaultViewDistance)
     {
         _weightRandom = new WeightRandom(new List<IWeightable>(blocksInfo), true);
@@ -52,7 +57,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _player = player;
         _haveStartBlock = haveStartBlock;
         _nextBlockDistancePercentToHide = nextBlockDistancePercentToHide;
-        _nextBlockDistancePercentToTrigger = nextBlockDistancePercentToTrigger;
+        _nextBlockDistanceToTrigger = nextBlockDistanceToTrigger;
+        _isTriggerDistancePercents = isTriggerDistanceInPercents;
         _viewDistance = viewDistance;
     }
     
@@ -62,9 +68,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
             
     
         if (_player.transform.position.z >
-            _firstBlockPosition + 
-            _firstBlock.BlockSize +
-            _blocksPositions.Peek().BlockSize * _nextBlockDistancePercentToHide)
+            _hideBlockPosition)
         {
             HideCurrentBlock();
         }
@@ -82,6 +86,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         }
         
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
+
+        if (_haveStartBlock)
+        {
+            UpdateHideBlockPosition();
+        }
     }
     
     public void StartRun()
@@ -89,9 +98,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         if (!_haveStartBlock)
         {
             UpdateFirstBlock();
+            UpdateHideBlockPosition();
         }
 
         _firstTriggerableBlock = _blocksToTrigger.Dequeue();
+        _triggerBlockPosition = CalculateTriggerBlockPosition();
     }
 
     public void EndRun()
@@ -138,21 +149,33 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     {
         if (!_firstTriggerableBlock) return;
         
-        if (_firstTriggerablePosition + _firstTriggerableBlock.BlockSize * _nextBlockDistancePercentToTrigger < 
-            _player.transform.position.z)
+        if (_triggerBlockPosition < _player.transform.position.z)
         {
             (_firstTriggerableBlock as ITriggerable)?.Trigger();
-            _firstTriggerablePosition += _firstTriggerableBlock.BlockSize;
-            _firstTriggerableBlock = _blocksToTrigger.Dequeue();
+            UpdateTriggerableBlock();
 
             return;
         }
 
         if (!_firstTriggerableBlock.gameObject.activeSelf)
         {
-            _firstTriggerablePosition += _firstTriggerableBlock.BlockSize;
-            _firstTriggerableBlock = _blocksToTrigger.Dequeue();
+            UpdateTriggerableBlock();
         }
+    }
+
+    private void UpdateTriggerableBlock()
+    {
+        _firstTriggerablePosition += _firstTriggerableBlock.BlockSize;
+        _firstTriggerableBlock = _blocksToTrigger.Dequeue();
+        _triggerBlockPosition = CalculateTriggerBlockPosition();
+    }
+
+    private float CalculateTriggerBlockPosition()
+    {
+        return _firstTriggerablePosition + 
+               (_isTriggerDistancePercents ? 
+                   _firstTriggerableBlock.BlockSize * _nextBlockDistanceToTrigger :
+                   _nextBlockDistanceToTrigger);
     }
 
     private void HideCurrentBlock()
@@ -160,8 +183,10 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _firstBlock?.HideBlock();
 
         UpdateFirstBlock();
-        
+
         _lastBlockPosition = SetNewBlocks(_firstBlockPosition, _lastBlockPosition);
+
+        UpdateHideBlockPosition();
     }
 
     private void UpdateFirstBlock()
@@ -169,6 +194,13 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _firstBlockPosition += _firstBlock?.BlockSize ?? 0;
         _firstBlock = _blocksPositions.Dequeue();
         _firstBlock.EnterBlock();
+    }
+
+    private void UpdateHideBlockPosition()
+    {
+        _hideBlockPosition = _firstBlockPosition +
+                             _firstBlock.BlockSize +
+                             _blocksPositions.Peek().BlockSize * _nextBlockDistancePercentToHide;
     }
 
     private float SetNewBlocks(float startPosition, float lastBlockPosition)

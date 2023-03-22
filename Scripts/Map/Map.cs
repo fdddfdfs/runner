@@ -82,7 +82,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
         _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player);
         _runnables = new List<IRunnable> { _level, _environment, _road, _mainMenuLocation };
 
-        GenerateMapAsync();
+        GenerateMap();
     }
 
     private void Update()
@@ -96,7 +96,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
         _mainMenuLocation.CheckToHideBlock();
     }
 
-    private void GenerateMapAsync()
+    private void GenerateMap()
     {
         _road.SetBlocks();
         _level?.SetBlocks();
