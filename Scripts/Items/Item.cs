@@ -85,7 +85,7 @@ public abstract class Item : MonoBehaviour
 
         await AsyncUtils.Wait(DeactivateTimeMilliseconds, _cancellationTokenSource.Token);
 
-        if (AsyncUtils.Instance.GetCancellationToken().IsCancellationRequested) return;
+        if (_cancellationTokenSource.Token.IsCancellationRequested) return;
         
         if (gameObject.activeSelf)
         {
