@@ -35,9 +35,11 @@ public sealed class PlayerHittable : IHittable
                 return true;
             case HitType.Soft when _isRecovery:
                 _recoverCancellationSource.Cancel();
+                Sounds.Instance.PlayRandomSounds(2, "Hit");
                 return true;
             case HitType.Soft:
                 Recover();
+                Sounds.Instance.PlayRandomSounds(2, "Hit");
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(hitType), hitType, "Unknown hit type");
@@ -73,6 +75,8 @@ public sealed class PlayerHittable : IHittable
         }
 
         _isRecovery = false;
+        
+        Sounds.Instance.PlaySound(2, "StopRecover");
     }
 
     private void CreateCancellationToken()

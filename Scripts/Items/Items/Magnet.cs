@@ -41,8 +41,10 @@ public sealed class Magnet : Item
 
     public override void PickupItem(ThirdPersonController player)
     {
-        base.PickupItem(player);
+        Sounds.Instance.PlayRandomSounds(2, "Item");
         
+        base.PickupItem(player);
+
         MagnetActive(player);
     }
 

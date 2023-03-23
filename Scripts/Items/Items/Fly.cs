@@ -18,6 +18,8 @@ public sealed class Fly : ActivatableItem
     {
         _player = player;
         
+        Sounds.Instance.PlaySound(2, "Fly");
+        
         base.PickupItem(player);
     }
 

@@ -17,6 +17,8 @@ public sealed class Immune : ActivatableItem
     {
         _player = player;
         
+        Sounds.Instance.PlayRandomSounds(2, "Item");
+        
         base.PickupItem(player);
     }
     

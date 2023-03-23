@@ -47,6 +47,8 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         AsyncUtils.TimeScale = 1;
+        
+        Sounds.Instance.PlayRandomSounds(2, "Start");
     }
 
     public void Lose()

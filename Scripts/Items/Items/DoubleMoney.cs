@@ -1,4 +1,6 @@
-﻿public sealed class DoubleMoney : ActivatableItem
+﻿using StarterAssets;
+
+public sealed class DoubleMoney : ActivatableItem
 {
     private const float AddedSecondsPerLevel = 2;
     private const float BaseDuration = 10;
@@ -22,6 +24,13 @@
         base.Init(activeItemsUI, run, itemsActiveStates, effects);
         
         _runProgress = runProgress;
+    }
+    
+    public override void PickupItem(ThirdPersonController player)
+    {
+        Sounds.Instance.PlayRandomSounds(2, "Item");
+        
+        base.PickupItem(player);
     }
 
     protected override void Activate()

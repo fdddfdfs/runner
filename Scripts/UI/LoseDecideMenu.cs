@@ -35,6 +35,8 @@ public sealed class LoseDecideMenu : MonoBehaviour
             _startCutscene = typeof(AcceptLoseStartCutscene);
             _menu.SetActive(false);
             _player.Lose();
+            
+            Sounds.Instance.PlayRandomSounds(2,"Sign");
         });
         
         _declineButton.onClick.AddListener(() =>
@@ -43,6 +45,8 @@ public sealed class LoseDecideMenu : MonoBehaviour
             _startCutscene = typeof(DeclineLoseStartCutscene);
             _menu.SetActive(false);
             _player.Lose();
+            
+            Sounds.Instance.PlayRandomSounds(2,"Throw");
         });
     }
 }

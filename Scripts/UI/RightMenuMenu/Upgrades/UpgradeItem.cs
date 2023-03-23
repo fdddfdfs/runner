@@ -56,6 +56,8 @@ public sealed class UpgradeItem : MonoBehaviour
             {
                 _buy.gameObject.SetActive(false);
             }
+            
+            Sounds.Instance.PlayRandomSounds(2, "Upgrade");
         });
 
         _buy.AddComponent<OnSelectButton>().Init(() => OnSelect?.Invoke(index));

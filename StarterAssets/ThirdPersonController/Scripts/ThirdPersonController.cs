@@ -178,6 +178,8 @@ namespace StarterAssets
                 EffectType.Explosion, 
                 transform.position + ExplosionEffectYOffset * Vector3.up,
                 ExplosionEffectTimeMilliseconds);
+            
+            Sounds.Instance.PlayRandomSounds(2, "Resurrect");
 
             IsDie = false;
         }
@@ -267,6 +269,8 @@ namespace StarterAssets
         {
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
             _follower.Lose(this);
+            
+            Sounds.Instance.PlayRandomSounds(2, "Die");
         }
 
         private void Awake()

@@ -33,6 +33,8 @@ public sealed class HighJump : ActivatableItem
     {
         _player = player;
         
+        Sounds.Instance.PlaySound(2, "HighJump");
+        
         base.PickupItem(player);
     }
     

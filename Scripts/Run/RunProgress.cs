@@ -32,11 +32,16 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         Score += value * _scoreMultiplier * SpeedMultiplier;
         _scoreShowText.Text.text =((int)Score).ToString(CultureInfo.InvariantCulture);
     }
-    
+
     public void AddMoney(int money = 1)
     {
         Money += money * _moneyMultiplier;
         _moneyShowText.Text.text = Money.ToString(CultureInfo.InvariantCulture);
+
+        if (Money % 100 == 0)
+        {
+            Sounds.Instance.PlayRandomSounds(2, "Money");
+        }
     }
 
     public void IncreaseSpeedMultiplayerInTime(float time)

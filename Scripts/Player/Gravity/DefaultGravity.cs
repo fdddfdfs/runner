@@ -63,6 +63,7 @@ public sealed class DefaultGravity : IGravitable, IRollable
                 _verticalVelocity = Mathf.Sqrt(_player.JumpHeight * -2f * _gravity);
 
                 _playerAnimator.ChangeAnimationBool(AnimationType.Jump, true);
+                Sounds.Instance.PlaySound(1, "RunJump");
             }
 
             if (_jumpTimeoutDelta >= 0.0f)
