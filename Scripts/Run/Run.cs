@@ -48,6 +48,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         Cursor.lockState = CursorLockMode.Locked;
         AsyncUtils.TimeScale = 1;
         
+        Sounds.Instance.StopAllSounds();
         Sounds.Instance.PlayRandomSounds(2, "Start");
     }
 
@@ -146,6 +147,8 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         {
             _mainMenu.SetCutsceneType(_mainMenuCutsceneType);
             _mainMenu.ShowMainMenu();
+            
+            Sounds.Instance.PlaySound(2, "BackToMainMenu");
         }
     }
 

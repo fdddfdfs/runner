@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public sealed class PauseMenu : MonoBehaviour
@@ -17,6 +16,7 @@ public sealed class PauseMenu : MonoBehaviour
         if (isActive)
         {
             _restartButton.Select();
+            Sounds.Instance.PlaySound(2, "Pause");
         }
     }
 

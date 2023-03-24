@@ -117,6 +117,5 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
     private void CutsceneEnded()
     {
         _cutsceneActive = false;
-        Sounds.Instance.StopAllSounds();
     }
 }
