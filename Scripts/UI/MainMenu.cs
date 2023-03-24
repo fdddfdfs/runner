@@ -14,6 +14,7 @@ public sealed class MainMenu : MonoBehaviour
     [SerializeField] private InputActionAsset _inputActionAsset;
     [SerializeField] private MainMenuRightMenu _rightMenu;
     [SerializeField] private Cutscenes _cutscenes;
+    [SerializeField] private ExitMenu _exitMenu;
 
     private bool _isStartPressed;
     private Type _cutsceneType;
@@ -47,12 +48,15 @@ public sealed class MainMenu : MonoBehaviour
         Localization.Instance.OnLanguageUpdated -= LocalizeText;
     }
 
+    private void Awake()
+    {
+        _exit.onClick.AddListener(_exitMenu.SwapMenuActive);
+    }
+
     private void Start()
     {
         SetCutsceneType(typeof(BaseStartCutscene));
         ShowMainMenu();
-        
-        _exit.onClick.AddListener(Application.Quit);
 
         InputActionMap inputActionMap = _inputActionAsset.FindActionMap("UI", true);
         inputActionMap.Enable();
