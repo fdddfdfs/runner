@@ -9,16 +9,15 @@ public sealed class RandomImage : MonoBehaviour
     [SerializeField] private List<Sprite> _sprites;
 
     private int _previous = -1;
-    
+
+    private void Awake()
+    {
+        _previous = Random.Range(0, _sprites.Count);
+    }
+
     private void OnEnable()
     {
-        int r;
-        do
-        {
-            r = Random.Range(0, _sprites.Count);
-        } while (_sprites.Count > 1 && r == _previous);
-        
-        _image.sprite = _sprites[r];
-        _previous = r;
+        _image.sprite = _sprites[_previous];
+        _previous = (_previous + 1) % _sprites.Count;
     }
 }
