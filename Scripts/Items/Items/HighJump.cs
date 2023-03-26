@@ -34,6 +34,7 @@ public sealed class HighJump : ActivatableItem
         _player = player;
         
         Sounds.Instance.PlaySound(2, "HighJump");
+        Achievements.Instance.GetAchievement("Item_4");
         
         base.PickupItem(player);
     }

@@ -16,6 +16,8 @@ public sealed class DeclineLoseEndCutscene : CutsceneWithEnvironment
             fade.FadeOut(null);
             mainMenu.SetCutsceneType(typeof(DeclineLoseStartCutscene));
             mainMenu.ShowMainMenu();
+            
+            Achievements.Instance.GetAchievement("Decline");
         };
     }
 }

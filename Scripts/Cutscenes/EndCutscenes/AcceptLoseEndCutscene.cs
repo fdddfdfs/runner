@@ -16,6 +16,8 @@ public sealed class AcceptLoseEndCutscene : CutsceneWithEnvironment
             fade.FadeOut(null);
             mainMenu.SetCutsceneType(typeof(AcceptLoseStartCutscene));
             mainMenu.ShowMainMenu();
+            
+            Achievements.Instance.GetAchievement("Accept");
         };
     }
 }

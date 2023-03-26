@@ -69,13 +69,26 @@ public sealed class MainMenuRightMenu : Menu
         for (var i = 0; i < _submenus.Count; i++)
         {
             int index = i;
-            _submenuButtons[i].onClick.AddListener(() => ChangeCurrentSubmenu(index));
+            _submenuButtons[i].onClick.AddListener(() =>
+            {
+                ChangeCurrentSubmenu(index);
+                Achievements.Instance.GetAchievement($"Menu_{(index+1).ToString()}");
+            });
         }
         
-        _submenuButtons[3].onClick.AddListener(() => Inventory.OpenInventory(typeof(InventoryClothes)));
-        _submenuButtons[4].onClick.AddListener(() => Inventory.OpenInventory(typeof(InventoryChests)));
+        _submenuButtons[3].onClick.AddListener(() =>
+        {
+            Inventory.OpenInventory(typeof(InventoryClothes));
+            Achievements.Instance.GetAchievement("Menu_4");
+        });
+        _submenuButtons[4].onClick.AddListener(() =>
+        {
+            Inventory.OpenInventory(typeof(InventoryChests));
+            Achievements.Instance.GetAchievement("Menu_5");
+        });
 
         ChangeCurrentSubmenu(0);
+        Achievements.Instance.GetAchievement("Menu_1");
     }
 
     private T SpawnMenu<T>(string resourceName) where T: Menu

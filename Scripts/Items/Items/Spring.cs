@@ -19,6 +19,7 @@ public sealed class Spring : Item
         base.PickupItem(player);
         
         Sounds.Instance.PlayRandomSounds(2, "Item");
+        Achievements.Instance.GetAchievement("Item_7");
         
         player.ChangeGravitable(player.Gravitables[typeof(SpringGravity)]);
         _effects.ActivateEffect(EffectType.PickupItem, transform.position, PickupItemEffectTimeMilliseconds);

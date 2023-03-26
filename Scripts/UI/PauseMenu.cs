@@ -17,6 +17,10 @@ public sealed class PauseMenu : MonoBehaviour
         {
             _restartButton.Select();
             Sounds.Instance.PlaySound(2, "Pause");
+            
+            Achievements.Instance.GetAchievement("Pause_1");
+            Achievements.Instance.GetAchievement("Pause_2");
+            Achievements.Instance.GetAchievement("Pause_3");
         }
     }
 
@@ -29,6 +33,8 @@ public sealed class PauseMenu : MonoBehaviour
             _run.ApplyLoseResults();
             _run.EndRun();
             _run.StartRun();
+            
+            Achievements.Instance.GetAchievement("Pause");
         });
         
         _backToMenuButton.onClick.AddListener(() =>

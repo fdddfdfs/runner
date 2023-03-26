@@ -17,7 +17,8 @@ public sealed class Immune : ActivatableItem
     {
         _player = player;
         
-        Sounds.Instance.PlayRandomSounds(2, "Item");
+        Sounds.Instance.PlaySound(2, "Immune");
+        Achievements.Instance.GetAchievement("Item_5");
         
         base.PickupItem(player);
     }

@@ -28,6 +28,7 @@ public sealed class DoubleScore : ActivatableItem
     public override void PickupItem(ThirdPersonController player)
     {
         Sounds.Instance.PlayRandomSounds(2, "Item");
+        Achievements.Instance.GetAchievement("Item_2");
         
         base.PickupItem(player);
     }

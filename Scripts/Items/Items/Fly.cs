@@ -19,6 +19,7 @@ public sealed class Fly : ActivatableItem
         _player = player;
         
         Sounds.Instance.PlaySound(2, "Fly");
+        Achievements.Instance.GetAchievement("Item_3");
         
         base.PickupItem(player);
     }

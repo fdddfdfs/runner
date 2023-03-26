@@ -15,6 +15,8 @@ public sealed class BaseStartCutscene : Cutscene
             HideCutscene();
             fade.FadeOut(null);
             run.StartRun();
+            
+            Achievements.Instance.GetAchievement("Start");
         };
     }
 

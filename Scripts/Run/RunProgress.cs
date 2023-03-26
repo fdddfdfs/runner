@@ -7,6 +7,8 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     public const int DefaultMoneyMultiplier = 1;
     public const int DefaultScoreMultiplier = 10;
     private const float DefaultSpeedMultiplier = 1;
+    private const int MoneyAchievementsNumber = 9;
+    private const int ScoreAchievementsNumber = 9;
 
     [SerializeField] private GameObject _scoreParent;
     [SerializeField] private GameObject _moneyParent;
@@ -16,6 +18,9 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     private int _moneyMultiplier = DefaultMoneyMultiplier;
     private int _scoreMultiplier = DefaultScoreMultiplier;
+
+    private string[] _moneyAchievements;
+    private string[] _scoreAchievements;
 
     private float _runTime;
 
@@ -29,14 +34,27 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
 
     public void AddScore(float value)
     {
+        float addedValue = value * _scoreMultiplier * SpeedMultiplier;
         Score += value * _scoreMultiplier * SpeedMultiplier;
         _scoreShowText.Text.text =((int)Score).ToString(CultureInfo.InvariantCulture);
+
+        for (var i = 0; i < _moneyAchievements.Length; i++)
+        {
+            Achievements.Instance.IncreaseProgress(_scoreAchievements[i], (int)addedValue);
+        }
     }
 
     public void AddMoney(int money = 1)
     {
-        Money += money * _moneyMultiplier;
+        int addedMoney = money * _moneyMultiplier;
+        
+        Money += addedMoney;
         _moneyShowText.Text.text = Money.ToString(CultureInfo.InvariantCulture);
+
+        for (var i = 0; i < _moneyAchievements.Length; i++)
+        {
+            Achievements.Instance.IncreaseProgress(_moneyAchievements[i], addedMoney);
+        }
 
         if (Money % 100 == 0)
         {
@@ -94,6 +112,21 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
                 new SteamItemDef_t(InventoryAllItems.PlaytimeGeneratorID));
             
             _mainMenuRightMenu.SetInventoryResult(result);
+        }
+    }
+
+    private void Awake()
+    {
+        _moneyAchievements = new string[MoneyAchievementsNumber];
+        for (int i = 0; i < MoneyAchievementsNumber; i++)
+        {
+            _moneyAchievements[i] = $"Money_{(i + 1).ToString()}";
+        }
+
+        _scoreAchievements = new string[ScoreAchievementsNumber];
+        for (int i = 0; i < ScoreAchievementsNumber; i++)
+        {
+            _scoreAchievements[i] = $"Score_{(i + 1).ToString()}";
         }
     }
 

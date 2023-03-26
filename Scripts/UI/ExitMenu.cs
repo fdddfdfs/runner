@@ -1,5 +1,4 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class ExitMenu : Menu
@@ -14,6 +13,10 @@ public class ExitMenu : Menu
         if (_menu.activeSelf)
         {
             Sounds.Instance.PlayRandomSounds(2,"Exit");
+            
+            Achievements.Instance.GetAchievement("Exit_1");
+            Achievements.Instance.GetAchievement("Exit_2");
+            Achievements.Instance.GetAchievement("Exit_3");
         }
     }
     

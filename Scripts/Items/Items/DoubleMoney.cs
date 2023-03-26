@@ -29,6 +29,7 @@ public sealed class DoubleMoney : ActivatableItem
     public override void PickupItem(ThirdPersonController player)
     {
         Sounds.Instance.PlayRandomSounds(2, "Item");
+        Achievements.Instance.GetAchievement("Item_1");
         
         base.PickupItem(player);
     }

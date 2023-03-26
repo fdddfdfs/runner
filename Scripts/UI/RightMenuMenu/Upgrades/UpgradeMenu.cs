@@ -31,13 +31,41 @@ public sealed class UpgradeMenu : Menu
         
         _upgradeActions = new Dictionary<ItemType, (Func<int> getLevel, Action increaseLevel)>
         {
-            { ItemType.Fly, (() => Stats.FlyLevel.Value, () => Stats.FlyLevel.Value += 1) },
-            { ItemType.Immune, (() => Stats.ImmuneLevel.Value, () => Stats.ImmuneLevel.Value += 1) },
-            { ItemType.Magnet, (() => Stats.MagnetLevel.Value, () => Stats.MagnetLevel.Value += 1) },
-            { ItemType.DoubleMoney, (() => Stats.DoubleMoneyLevel.Value, () => Stats.DoubleMoneyLevel.Value += 1) },
-            { ItemType.HighJump, (() => Stats.HighJumpLevel.Value, () => Stats.HighJumpLevel.Value += 1) },
-            { ItemType.DoubleScore, (() => Stats.DoubleScoreLevel.Value, () => Stats.DoubleScoreLevel.Value += 1) },
-            { ItemType.Board, (() => Stats.BoardLevel.Value, () => Stats.BoardLevel.Value += 1) },
+            { ItemType.Fly, (() => Stats.FlyLevel.Value, () =>
+            {
+                Stats.FlyLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_3");
+            }) },
+            { ItemType.Immune, (() => Stats.ImmuneLevel.Value, () =>
+            {
+                Stats.ImmuneLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_5");
+            }) },
+            { ItemType.Magnet, (() => Stats.MagnetLevel.Value, () =>
+            {
+                Stats.MagnetLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_6");
+            }) },
+            { ItemType.DoubleMoney, (() => Stats.DoubleMoneyLevel.Value, () =>
+            {
+                Stats.DoubleMoneyLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_1");
+            }) },
+            { ItemType.HighJump, (() => Stats.HighJumpLevel.Value, () =>
+            {
+                Stats.HighJumpLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_4");
+            }) },
+            { ItemType.DoubleScore, (() => Stats.DoubleScoreLevel.Value, () =>
+            {
+                Stats.DoubleScoreLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_2");
+            }) },
+            { ItemType.Board, (() => Stats.BoardLevel.Value, () =>
+            {
+                Stats.BoardLevel.Value += 1;
+                Achievements.Instance.GetAchievement("Upgrade_7");
+            }) },
         };
 
         var parentVerticalLayoutGroup = _parent.GetComponent<VerticalLayoutGroup>();
