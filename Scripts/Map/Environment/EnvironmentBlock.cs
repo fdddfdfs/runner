@@ -1,15 +1,22 @@
 ﻿public sealed class EnvironmentBlock : Triggerable, IMapBlock
 {
+    private AchievementData _achievementData;
+    
     public float BlockSize { get; private set; }
 
-    public void Init(float blockSize)
+    public void Init(float blockSize, AchievementData achievementData)
     {
         BlockSize = blockSize;
+
+        _achievementData = achievementData;
         
         base.Init();
     }
 
-    public void EnterBlock() { }
+    public void EnterBlock()
+    {
+        Achievements.Instance.GetAchievement(_achievementData.Name);
+    }
 
     public async void HideBlock()
     {

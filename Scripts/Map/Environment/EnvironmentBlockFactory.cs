@@ -21,7 +21,8 @@ public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
         environmentBlock ??= environmentBlockObject.AddComponent<EnvironmentBlock>();
         environmentBlock.Init(
             _environmentBlockInfo.Terrain.terrainData.size.z *
-            _environmentBlockInfo.Prefab.transform.localScale.z);
+            _environmentBlockInfo.Prefab.transform.localScale.z,
+            _environmentBlockInfo.AchievementData);
         
         _count++;
         
