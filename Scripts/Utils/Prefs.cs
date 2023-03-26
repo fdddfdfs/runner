@@ -80,9 +80,11 @@ public static class Prefs
         return array;
     }
 
-    public static void LoadArray(out string[] array, string key)
+    public static string[] LoadStringArray(string key)
     {
         int length;
+
+        string[] array;
 
         if (PlayerPrefs.HasKey(key + ArrayLengthKey))
         {
@@ -91,7 +93,7 @@ public static class Prefs
         else
         {
             array = Array.Empty<string>();
-            return;
+            return array;
         }
 
         array = new string[length];
@@ -99,6 +101,8 @@ public static class Prefs
         {
             array[i] = PlayerPrefs.GetString(key + i);
         }
+
+        return array;
     }
 
     public static void LoadArray(out int[] array, string key, int defaultValue, int length)

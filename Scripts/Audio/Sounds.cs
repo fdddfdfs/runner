@@ -42,7 +42,7 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
         
         if (!_randomClipsCount.ContainsKey(clipBaseName))
         {
-            throw new Exception($"{clipBaseName} doesnt exist in {nameof(Sounds)}");
+            throw new Exception($"{clipBaseName} doesnt exist in random sounds in {nameof(Sounds)}");
         }
 
         int r = Random.Range(0, _randomClipsCount[clipBaseName]);
