@@ -45,5 +45,7 @@ public class NewItem : MonoBehaviour
         {
             gameObject.SetActive(false);
         });
+
+        _animator.keepAnimatorControllerStateOnDisable = true;
     }
 }
