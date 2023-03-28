@@ -24,6 +24,33 @@ public sealed class Inventory : Menu
     public void Init(IClothesChanger clothesChanger)
     {
         _clothesChanger = clothesChanger;
+        
+        InventorySteamworks = new InventorySteamworks();
+        var inventoryChests = new InventoryChests(
+            InventorySteamworks,
+            _inventoryCells,
+            _nameText,
+            _descriptionText,
+            _button,
+            _nextPageButton,
+            _previousPageButton,
+            _invisibleSprite);
+        var inventoryClothes = new InventoryClothes(
+            InventorySteamworks,
+            _inventoryCells,
+            _nameText,
+            _descriptionText,
+            _button,
+            _nextPageButton,
+            _previousPageButton,
+            _clothesChanger,
+            _invisibleSprite);
+
+        _inventories = new Dictionary<Type, InventoryGrid>
+        {
+            [typeof(InventoryClothes)] = inventoryClothes,
+            [typeof(InventoryChests)] = inventoryChests,
+        };
     }
     
     public void OpenInventory(Type inventoryType)
@@ -34,36 +61,6 @@ public sealed class Inventory : Menu
     public void SetInventoryResult(SteamInventoryResult_t inventoryResult)
     {
         InventorySteamworks.SetInventoryResult(inventoryResult);
-    }
-
-    private void Awake()
-    {
-         InventorySteamworks = new InventorySteamworks();
-         var inventoryChests = new InventoryChests(
-             InventorySteamworks,
-            _inventoryCells,
-            _nameText,
-            _descriptionText,
-            _button,
-            _nextPageButton,
-            _previousPageButton,
-             _invisibleSprite);
-         var inventoryClothes = new InventoryClothes(
-             InventorySteamworks,
-             _inventoryCells,
-             _nameText,
-             _descriptionText,
-             _button,
-             _nextPageButton,
-             _previousPageButton,
-             _clothesChanger,
-            _invisibleSprite);
-
-        _inventories = new Dictionary<Type, InventoryGrid>
-        {
-            [typeof(InventoryClothes)] = inventoryClothes,
-            [typeof(InventoryChests)] = inventoryChests,
-        };
     }
 
     private void OpenNewInventory(InventoryGrid newInventory)
