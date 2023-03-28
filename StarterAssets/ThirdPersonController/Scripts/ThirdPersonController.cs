@@ -15,6 +15,8 @@ namespace StarterAssets
         private const int JumpEffectTimeMilliseconds = 5000;
         private const float ExplosionEffectYOffset = 1f;
         private const int ExplosionEffectTimeMilliseconds = 5000;
+        private const int PlayerChestIndex = 3;
+        private const float ClothesScale = 1;
         
         [SerializeField] private RunProgress _runProgress;
         [SerializeField] private Map _map;
@@ -28,6 +30,7 @@ namespace StarterAssets
         [SerializeField] private CinemachineVirtualCamera _runCamera;
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
         [SerializeField] private Camera _playerRunCamera;
+        [SerializeField] private Transform _playerRootBone;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -128,6 +131,8 @@ namespace StarterAssets
         private PlayerRunInput _playerRunInput;
         private PlayerCamera _playerCamera;
 
+        private PlayerClothes _playerClothes;
+
         public Effects Effects { get; private set; }
 
         public Dictionary<Type, IHittable> Hittables => _hittables;
@@ -226,6 +231,8 @@ namespace StarterAssets
             _playerMesh.SetActive(true);
             
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Reset);
+            
+            _playerClothes.AddClothes(ClothesStorage.PlayerClothes.Value);
         }
 
         public void EndRun()
@@ -295,7 +302,11 @@ namespace StarterAssets
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
             };
             
-            //PlayerBones.gameObject.SetActive(false);
+            _playerClothes = new PlayerClothes(
+                _playerRootBone,
+                _playerBones.parent.gameObject,
+                PlayerChestIndex,
+                ClothesScale);
         }
 
         private void Start()
