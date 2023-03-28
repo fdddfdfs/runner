@@ -5,12 +5,15 @@ public abstract class Cutscene : MonoBehaviour
 {
     private const string StartCutsceneTrigger = "Start";
     private const string BackToStartTrigger = "Back";
+    private const int PlayerChestIndex = 2;
         
     [SerializeField] protected Camera _cutsceneCamera;
     [SerializeField] private Animator _cutsceneAnimator;
     [SerializeField] private GameObject _cutsceneObject;
     [SerializeField] private float _endThreshold = 1f;
     [SerializeField] private Transform _playerRootBone;
+    [SerializeField] private GameObject _playerMesh;
+    [SerializeField] private float _clothesScale;
 
     private readonly int _startCutsceneTrigger = Animator.StringToHash(StartCutsceneTrigger);
     private readonly int _backToStartTrigger = Animator.StringToHash(BackToStartTrigger);
@@ -29,7 +32,7 @@ public abstract class Cutscene : MonoBehaviour
     {
         _fade = fade;
 
-        PlayerClothes = new PlayerClothes(_playerRootBone);
+        PlayerClothes = new PlayerClothes(_playerRootBone, _playerMesh, PlayerChestIndex, _clothesScale);
     }
 
     public void AddClothes(int clothesID)
