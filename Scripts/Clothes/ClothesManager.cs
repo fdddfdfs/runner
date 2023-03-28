@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public sealed class ClothesManager : MonoBehaviour
 {
-    private const string BONE_NAME = "Armature";
+    private const string BONE_NAME = "mixamorig:Hips";
 
     public static List<GameObject> ApplyClother(
         GameObject character,
@@ -26,14 +26,7 @@ public sealed class ClothesManager : MonoBehaviour
 
             clotherBones[i].localPosition = new Vector3(0, 0, 0);
             clotherBones[i].localRotation = new Quaternion(0, 0, 0, 0);
-            if (type != ClotherType.Head && type != ClotherType.Face && type != (ClotherType.Head | ClotherType.Face))
-            {
-                clotherBones[i].localScale = new Vector3(scale, scale, scale);
-            }
-            else
-            {
-                clotherBones[i].localScale = new Vector3(1, 1, 1);
-            }
+            clotherBones[i].localScale = new Vector3(scale, scale, scale);
 
             clotherBones[i].name = "i";
             clotherParts.Add(clotherBones[i].gameObject);
@@ -62,10 +55,20 @@ public sealed class ClothesManager : MonoBehaviour
 
         for (var i = 0; i < obj.transform.childCount; i++)
         {
-            if (obj.transform.GetChild(i).name.StartsWith(BONE_NAME))
+            Transform child = obj.transform.GetChild(i);
+            if (child.name.StartsWith(BONE_NAME))
             {
-                rootBone = obj.transform.GetChild(i);
+                rootBone = child;
                 break;
+            }
+
+            for (int j = 0; j < child.transform.childCount; j++)
+            {
+                if (child.transform.GetChild(j).name.StartsWith(BONE_NAME))
+                {
+                    rootBone = child.transform.GetChild(j);
+                    break;
+                }
             }
         }
 
@@ -76,6 +79,7 @@ public sealed class ClothesManager : MonoBehaviour
         }
 
         Transform[] objBones = rootBone.GetComponentsInChildren<Transform>();
+        objBones = objBones.Append(rootBone).ToArray();
 
         return objBones;
     }
@@ -85,7 +89,7 @@ public sealed class ClothesManager : MonoBehaviour
         return rootBone.GetComponentsInChildren<Transform>();
     }
 
-    public static List<GameObject> LoadClothesByIDs(GameObject character, int[] clothes, float scale = 1)
+    /*public static List<GameObject> LoadClothesByIDs(GameObject character, int[] clothes, float scale = 1)
     {
         Transform[] characterBones = FindBones(character, out Transform rootBone);
         List<GameObject> clothesParts = new();
@@ -110,5 +114,5 @@ public sealed class ClothesManager : MonoBehaviour
         }
 
         return clothesParts;
-    }
+    }*/
 }
