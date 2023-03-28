@@ -172,6 +172,7 @@ public abstract class InventoryGrid
             {
                 _items.Add(addedItems[i]);
                 _itemsCount.Add(1);
+                _itemsIDs.Add(new List<ulong>{addedItems[i].SteamID});
             }
             else
             {
