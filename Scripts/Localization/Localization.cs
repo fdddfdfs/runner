@@ -36,6 +36,8 @@ public class Localization
     {
         get
         {
+            if (key == null) return "Tried to get translation for null key";
+            
             if (_localization.ContainsKey(key))
             {
                 return _localization[key];
