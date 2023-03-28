@@ -30,6 +30,7 @@ public class NewItemsMenu: MonoBehaviour
         foreach (InventoryItem addedItem in addedItems)
         {
             NewItem newItem = _newItemsPool.GetItem();
+            newItem.transform.SetAsLastSibling();
             newItem.Appear(AppearTime, addedItem.InventoryItemData);
         }
     }
