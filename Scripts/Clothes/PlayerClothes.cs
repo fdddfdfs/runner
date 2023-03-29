@@ -47,16 +47,27 @@ public sealed class PlayerClothes
         _defaultPlayerClothes = new DefaultPlayerClothes(playerMeshParent, chestIndex);
     }
 
-    public void AddClothes(int[] clothesIDs)
+    public void ChangeClothes(int[] clothesIDs, bool deleteIfExist)
     {
         for (var i = 0; i < clothesIDs.Length; i++)
         {
-            AddClothes(clothesIDs[i]);
+            ChangeClothes(clothesIDs[i], deleteIfExist);
         }
     }
 
-    public void AddClothes(int clothesID)
+    public void ChangeClothes(int clothesID, bool deleteIfExist)
     {
+        if (deleteIfExist)
+        {
+            bool isDeleted = DeleteIfExist(clothesID);
+
+            if (isDeleted)
+            {
+                ClothesStorage.PlayerClothes.Value = _clothesIDs.ToArray();
+                return;
+            }
+        }
+
         var clothesData = InventoryAllItems.Instance.Items[clothesID] as InventoryClothesItemData;
         
         if (!clothesData)
@@ -71,23 +82,40 @@ public sealed class PlayerClothes
             if ((_clothes[i].Type & clothesType) != 0)
             {
                 if (_clothesIDs[i] == clothesID) return;
-
-                if (_clothes[i].Bones != null)
-                {
-                    ClothesManager.RemoveClother(_clothes[i].Bones);
-                }
-                else
-                {
-                    _defaultPlayerClothes.ResetDefaultClothes(_clothes[i].Type);
-                }
                 
-                _clothes.RemoveAt(i);
-                _clothesIDs.RemoveAt(i);
+                DeleteClother(i);
+                
                 i--;
             }
         }
 
         ApplyCloth(clothesID);
+    }
+
+    private bool DeleteIfExist(int clothesID)
+    {
+        int index = _clothesIDs.FindIndex(id => id == clothesID);
+
+        if (index == -1) return false;
+        
+        DeleteClother(index);
+
+        return true;
+    }
+
+    private void DeleteClother(int index)
+    {
+        if (_clothes[index].Bones != null)
+        {
+            ClothesManager.RemoveClother(_clothes[index].Bones);
+        }
+        else
+        {
+            _defaultPlayerClothes.ResetDefaultClothes(_clothes[index].Type);
+        }
+                
+        _clothes.RemoveAt(index);
+        _clothesIDs.RemoveAt(index);
     }
 
     private void ApplyCloth(int clothesID)
