@@ -232,7 +232,7 @@ namespace StarterAssets
             
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Reset);
             
-            _playerClothes.AddClothes(ClothesStorage.PlayerClothes.Value);
+            _playerClothes.ChangeClothes(ClothesStorage.PlayerClothes.Value, false);
         }
 
         public void EndRun()

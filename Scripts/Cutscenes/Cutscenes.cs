@@ -47,7 +47,7 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
     
     public void ChangeClothes(int clothesID)
     {
-        _cutscene.AddClothes(clothesID);
+        _cutscene.ChangeClothes(clothesID);
     }
     
     private void Awake()

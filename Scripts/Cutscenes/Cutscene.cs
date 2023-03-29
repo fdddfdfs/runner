@@ -35,9 +35,9 @@ public abstract class Cutscene : MonoBehaviour
         PlayerClothes = new PlayerClothes(_playerRootBone, _playerMesh, PlayerChestIndex, _clothesScale);
     }
 
-    public void AddClothes(int clothesID)
+    public void ChangeClothes(int clothesID)
     {
-        PlayerClothes.AddClothes(clothesID);
+        PlayerClothes.ChangeClothes(clothesID, true);
     }
     
     public virtual void SetCutscene()
@@ -47,7 +47,7 @@ public abstract class Cutscene : MonoBehaviour
 
         _isEnded = false;
         
-        PlayerClothes.AddClothes(ClothesStorage.PlayerClothes.Value);
+        PlayerClothes.ChangeClothes(ClothesStorage.PlayerClothes.Value, false);
     }
 
     public virtual void HideCutscene()
