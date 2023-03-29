@@ -34,17 +34,22 @@ public class DefaultPlayerClothes
         {
             throw new Exception($"Unknown material for ClotherType {clothesItemData.ClotherType}");
         }
-
-        Material[] materials = _playerMesh.materials;
-        materials[_materialIndexes[clothesItemData.ClotherType]] = clothesItemData.DefaultClothesMaterial;
-        _playerMesh.materials = materials;
+        
+        ChangePlayerMaterials(_materialIndexes[clothesItemData.ClotherType], clothesItemData.DefaultClothesMaterial);
     }
 
     public void ResetDefaultClothes(ClotherType clotherType)
     {
         if (_defaultMaterials.ContainsKey(clotherType))
         {
-            _playerMesh.materials[_materialIndexes[clotherType]] = _defaultMaterials[clotherType];
+            ChangePlayerMaterials(_materialIndexes[clotherType], _defaultMaterials[clotherType]);
         }
+    }
+
+    private void ChangePlayerMaterials(int index, Material newMaterial)
+    {
+        Material[] materials = _playerMesh.materials;
+        materials[index] = newMaterial;
+        _playerMesh.materials = materials;
     }
 }
