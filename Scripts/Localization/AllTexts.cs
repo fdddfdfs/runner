@@ -3,7 +3,7 @@
 public static class AllTexts
 {
     public static string OpenChest => "Open Chest";
-    public static string PutClothes => "Put Clothes";
+    public static string PutClothes => "Change Clothes";
     public static string Music => "Music";
     public static string Sounds => "Sounds";
     public static string Graphic => "Graphic";
