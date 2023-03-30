@@ -45,7 +45,7 @@ public class Localization
             
             Debug.LogWarning($"Localization don`t contains translation for key: {key}");
 
-            return "UNLOCALIZED";
+            return key;
         }
     }
 
