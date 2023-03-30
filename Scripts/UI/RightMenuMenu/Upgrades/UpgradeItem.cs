@@ -15,6 +15,9 @@ public sealed class UpgradeItem : MonoBehaviour
 
     public event Action<int> OnSelect;
 
+    private string _itemName;
+    private string _itemDescription;
+
     public void Init(
         Sprite itemSprite,
         string itemName,
@@ -23,9 +26,12 @@ public sealed class UpgradeItem : MonoBehaviour
         Action increaseLevel,
         int index)
     {
+        _itemName = itemName;
+        _itemDescription = itemDescription;
         _image.sprite = itemSprite;
-        _name.text = itemName;
-        _description.text = itemDescription;
+        LocalizeText();
+        Localization.Instance.OnLanguageUpdated += LocalizeText;
+        
         int currentLevel = getLevel.Invoke();
 
         for (int i = 0; i < currentLevel - 1; i++)
@@ -76,5 +82,11 @@ public sealed class UpgradeItem : MonoBehaviour
     private static int CalculateUpgradePrice(int level)
     {
         return level * 1000;
+    }
+
+    private void LocalizeText()
+    {
+        _name.text = Localization.Instance[_itemName];
+        _description.text = Localization.Instance[_itemDescription];
     }
 }
