@@ -42,14 +42,9 @@ public sealed class Music : ResourcesSingleton<Music, MusicResourceName>
         _audioSource.clip = clip;
         _audioSource.Play();
 
-        try
-        {
-            await Task.Delay((int)(clip.length * 1000), _cancellationTokenSource.Token);
-        }
-        catch
-        {
-            return;
-        }
+        await AsyncUtils.Wait(clip.length, _cancellationTokenSource.Token);
+
+        if (_cancellationTokenSource.IsCancellationRequested) return;
 
         _isPlaying = false;
         PlayMusic((musicIndex + 1) % _audioClips.Count);
