@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -18,9 +19,24 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
             soundsSource.volume = newVolume;
         }
     }
+    
+    public async void DisableAudioForTime(int layer, float time)
+    {
+        CancellationToken token = AsyncUtils.Instance.GetCancellationToken();
+        _soundsSources[layer].enabled = false;
+        
+        await AsyncUtils.Wait(time, token);
+
+        if (token.IsCancellationRequested) return;
+        
+        _soundsSources[layer].clip = null;
+        _soundsSources[layer].enabled = true;
+    }
 
     public void PlaySound(int layer, string clipName)
     {
+        if (!_soundsSources[layer].enabled) return;
+        
         CheckLayer(layer);
 
         clipName = clipName.ToLower();
@@ -36,6 +52,8 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
 
     public void PlayRandomSounds(int layer, string clipBaseName)
     {
+        if (!_soundsSources[layer].enabled) return;
+        
         CheckLayer(layer);
         
         clipBaseName = clipBaseName.ToLower();

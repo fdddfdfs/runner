@@ -214,8 +214,7 @@ namespace StarterAssets
         {
             transform.position = _startPosition;
             Controller.enabled = true;
-            //Controller.Move(_startPosition - transform.localPosition);
-            
+
             PlayerStateMachine.StartRun();
             _playerRunInput.StartRun();
             _playerCamera.StartRun();
@@ -233,6 +232,8 @@ namespace StarterAssets
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Reset);
             
             _playerClothes.ChangeClothes(ClothesStorage.PlayerClothes.Value, false);
+            
+            Sounds.Instance.DisableAudioForTime(1, 2f);
         }
 
         public void EndRun()
