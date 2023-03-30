@@ -73,10 +73,12 @@ public sealed class PlayerHittable : IHittable
             _follower.StopFollowing();
             CreateCancellationToken();
         }
+        else
+        {
+            Sounds.Instance.PlaySound(2, "StopRecover");
+        }
 
         _isRecovery = false;
-        
-        Sounds.Instance.PlaySound(2, "StopRecover");
     }
 
     private void CreateCancellationToken()
