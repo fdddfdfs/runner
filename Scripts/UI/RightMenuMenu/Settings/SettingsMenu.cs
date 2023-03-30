@@ -58,6 +58,10 @@ public sealed class SettingsMenu : Menu
         {
             Localization.Instance.ChangeLanguage(_languages[index]);
         });
+
+        _languageDropdown.Show();
+        _languageDropdown.value = _languages.FindIndex(
+            language => (int)language == SettingsStorage.Localization.Value);
     }
 
     private void OnEnable()
