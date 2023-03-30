@@ -158,8 +158,8 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     
     private static float SpeedMultiplayerFunc(float time)
     {
-        float speedMultiplayer = 1 * Mathf.Log(time / 10f);
-        speedMultiplayer = 1.5f + (speedMultiplayer < 0 ? 0 : speedMultiplayer);
+        float speedMultiplayer = 1 * Mathf.Log(time / 15f);
+        speedMultiplayer = 2f + (speedMultiplayer < 0 ? 0 : speedMultiplayer);
         return speedMultiplayer;
     }
 }
