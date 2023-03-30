@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 
@@ -56,6 +57,15 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
 
         _isActive = false;
         Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, startValue + dir);
+
+        if (Math.Abs(startValue + dir) < 0.1f)
+        {
+            Text.gameObject.SetActive(true);
+        }
+        else
+        {
+            Text.gameObject.SetActive(false);
+        }
     }
 
     private void CheckCancellationToken()
