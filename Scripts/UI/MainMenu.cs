@@ -25,7 +25,7 @@ public sealed class MainMenu : MonoBehaviour
     public void ShowMainMenu()
     {
         _rightMenu.ChangeMenuActive(true);
-        _startTextChangeTextOnStart.EndRun();
+        //_startTextChangeTextOnStart.EndRun();
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
         _exit.gameObject.SetActive(true);
@@ -37,17 +37,7 @@ public sealed class MainMenu : MonoBehaviour
     {
         _cutsceneType = cutsceneType;
     }
-
-    private void OnEnable()
-    {
-        Localization.Instance.OnLanguageUpdated += LocalizeText;
-    }
-
-    private void OnDisable()
-    {
-        Localization.Instance.OnLanguageUpdated -= LocalizeText;
-    }
-
+    
     private void Awake()
     {
         _exit.onClick.AddListener(_exitMenu.SwapMenuActive);
@@ -72,11 +62,6 @@ public sealed class MainMenu : MonoBehaviour
         {
             StartRun();
         }
-    }
-
-    private void LocalizeText()
-    {
-        _startText.text = Localization.Instance[AllTexts.StartRun];
     }
 
     private void StartRun()
