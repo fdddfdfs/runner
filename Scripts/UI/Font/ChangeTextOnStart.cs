@@ -37,6 +37,11 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
     {
         CheckCancellationToken();
         
+        if (Math.Abs(startValue + dir) < 0.1f)
+        {
+            Text.gameObject.SetActive(true);
+        }
+        
         _isActive = true;
         float currentTime = 0;
         while (currentTime < ShowTimeMilliseconds)
@@ -58,11 +63,7 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
         _isActive = false;
         Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, startValue + dir);
 
-        if (Math.Abs(startValue + dir) < 0.1f)
-        {
-            Text.gameObject.SetActive(true);
-        }
-        else
+        if (Math.Abs(startValue + dir) > 0.9f)
         {
             Text.gameObject.SetActive(false);
         }
