@@ -37,7 +37,7 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
         float targetTime = currentTime + time;
         while (currentTime < targetTime)
         {
-            currentTime += unscaledTime ? Time.deltaTime * TimeScale : Time.deltaTime;
+            currentTime += unscaledTime ? Time.deltaTime : Time.deltaTime * TimeScale;
             await Task.Yield();
         }
     }
@@ -48,7 +48,7 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
         float targetTime = currentTime + time;
         while (currentTime < targetTime)
         {
-            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            currentTime += unscaledTime ? Time.deltaTime : Time.deltaTime * TimeScale;
             await Task.Yield();
 
             if (cancellationToken.IsCancellationRequested) return;
@@ -61,7 +61,7 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
         float targetTime = currentTime + timeMilliseconds / 1000f;
         while (currentTime < targetTime)
         {
-            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            currentTime += unscaledTime ? Time.deltaTime : Time.deltaTime * TimeScale;
             await Task.Yield();
         }
     }
@@ -72,7 +72,7 @@ public sealed class AsyncUtils : MonoBehaviour, ICancellationTokenProvider
         float targetTime = currentTime + timeMilliseconds / 1000f;
         while (currentTime < targetTime)
         {
-            currentTime += unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            currentTime += unscaledTime ? Time.deltaTime : Time.deltaTime * TimeScale;
             await Task.Yield();
 
             if (cancellationToken.IsCancellationRequested) return;
