@@ -27,7 +27,10 @@ public sealed class Factories : MonoBehaviour
             [ItemType.Fly] = Fly.Weight,
             [ItemType.DoubleScore] = DoubleScore.Weight,
             [ItemType.Spring] = Spring.Weight,
+            [ItemType.Board] = BoardItem.Weight,
         };
+
+        Effects effects = _player.Effects;
         
         _itemFactories = new Dictionary<ItemType, ItemFactory<Item>>
         {
@@ -36,29 +39,30 @@ public sealed class Factories : MonoBehaviour
                 _activeItemsUI,
                 _run,
                 itemsActiveStates,
-                _player.Effects),
+                effects),
             [ItemType.DoubleMoney] = new DoubleMoneyItemFactory<Item>(
                 _runProgress,
                 _activeItemsUI,
                 _run,
                 itemsActiveStates,
-                _player.Effects),
+                effects),
             [ItemType.DoubleScore] = new DoubleScoreItemFactory<Item>(
                 _runProgress,
                 _activeItemsUI,
                 _run,
                 itemsActiveStates,
-                _player.Effects),
+                effects),
             [ItemType.Money] = new MoneyItemFactory<Item>(
                 _runProgress,
                 _run,
                 false,
                 false,
-                _player.Effects),
-            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
-            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
-            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, _player.Effects),
-            [ItemType.Spring] = new SpringItemFactory<Item>(_run,  _player.Effects),
+                effects),
+            [ItemType.Magnet] = new MagnetItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, effects),
+            [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, effects),
+            [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, effects),
+            [ItemType.Spring] = new SpringItemFactory<Item>(_run,  effects),
+            [ItemType.Board] = new BoardItemFactory<Item>(_run, effects),
         };
         
         _itemFactories.Add(ItemType.RandomBoost, new RandomItemFactory<Item>(this));
