@@ -71,7 +71,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
     private void FixedUpdate()
     {
-        if (!_isFollowing) return;
+        if (!_isFollowing || AsyncUtils.TimeScale == 0) return;
 
         _followerAnimator.ChangeAnimationFloat(AnimationType.Speed ,_runProgress.HalfSpeedMultiplier);
         
