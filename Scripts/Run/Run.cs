@@ -59,7 +59,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         
-        _resurrectMenu.ShowMenu(_runProgress.Score);
+        _resurrectMenu.ShowMenu((int)_runProgress.Score);
         AsyncUtils.TimeScale = 0;
         _pauseController.ChangeAllowingPause(false);
         

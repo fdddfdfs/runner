@@ -21,7 +21,7 @@ public sealed class ResurrectMenu : MonoBehaviour
     [SerializeField] private TMP_Text _currentScore;
     [SerializeField] private Run _run;
 
-    public void ShowMenu(float score)
+    public void ShowMenu(int score)
     {
         ChangeMenuVisible(true);
         
