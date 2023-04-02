@@ -395,9 +395,12 @@ namespace StarterAssets
 
         private void BoardActive()
         {
-            if (_playerRunInput.IsBoardPressed)
+            if (_playerRunInput.IsBoardPressed && Stats.BoardCount.Value > 0)
             {
-                PlayerStateMachine.ChangeStateSafely(typeof(RunState),typeof(BoardState));
+                if (PlayerStateMachine.ChangeStateSafely(typeof(RunState), typeof(BoardState)))
+                {
+                    Stats.BoardCount.Value -= 1;
+                }
             }
         }
 

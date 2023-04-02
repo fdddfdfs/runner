@@ -40,14 +40,16 @@ public sealed class PlayerStateMachine : IRunnable
         _currentState.EnterState();
     }
 
-    public void ChangeStateSafely(Type from, Type to)
+    public bool ChangeStateSafely(Type from, Type to)
     {
         if (_currentState.GetType() != from)
         {
-            return;
+            return false;
         }
         
         ChangeState(to);
+
+        return true;
     }
 
     public void StartRun()
