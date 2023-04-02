@@ -81,7 +81,7 @@ public sealed class UpgradeItem : MonoBehaviour
     //TODO: make function to calculate upgrade price
     private static int CalculateUpgradePrice(int level)
     {
-        return level * 1000;
+        return level * 100;
     }
 
     private void LocalizeText()

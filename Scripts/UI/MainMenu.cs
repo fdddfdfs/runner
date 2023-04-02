@@ -25,7 +25,7 @@ public sealed class MainMenu : MonoBehaviour
     public void ShowMainMenu()
     {
         _rightMenu.ChangeMenuActive(true);
-        //_startTextChangeTextOnStart.EndRun();
+        _startTextChangeTextOnStart.EndRun();
         _statsMenu.ChangeActiveState(true);
         _isRun = false;
         _exit.gameObject.SetActive(true);
