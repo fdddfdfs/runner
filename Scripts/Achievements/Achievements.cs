@@ -72,8 +72,12 @@ public class Achievements : MonoBehaviour
             return;
         }
         
-        SteamUserStats.GetAchievement(achievementName, out bool _);
-        SteamUserStats.StoreStats();
+        SteamUserStats.GetAchievement(achievementName, out bool achieved);
+        if (!achieved)
+        {
+            SteamUserStats.SetAchievement(achievementName);
+            SteamUserStats.StoreStats();
+        }
     }
 
     public void IncreaseProgress(string achievementName, int progress)
@@ -100,6 +104,22 @@ public class Achievements : MonoBehaviour
             currentProgress.Value += progress;
             _achievementsProgress[achievementName] = currentProgress;
         }
+    }
+
+    public void ResetProgress(string achievementName)
+    {
+        if (_givenAchievements.Contains(achievementName)) return;
+
+        if (!_achievementByName.ContainsKey(achievementName))
+        {
+            throw new Exception($"{nameof(Achievements)} doesnt have data for {achievementName}");
+        }
         
+        DataInt currentProgress = _achievementsProgress.GetValueOrDefault(
+            achievementName,
+            new DataInt(achievementName, 0));
+
+        currentProgress.Value = 0;
+        _achievementsProgress[achievementName] = currentProgress;
     }
 }
