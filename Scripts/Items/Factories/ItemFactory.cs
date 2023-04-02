@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public abstract class ItemFactory<T> : AbstractFactory<T> where T : MonoBehaviour
@@ -8,8 +9,13 @@ public abstract class ItemFactory<T> : AbstractFactory<T> where T : MonoBehaviou
     
     protected ItemFactory()
     {
-        if (PrefabName == null) return;
+        if (PrefabName == null) return; 
         
         _prefab = Resources.Load(PrefabName) as GameObject;
+
+        if (!_prefab)
+        {
+            throw new Exception($"Cannot find resource prefab named {PrefabName}");
+        }
     }
 }
