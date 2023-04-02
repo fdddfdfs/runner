@@ -1,4 +1,6 @@
-﻿public sealed class HideTextOnStart : ChangeTextOnStart
+﻿using UnityEngine;
+
+public sealed class HideTextOnStart : ChangeTextOnStart
 {
     public override void StartRun()
     {
@@ -7,6 +9,7 @@
 
     public override void EndRun()
     {
-        ChangeTextDilate(-1, 1);
+        Text.gameObject.SetActive(true);
+        SetDilate(0);
     }
 }

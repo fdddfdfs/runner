@@ -37,23 +37,23 @@ public abstract class ChangeTextOnStart : MonoBehaviour, IRunnable
     {
         CheckCancellationToken();
         
-        if (Math.Abs(startValue + dir) < 0.1f)
-        {
-            Text.gameObject.SetActive(true);
-        }
+        Text.gameObject.SetActive(true);
         
         _isActive = true;
         float currentTime = 0;
+        CancellationToken token = _cancellationTokenSource.Token;
+        
         while (currentTime < ShowTimeMilliseconds)
         {
             Text.fontMaterial.SetFloat(
                 ShaderUtilities.ID_FaceDilate,
                 startValue + currentTime / ShowTimeMilliseconds * dir);
 
-            await AsyncUtils.Wait(DeltaTimeMilliseconds, _cancellationTokenSource.Token);
-            if (_cancellationTokenSource.Token.IsCancellationRequested)
+            await AsyncUtils.Wait(DeltaTimeMilliseconds, token, true);
+            if (token.IsCancellationRequested)
             {
                 Text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, startValue + dir);
+
                 return;
             }
 
