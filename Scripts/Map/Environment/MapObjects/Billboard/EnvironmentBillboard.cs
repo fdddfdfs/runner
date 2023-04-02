@@ -1,16 +1,29 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class EnvironmentBillboard : MonoBehaviour, ITriggerable
 {
+    private const int ImageMaterialNumber = 1;
+    
     [SerializeField] private List<EnvironmentBillboardInfo> _environmentBillboardInfos;
     [SerializeField] private MeshRenderer _billboard;
+
+    private int _currentBillboard;
     
     public void Trigger()
     {
+        Achievements.Instance.GetAchievement(_environmentBillboardInfos[_currentBillboard].BillboardAchievement.Name);
+    }
+
+    private void OnEnable()
+    {
         int r = Random.Range(0, _environmentBillboardInfos.Count);
 
-        _billboard.material.mainTexture = _environmentBillboardInfos[r].Sprite.texture;
-        Achievements.Instance.GetAchievement(_environmentBillboardInfos[r].BillboardAchievement.Name);
+        _billboard.materials[ImageMaterialNumber].mainTexture = _environmentBillboardInfos[r].Sprite.texture;
+
+        _currentBillboard = r;
     }
 }
