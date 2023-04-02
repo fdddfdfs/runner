@@ -23,6 +23,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     private string[] _scoreAchievements;
 
     private float _runTime;
+    private float _scoreDelta;
 
     public float SpeedMultiplier { get; private set; } = DefaultSpeedMultiplier;
 
@@ -35,12 +36,19 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     public void AddScore(float value)
     {
         float addedValue = value * _scoreMultiplier * SpeedMultiplier;
-        Score += value * _scoreMultiplier * SpeedMultiplier;
-        _scoreShowText.Text.text =((int)Score).ToString(CultureInfo.InvariantCulture);
+        Score += addedValue;
+        _scoreShowText.Text.text = ((int)Score).ToString(CultureInfo.InvariantCulture);
 
-        for (var i = 0; i < _moneyAchievements.Length; i++)
+        _scoreDelta += addedValue;
+
+        if (_scoreDelta > 1)
         {
-            Achievements.Instance.IncreaseProgress(_scoreAchievements[i], (int)addedValue);
+            for (var i = 0; i < _scoreAchievements.Length; i++)
+            {
+                Achievements.Instance.IncreaseProgress(_scoreAchievements[i], 1);
+            }
+
+            _scoreDelta -= 1;
         }
     }
 
@@ -113,6 +121,11 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
             
             _mainMenuRightMenu.SetInventoryResult(result);
         }
+
+        foreach (string scoreAchievement in _scoreAchievements)
+        {
+            Achievements.Instance.ResetProgress(scoreAchievement);
+        }
     }
 
     private void Awake()
@@ -134,7 +147,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     {
         _scoreShowText.SetDilate(-1);
         _moneyShowText.SetDilate(-1);
-        
+
         _moneyParent.SetActive(false);
         _scoreParent.SetActive(false);
     }
