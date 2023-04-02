@@ -121,6 +121,7 @@ public sealed class Board : IHittable
     private async void Activated()
     {
         _isActive = true;
+        Achievements.Instance.GetAchievement("Item_8");
 
         await AsyncUtils.Wait(BoardDuration, _cancellationTokenSource.Token);
 
