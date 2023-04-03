@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,8 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
             item = _activeItems.GetItem();
             item.ItemImage.sprite = _items[itemType].Icon;
             _currentlyActiveItems[itemType] = item;
+
+            item.Text.text = itemType == ItemType.Board ? Stats.BoardCount.Value.ToString() : string.Empty;
         }
         
         CheckCancellationTokenSource();
