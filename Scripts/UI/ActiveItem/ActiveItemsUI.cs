@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DG.Tweening;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -36,7 +34,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
             item.ItemImage.sprite = _items[itemType].Icon;
             _currentlyActiveItems[itemType] = item;
 
-            item.Text.text = itemType == ItemType.Board ? Stats.BoardCount.Value.ToString() : string.Empty;
+            item.Text.text = itemType == ItemType.Board ? $"x{Stats.BoardCount.Value.ToString()}" : string.Empty;
         }
         
         CheckCancellationTokenSource();
