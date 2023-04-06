@@ -613,6 +613,7 @@ namespace StarterAssets
 
         private void Die(Vector3 hitNormal)
         {
+            _playerCamera.StopShake();
             _run.Lose();
             StopRecover();
             AnimationType dieAnimationType = 

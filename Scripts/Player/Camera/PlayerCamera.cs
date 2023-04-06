@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Cinemachine;
 using UnityEngine;
+using Quaternion = System.Numerics.Quaternion;
 
 public class PlayerCamera : IRunnable
 {
@@ -9,10 +10,13 @@ public class PlayerCamera : IRunnable
     private readonly CinemachineVirtualCamera _idleCamera;
     private readonly Camera _camera;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
+    private readonly CancellationToken[] _linkedTokens = new CancellationToken[1];
 
     private readonly float _startAmplitude;
     private readonly CinemachineBasicMultiChannelPerlin _cinemachineBasicMultiChannelPerlin;
-    
+
+    private CancellationTokenSource _cancellationTokenSource;
+
     public PlayerCamera(
         Camera camera,
         CinemachineVirtualCamera runCamera,
@@ -41,13 +45,17 @@ public class PlayerCamera : IRunnable
     {
         _runCamera.gameObject.SetActive(false);
         _camera.gameObject.SetActive(false);
+        _camera.transform.position = Vector3.zero;
+        _camera.transform.rotation = UnityEngine.Quaternion.Euler(0, 180, 0);
     }
 
     public async void ShakeCamera(float intensity, float time)
     {
+        RecreateTokenSource();
+        
         _cinemachineBasicMultiChannelPerlin.m_AmplitudeGain = intensity;
         float currentTime = 0;
-        CancellationToken token = _cancellationTokenProvider.GetCancellationToken();
+        CancellationToken token = _cancellationTokenSource.Token;
         while (currentTime < time)
         {
             await Task.Yield();
@@ -59,6 +67,21 @@ public class PlayerCamera : IRunnable
         }
 
         _cinemachineBasicMultiChannelPerlin.m_AmplitudeGain = _startAmplitude;
+    }
+
+    public void StopShake()
+    {
+        _cancellationTokenSource?.Cancel();
+    }
+
+    private void RecreateTokenSource()
+    {
+        if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
+        {
+            _cancellationTokenSource?.Dispose();
+            _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+        }
     }
 
     private void SetIdleCamera()
