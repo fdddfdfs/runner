@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Gaia;
 using UnityEngine;
 
 public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
@@ -23,7 +24,17 @@ public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
             _environmentBlockInfo.Terrain.terrainData.size.z *
             _environmentBlockInfo.Prefab.transform.localScale.z,
             _environmentBlockInfo.AchievementData);
-        
+
+        var terrainDetailOverwrite = environmentBlockObject.GetComponentInChildren<TerrainDetailOverwrite>();
+
+        if (terrainDetailOverwrite != null)
+        {
+            terrainDetailOverwrite.m_detailDensity = 0.1f + SettingsStorage.Graphic.Value * 0.1f;
+            terrainDetailOverwrite.m_detailDistance = 100 + SettingsStorage.Graphic.Value * 15;
+            terrainDetailOverwrite.m_detailQuality = (GaiaConstants.TerrainDetailQuality)SettingsStorage.Graphic.Value;
+            terrainDetailOverwrite.ApplySettings(false);
+        }
+
         _count++;
         
         StaticBatchingUtility.Combine(environmentBlockObject);
