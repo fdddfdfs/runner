@@ -10,6 +10,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
     [SerializeField] private LevelBlockInfo _startLevelBlock;
     [SerializeField] private List<EnvironmentBlockInfo> _environmentBlockInfos;
     [SerializeField] private List<RoadBlockInfo> _roadBlockInfos;
+    [SerializeField] private List<RoadBlockDamageInfo> _roadBlockDamageInfos;
     [SerializeField] private BoxCollider _mainMenuLocationPrefab;
     [SerializeField] private Transform _player;
     [SerializeField] private Factories _factories;
@@ -78,7 +79,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
     {
         _level = _needSpawnLevel ? new Level(_levelBlocks, _startLevelBlock, _factories, _player, _runProgress) : null;
         _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
-        _road = new Road(_roadBlockInfos, _player);
+        _road = new Road(_roadBlockInfos, _player, _roadBlockDamageInfos);
         _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player);
         _runnables = new List<IRunnable> { _level, _environment, _road, _mainMenuLocation };
 
