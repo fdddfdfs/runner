@@ -1,4 +1,6 @@
-﻿public sealed class EnvironmentBlock : Triggerable, IMapBlock
+﻿using System.Threading;
+
+public sealed class EnvironmentBlock : Triggerable, IMapBlock
 {
     private AchievementData _achievementData;
     
@@ -20,7 +22,11 @@
 
     public async void HideBlock()
     {
-        await AsyncUtils.Wait(0.1f, AsyncUtils.Instance.GetCancellationToken());
+        CancellationToken token = AsyncUtils.Instance.GetCancellationToken();
+        
+        await AsyncUtils.Wait(0.1f, token);
+
+        if (token.IsCancellationRequested) return;
         
         gameObject.SetActive(false);
     }
