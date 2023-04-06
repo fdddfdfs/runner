@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "Road", menuName = "Road")]
+[CreateAssetMenu(fileName = "Road", menuName = "Road/Road")]
 public sealed class RoadBlockInfo : ScriptableObject, IWeightable
 {
     [SerializeField] private RoadLine _roadLine;

@@ -9,7 +9,7 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private const float BaseYPosition = 0;
     private const float HideBlockOffset = 5;
 
-    private Dictionary<int, AbstractFactory<TBlock>> _blocks;
+    //private Dictionary<int, AbstractFactory<TBlock>> _blocks;
     private Dictionary<int, FactoryPoolMono<TBlock>> _blockPools;
 
     private readonly Queue<TBlock> _blocksPositions;
