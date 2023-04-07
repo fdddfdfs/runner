@@ -29,8 +29,8 @@ public sealed class EnvironmentBlockFactory : AbstractFactory<EnvironmentBlock>
 
         if (terrainDetailOverwrite != null)
         {
-            terrainDetailOverwrite.m_detailDensity = 0.1f + SettingsStorage.Graphic.Value * 0.1f;
-            terrainDetailOverwrite.m_detailDistance = 100 + SettingsStorage.Graphic.Value * 15;
+            terrainDetailOverwrite.m_detailDensity = 0.3f + SettingsStorage.Graphic.Value * 0.1f;
+            terrainDetailOverwrite.m_detailDistance = 115 + SettingsStorage.Graphic.Value * 15;
             terrainDetailOverwrite.m_detailQuality = (GaiaConstants.TerrainDetailQuality)SettingsStorage.Graphic.Value;
             terrainDetailOverwrite.ApplySettings(false);
         }

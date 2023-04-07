@@ -10,6 +10,7 @@ public sealed class LoseDecideMenu : MonoBehaviour
     [SerializeField] private Button _declineButton;
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private Run _run;
+    [SerializeField] private Map _map;
 
     private Type _endCutscene;
     private Type _startCutscene;
@@ -35,6 +36,7 @@ public sealed class LoseDecideMenu : MonoBehaviour
             _startCutscene = typeof(AcceptLoseStartCutscene);
             _menu.SetActive(false);
             _player.Lose();
+            _map.ChangeStartLocationDetailsDensity(1);
             
             Sounds.Instance.PlayRandomSounds(2,"Sign");
         });
@@ -45,6 +47,7 @@ public sealed class LoseDecideMenu : MonoBehaviour
             _startCutscene = typeof(DeclineLoseStartCutscene);
             _menu.SetActive(false);
             _player.Lose();
+            _map.ChangeStartLocationDetailsDensity(0);
             
             Sounds.Instance.PlayRandomSounds(2,"Throw");
         });

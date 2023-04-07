@@ -1,9 +1,15 @@
-﻿using UnityEngine;
+﻿using System;
+using Gaia;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 public sealed class MainMenuLocation : IRunnable
 {
     private readonly GameObject _startLocation;
     private readonly Transform _player;
+    private readonly TerrainDetailOverwrite _terrainDetailOverwrite;
+
+    private float _currentDetailsDensity;
     
     public MainMenuLocation(BoxCollider startLocation, Transform player)
     {
@@ -12,11 +18,9 @@ public sealed class MainMenuLocation : IRunnable
         _startLocation.transform.position = Vector3.back * (sizeZ / 2);
 
         _player = player;
-    }
 
-    private void ChangeActive(bool active)
-    {
-        _startLocation.SetActive(active);
+        _terrainDetailOverwrite = _startLocation.GetComponentInChildren<TerrainDetailOverwrite>();
+        _currentDetailsDensity = _terrainDetailOverwrite.m_detailDensity;
     }
 
     public void StartRun()
@@ -29,6 +33,16 @@ public sealed class MainMenuLocation : IRunnable
         ChangeActive(true);
     }
 
+    public void ChangeDetailsDensity(float value)
+    {
+        if (Math.Abs(_currentDetailsDensity - value) < 0.01f) return;
+        
+        _terrainDetailOverwrite.m_detailDensity = value;
+        _currentDetailsDensity = value;
+        
+        _terrainDetailOverwrite.ApplySettings(false);
+    }
+
     public void CheckToHideBlock()
     {
         if (!_startLocation.activeSelf) return;
@@ -37,5 +51,10 @@ public sealed class MainMenuLocation : IRunnable
         {
             ChangeActive(false);
         }
+    }
+    
+    private void ChangeActive(bool active)
+    {
+        _startLocation.SetActive(active);
     }
 }

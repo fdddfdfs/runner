@@ -69,6 +69,11 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
 
         _isPause = true;
     }
+
+    public void ChangeStartLocationDetailsDensity(float value)
+    {
+        _mainMenuLocation.ChangeDetailsDensity(value);
+    }
     
     private void Awake()
     {
