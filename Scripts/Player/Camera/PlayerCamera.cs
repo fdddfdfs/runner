@@ -37,6 +37,7 @@ public class PlayerCamera : IRunnable
 
     public void StartRun()
     {
+        _camera.transform.rotation = UnityEngine.Quaternion.Euler(0, 0, 0);
         _camera.gameObject.SetActive(true);
         _runCamera.gameObject.SetActive(true);
     }
