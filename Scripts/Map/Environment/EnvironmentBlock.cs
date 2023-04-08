@@ -1,9 +1,10 @@
 ﻿using System.Threading;
+using Random = UnityEngine.Random;
 
 public sealed class EnvironmentBlock : Triggerable, IMapBlock
 {
     private AchievementData _achievementData;
-    
+
     public float BlockSize { get; private set; }
 
     public void Init(float blockSize, AchievementData achievementData)
@@ -18,6 +19,7 @@ public sealed class EnvironmentBlock : Triggerable, IMapBlock
     public void EnterBlock()
     {
         Achievements.Instance.GetAchievement(_achievementData.Name);
+        Achievements.Instance.GetAchievement($"Location_{Random.Range(7, 16)}");
     }
 
     public async void HideBlock()
