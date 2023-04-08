@@ -187,6 +187,7 @@ namespace StarterAssets
             Sounds.Instance.PlayRandomSounds(2, "Resurrect");
 
             IsDie = false;
+            _isFall = false;
         }
 
         public void ChangeHittable(IHittable newHittable)
