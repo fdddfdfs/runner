@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using StarterAssets;
 using UnityEngine;
 
@@ -10,7 +8,7 @@ using UnityEngine;
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 1;
-    private const int DeactivateTimeMilliseconds = 20 * 1000;
+    private const int DeactivateTimeMilliseconds = 10 * 1000;
 
     private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;

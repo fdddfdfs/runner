@@ -34,7 +34,7 @@ public sealed class PauseMenu : MonoBehaviour
             _run.EndRun();
             _run.StartRun();
             
-            Achievements.Instance.GetAchievement("Pause");
+            Achievements.Instance.GetAchievement("Restart");
         });
         
         _backToMenuButton.onClick.AddListener(() =>

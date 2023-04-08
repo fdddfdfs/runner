@@ -20,12 +20,10 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
     [SerializeField] private Fade _fade;
     [SerializeField] private MainMenu _mainMenu;
     [SerializeField] private ThirdPersonController _player;
-    
+
     private Dictionary<Type, Cutscene> _cutscenes;
     private Cutscene _cutscene;
     private bool _cutsceneActive;
-
-    public PlayerClothes CurrentCutscenePlayerClothes => _cutscene.PlayerClothes;
 
     public void ChangeCurrentCutscene(Type newCutscene)
     {

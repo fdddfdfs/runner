@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 public sealed class RoadBlockFactory : AbstractFactory<RoadBlock>
 {
     private const int RoadBlockDamageOffset = 5;
-    private const int RoadBlockDamageSpawnChance = 3;
+    private const int RoadBlockDamageSpawnChance = 10;
     private const float RoadBlockDamageYOffset = 0.01f;
     
     private readonly RoadBlockInfo _roadBlockInfo;
