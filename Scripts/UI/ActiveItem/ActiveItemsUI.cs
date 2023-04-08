@@ -17,7 +17,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
     private Dictionary<ItemType, ActiveItem> _currentlyActiveItems;
     private Dictionary<ItemType, ItemData> _items;
 
-    private CancellationTokenSource _cancellationTokenSource;
+    private Dictionary<ItemType, CancellationTokenSource> _cancellationTokenSources;
 
     public void ShowNewItemEffect(ItemType itemType, float time)
     {
@@ -26,7 +26,8 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         if (_currentlyActiveItems.ContainsKey(itemType))
         {
             item = _currentlyActiveItems[itemType];
-            _cancellationTokenSource.Cancel();
+            
+            _cancellationTokenSources[itemType].Cancel();
         }
         else
         {
@@ -37,18 +38,19 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
             item.Text.text = itemType == ItemType.Board ? $"x{Stats.BoardCount.Value.ToString()}" : string.Empty;
         }
         
-        CheckCancellationTokenSource();
+        CheckCancellationTokenSource(itemType);
         
         ShowActiveEffect(item, itemType, time);
     }
 
-    private void CheckCancellationTokenSource()
+    private void CheckCancellationTokenSource(ItemType itemType)
     {
-        if (_cancellationTokenSource == null || _cancellationTokenSource.IsCancellationRequested)
+        CancellationTokenSource itemTokenSource = _cancellationTokenSources.GetValueOrDefault(itemType, null);
+        if (itemTokenSource == null || itemTokenSource.IsCancellationRequested)
         {
-            _cancellationTokenSource?.Dispose();
+            itemTokenSource?.Dispose();
             _linkedTokens[0] = AsyncUtils.Instance.GetCancellationToken();
-            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+            _cancellationTokenSources[itemType] = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
         }
     }
 
@@ -56,7 +58,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
     {
         float currentTime = 0;
 
-        CancellationToken token = _cancellationTokenSource.Token;
+        CancellationToken token = _cancellationTokenSources[itemType].Token;
         
         foreach (Image progressImage in item.ProgressImages)
         {
@@ -90,7 +92,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         
         if (isForceCancel)
         {
-            _cancellationTokenSource.Cancel();
+            _cancellationTokenSources[itemType].Cancel();
         }
         
         ActiveItem item = _currentlyActiveItems[itemType];
@@ -120,5 +122,7 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         }
 
         _activeItems = new GameObjectPoolMono<ActiveItem>(_prefab, _parent, true, 5);
+
+        _cancellationTokenSources = new Dictionary<ItemType, CancellationTokenSource>();
     }
 }
