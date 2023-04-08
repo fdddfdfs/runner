@@ -113,6 +113,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         _player.Resurrect();
         _pauseController.ChangeAllowingPause(true);
         AsyncUtils.TimeScale = 1;
+        _map.Level.HideCurrentEnteredBlock();
     }
 
     public void EndRun()
