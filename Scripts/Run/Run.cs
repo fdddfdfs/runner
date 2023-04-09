@@ -157,11 +157,10 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 
     private void Update()
     {
-        if (_isRun)
-        {
-            _runProgress.AddScore(Time.deltaTime * AsyncUtils.TimeScale);
-            _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime * AsyncUtils.TimeScale);
-        }
+        if (!_isRun) return;
+        
+        _runProgress.AddScore(Time.deltaTime * AsyncUtils.TimeScale);
+        _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime * AsyncUtils.TimeScale);
     }
 
     private void Awake()
