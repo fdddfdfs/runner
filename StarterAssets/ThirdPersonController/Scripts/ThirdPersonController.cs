@@ -31,6 +31,8 @@ namespace StarterAssets
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
         [SerializeField] private Camera _playerRunCamera;
         [SerializeField] private Transform _playerRootBone;
+        [SerializeField] private Fade _fade;
+        [SerializeField] private LoseDecideMenu _loseDecideMenu;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -371,6 +373,8 @@ namespace StarterAssets
             };
 
             PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower, Effects);
+            
+            _animator.GetBehaviour<DieBehaviour>().Init(_fade, _loseDecideMenu);
         }
 
         private void FixedUpdate()
