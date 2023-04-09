@@ -27,7 +27,7 @@ public sealed class PlayerStateMachine : IRunnable
             [typeof(IdleState)] = new IdleState(player.PlayerAnimator),
         };
         
-        _currentState = _states[typeof(IdleState)];
+        _currentState = _states[typeof(RunState)];
         _currentState.EnterState();
     }
 
@@ -59,6 +59,6 @@ public sealed class PlayerStateMachine : IRunnable
 
     public void EndRun()
     {
-        ChangeState(typeof(IdleState));
+        ChangeState(typeof(RunState));
     }
 }

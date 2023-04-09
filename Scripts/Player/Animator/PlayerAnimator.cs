@@ -24,7 +24,7 @@ public sealed class PlayerAnimator : BaseAnimator
             { typeof(PlayerIdleAnimator), new PlayerIdleAnimator(playerAnimator) },
         };
         
-        ChangeAnimator(typeof(PlayerIdleAnimator));
+        ChangeAnimator(typeof(PlayerDefaultAnimator));
     }
 
     public override void ChangeAnimator(Type animatorType)
