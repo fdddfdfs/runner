@@ -237,6 +237,8 @@ namespace StarterAssets
             _playerClothes.ChangeClothes(ClothesStorage.PlayerClothes.Value, false);
             
             Sounds.Instance.DisableAudioForTime(1, 2f);
+            
+            (_hittable as PlayerHittable)?.StartRun();
         }
 
         public void EndRun()

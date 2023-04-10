@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 using StarterAssets;
-using UnityEngine;
 
-public sealed class PlayerHittable : IHittable
+public sealed class PlayerHittable : IHittable, IRunnable
 {
     private const float RecoverTime = 20f;
 
@@ -86,5 +84,17 @@ public sealed class PlayerHittable : IHittable
         _recoverCancellationSource?.Dispose();
         _linkedTokens[0] = _cancellationTokenProvider.GetCancellationToken();
         _recoverCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_linkedTokens);
+    }
+
+    public async void StartRun()
+    {
+        await AsyncUtils.Wait(1f, AsyncUtils.Instance.GetCancellationToken());
+        
+        Recover();
+    }
+
+    public void EndRun()
+    {
+        
     }
 }
