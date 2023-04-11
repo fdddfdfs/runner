@@ -9,7 +9,7 @@ public sealed class DoubleScore : ActivatableItem
     
     public static int Weight => 1;
 
-    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleScoreLevel.Value;
     
     protected override ItemType ActiveItemType => ItemType.DoubleScore;
     
