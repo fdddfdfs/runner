@@ -18,9 +18,9 @@ public sealed class DieBehaviour : StateMachineBehaviour
         }, FadeMultiplier);
     }
 
-    public void Init(Fade fade, LoseDecideMenu loseDecideMenu)
+    private void Awake()
     {
-        _fade = fade;
-        _loseDecideMenu = loseDecideMenu;
+        _fade = FindObjectOfType<Fade>();
+        _loseDecideMenu = FindObjectOfType<LoseDecideMenu>();
     }
 }
