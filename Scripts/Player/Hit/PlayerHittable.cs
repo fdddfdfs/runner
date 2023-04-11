@@ -88,7 +88,7 @@ public sealed class PlayerHittable : IHittable, IRunnable
 
     public async void StartRun()
     {
-        await AsyncUtils.Wait(1f, AsyncUtils.Instance.GetCancellationToken());
+        await AsyncUtils.Wait(0.5f, AsyncUtils.Instance.GetCancellationToken());
         
         Recover();
     }

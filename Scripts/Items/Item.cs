@@ -8,7 +8,7 @@ using UnityEngine;
 public abstract class Item : MonoBehaviour
 {
     private const float ActivateTime = 1;
-    private const int DeactivateTimeMilliseconds = 10 * 1000;
+    private const int DeactivateTimeMilliseconds = 30 * 1000;
 
     private List<MeshRenderer> _meshRenderers;
     private BoxCollider _boxCollider;
@@ -83,7 +83,7 @@ public abstract class Item : MonoBehaviour
 
         await AsyncUtils.Wait(DeactivateTimeMilliseconds, _cancellationTokenSource.Token);
 
-        if (_cancellationTokenSource.Token.IsCancellationRequested) return;
+        if (!Application.isPlaying) return;
         
         if (gameObject.activeSelf)
         {

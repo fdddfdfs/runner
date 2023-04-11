@@ -27945,6 +27945,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 16acd85189201ee4797d703c05d6a32f, type: 2}
   - {fileID: 11400000, guid: be80a078365de884281672fe82fef9d3, type: 2}
   - {fileID: 11400000, guid: 51b3851fe1edd064398cdb79f4dfe191, type: 2}
+  - {fileID: 11400000, guid: f07ac02241900ee488ffe450cbda4a0a, type: 2}
   _roadBlockInfos:
   - {fileID: 11400000, guid: 68cc3c92c39a54849bf49124f84b142a, type: 2}
   - {fileID: 11400000, guid: 7389bdba755ff924bb06f09dd542b905, type: 2}
@@ -30656,6 +30657,7 @@ MonoBehaviour:
   _restart: {fileID: 1871536761}
   _backToMenu: {fileID: 2127975955}
   _run: {fileID: 257345775}
+  _fade: {fileID: 1682359}
 --- !u!4 &1061024081
 Transform:
   m_ObjectHideFlags: 0
@@ -31380,6 +31382,7 @@ MonoBehaviour:
   _backToMenuButton: {fileID: 1259752408}
   _run: {fileID: 257345775}
   _pauseController: {fileID: 1306159500}
+  _fade: {fileID: 1682359}
 --- !u!1 &1148471281
 GameObject:
   m_ObjectHideFlags: 0
@@ -41949,7 +41952,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5290610966159597683, guid: c4415becbdca3624c9422e8eb88943f1, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.93859863
+      value: 0.93847656
       objectReference: {fileID: 0}
     - target: {fileID: 5290610966270551768, guid: c4415becbdca3624c9422e8eb88943f1, type: 3}
       propertyPath: m_AnchorMax.y
@@ -43008,6 +43011,8 @@ MonoBehaviour:
   _idleCamera: {fileID: 1539139351}
   _playerRunCamera: {fileID: 53667651}
   _playerRootBone: {fileID: 1912420894136730018}
+  _fade: {fileID: 1682359}
+  _loseDecideMenu: {fileID: 1687693180}
   MoveSpeed: 2
   SprintSpeed: 10
   RotationSmoothTime: 0.12

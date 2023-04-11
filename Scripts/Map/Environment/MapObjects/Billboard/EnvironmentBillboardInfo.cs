@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "EnvironmentBillboard", menuName = "Environments/EnvironmentBillboardInfo")]
 public class EnvironmentBillboardInfo : ScriptableObject
