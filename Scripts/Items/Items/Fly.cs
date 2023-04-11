@@ -10,7 +10,7 @@ public sealed class Fly : ActivatableItem
     
     public static int Weight => 1;
     
-    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.FlyLevel.Value;
 
     protected override ItemType ActiveItemType => ItemType.Fly;
 

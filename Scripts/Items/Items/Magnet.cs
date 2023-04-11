@@ -23,7 +23,7 @@ public sealed class Magnet : Item
 
     private static ItemType ActiveItemType => ItemType.Magnet;
     
-    private static float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    private static float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.MagnetLevel.Value;
 
     public void Init(
         ActiveItemsUI activeItemsUI,

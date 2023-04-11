@@ -22,7 +22,7 @@ public sealed class Board : IHittable
     private bool _isActive;
     private bool _isRecovery;
     
-    public static float BoardDuration => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    public static float BoardDuration => BaseDuration + AddedSecondsPerLevel * Stats.BoardLevel.Value;
 
     public Board(
         ThirdPersonController player,

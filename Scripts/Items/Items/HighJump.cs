@@ -13,7 +13,7 @@ public sealed class HighJump : ActivatableItem
 
     private ThirdPersonController _player;
     
-    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.HighJumpLevel.Value;
     
     protected override ItemType ActiveItemType => ItemType.HighJump;
 

@@ -9,7 +9,7 @@ public sealed class Immune : ActivatableItem
     
     public static int Weight => 1;
 
-    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.DoubleMoneyLevel.Value;
+    protected override float ActiveTime => BaseDuration + AddedSecondsPerLevel * Stats.ImmuneLevel.Value;
     
     protected override ItemType ActiveItemType => ItemType.Immune;
 
