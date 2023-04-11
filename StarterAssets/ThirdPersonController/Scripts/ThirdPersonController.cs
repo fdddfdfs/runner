@@ -31,8 +31,6 @@ namespace StarterAssets
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
         [SerializeField] private Camera _playerRunCamera;
         [SerializeField] private Transform _playerRootBone;
-        [SerializeField] private Fade _fade;
-        [SerializeField] private LoseDecideMenu _loseDecideMenu;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -134,6 +132,8 @@ namespace StarterAssets
         private PlayerCamera _playerCamera;
 
         private PlayerClothes _playerClothes;
+
+        private float _moveBackTarget = 0f;
 
         public Effects Effects { get; private set; }
 
@@ -343,7 +343,7 @@ namespace StarterAssets
                     typeof(FlyGravity),
                     new FlyGravity(
                         Gravity,
-                        JumpHeight * 5,
+                        JumpHeight * 6,
                         SprintSpeed,
                         this,
                         _map,
@@ -375,8 +375,6 @@ namespace StarterAssets
             };
 
             PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower, Effects);
-            
-            _animator.GetBehaviour<DieBehaviour>().Init(_fade, _loseDecideMenu);
         }
 
         private void FixedUpdate()
@@ -398,6 +396,7 @@ namespace StarterAssets
             JumpAndGravity();
             Move();
             CameraRotation();
+            MoveBack();
         }
 
         private void BoardActive()
@@ -631,6 +630,17 @@ namespace StarterAssets
             PlayerAnimator.ChangeAnimationTrigger(dieAnimationType);
             _isFall = true;
             IsDie = true;
+            _moveBackTarget = 3f;
+        }
+
+        private void MoveBack()
+        {
+            if (_moveBackTarget > 0)
+            {
+                float moveDelta = _speed * Time.fixedDeltaTime;
+                Controller.Move(Vector3.back * moveDelta);
+                _moveBackTarget -= moveDelta;
+            }
         }
 
         private void Fall()
