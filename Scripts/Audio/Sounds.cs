@@ -8,16 +8,17 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
 {
     [SerializeField] private List<AudioSource> _soundsSources;
     [SerializeField] private List<AudioClip> _soundsClips;
+    [SerializeField] private List<SoundData> _soundsData;
 
     private Dictionary<string, AudioClip> _clips;
     private Dictionary<string, int> _randomClipsCount;
+    private Dictionary<string, float> _soundsVolume;
+
+    private float _currentVolume;
 
     public void ChangeSoundsVolume(float newVolume)
     {
-        foreach (AudioSource soundsSource in _soundsSources)
-        {
-            soundsSource.volume = newVolume;
-        }
+        _currentVolume = newVolume;
     }
     
     public async void DisableAudioForTime(int layer, float time)
@@ -35,7 +36,9 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
 
     public void PlaySound(int layer, string clipName)
     {
-        if (!_soundsSources[layer].enabled) return;
+        AudioSource source = _soundsSources[layer];
+        
+        if (!source.enabled) return;
         
         CheckLayer(layer);
 
@@ -45,14 +48,18 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
         {
             throw new Exception($"Clip with name: {clipName} doesnt exist in {nameof(Sounds)}");
         }
+
+        source.volume = _soundsVolume.GetValueOrDefault(clipName, 1) * _currentVolume;
         
-        _soundsSources[layer].clip = _clips[clipName];
-        _soundsSources[layer].Play();
+        source.clip = _clips[clipName];
+        source.Play();
     }
 
     public void PlayRandomSounds(int layer, string clipBaseName)
     {
-        if (!_soundsSources[layer].enabled) return;
+        AudioSource source = _soundsSources[layer];
+        
+        if (!source.enabled) return;
         
         CheckLayer(layer);
         
@@ -73,9 +80,10 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
                 $"Clip with name: {clipName} doesnt exist in {nameof(Sounds)}," +
                 $" clips with {clipBaseName} probably have missing numbers");
         }
-        
-        _soundsSources[layer].clip = _clips[clipName];
-        _soundsSources[layer].Play();
+
+        source.volume = _soundsVolume.GetValueOrDefault(clipName, 1) * _currentVolume;
+        source.clip = _clips[clipName];
+        source.Play();
     }
 
     public void StopSound(int layer)
@@ -122,6 +130,12 @@ public sealed class Sounds : ResourcesSingleton<Sounds, SoundsResourceName>
             }
             
             _clips.Add(clipName, soundsClip);
+        }
+
+        _soundsVolume = new Dictionary<string, float>();
+        for (int i = 0; i < _soundsData.Count; i++)
+        {
+            _soundsVolume[_soundsData[i].AudioClip.name.ToLower()] = _soundsData[i].SoundVolume;
         }
     }
 
