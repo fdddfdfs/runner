@@ -9,6 +9,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
     private const float DefaultSpeedMultiplier = 1;
     private const int MoneyAchievementsNumber = 9;
     private const int ScoreAchievementsNumber = 9;
+    private const int MoneyToPlaySound = 250;
 
     [SerializeField] private GameObject _scoreParent;
     [SerializeField] private GameObject _moneyParent;
@@ -64,7 +65,7 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
             Achievements.Instance.IncreaseProgress(_moneyAchievements[i], addedMoney);
         }
 
-        if (Money % 100 == 0)
+        if (Money % MoneyToPlaySound == 0)
         {
             Sounds.Instance.PlayRandomSounds(2, "Money");
         }

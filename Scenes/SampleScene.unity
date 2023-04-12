@@ -27936,6 +27936,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e057d97a2da0739448fd066677649dcb, type: 2}
   - {fileID: 11400000, guid: 72cde31d4476f034793fc65f409587db, type: 2}
   - {fileID: 11400000, guid: d9c4aa2812348f747a9872add0406215, type: 2}
+  - {fileID: 11400000, guid: e78df49c27ae6d04cbe45851e716705b, type: 2}
+  - {fileID: 11400000, guid: 9057fead0cdeea24b93b35fd20e8cf25, type: 2}
+  - {fileID: 11400000, guid: 970c1ae3b89fcf7448d51af45dd7786a, type: 2}
+  - {fileID: 11400000, guid: 37ffa15c1bd1f2c4fb4a551371784b24, type: 2}
   _startLevelBlock: {fileID: 11400000, guid: 701ee843c7b2686408ea0eb210f11729, type: 2}
   _environmentBlockInfos:
   - {fileID: 11400000, guid: 3158a82d0222dd74bb512fa94c07c482, type: 2}
@@ -41952,7 +41956,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5290610966159597683, guid: c4415becbdca3624c9422e8eb88943f1, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.93847656
+      value: 0.9383545
       objectReference: {fileID: 0}
     - target: {fileID: 5290610966270551768, guid: c4415becbdca3624c9422e8eb88943f1, type: 3}
       propertyPath: m_AnchorMax.y
@@ -43011,8 +43015,6 @@ MonoBehaviour:
   _idleCamera: {fileID: 1539139351}
   _playerRunCamera: {fileID: 53667651}
   _playerRootBone: {fileID: 1912420894136730018}
-  _fade: {fileID: 1682359}
-  _loseDecideMenu: {fileID: 1687693180}
   MoveSpeed: 2
   SprintSpeed: 10
   RotationSmoothTime: 0.12
