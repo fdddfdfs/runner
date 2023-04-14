@@ -22,7 +22,7 @@ public class EnvironmentAnimatedObject : MonoBehaviour, ITriggerable
         }
     }
 
-    public void Trigger()
+    public virtual void Trigger()
     {
         _objectAnimator.SetTrigger(_startAnimationTrigger);
     }
