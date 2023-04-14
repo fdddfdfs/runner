@@ -7,6 +7,11 @@ public class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
     private Vector3 _startPosition;
     private Quaternion _startRotation;
     
+    public override void Trigger()
+    {
+        
+    }
+    
     private void Start()
     {
         if (_object == null)
@@ -15,14 +20,19 @@ public class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
         }
         
         Transform objectTransform = _object.transform;
-        _startPosition = objectTransform.position;
-        _startRotation = objectTransform.rotation;
+        _startPosition = objectTransform.localPosition;
+        _startRotation = objectTransform.localRotation;
+    }
+
+    private void OnEnable()
+    {
+        base.Trigger();
     }
 
     private void OnDisable()
     {
         Transform objectTransform = _object.transform;
-        objectTransform.position = _startPosition;
-        objectTransform.rotation = _startRotation;
+        objectTransform.localPosition = _startPosition;
+        objectTransform.localRotation = _startRotation;
     }
 }
