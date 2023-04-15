@@ -1,6 +1,6 @@
 ﻿using StarterAssets;
 
-public class BoardItem : Item
+public sealed class BoardItem : Item
 {
     private Effects _effects;
     

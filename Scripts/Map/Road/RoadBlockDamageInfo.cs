@@ -2,7 +2,7 @@
 using UnityEngine.Rendering.PostProcessing;
 
 [CreateAssetMenu(fileName = "RoadDamage", menuName = "Road/Damage")]
-public class RoadBlockDamageInfo : ScriptableObject, IWeightable
+public sealed class RoadBlockDamageInfo : ScriptableObject, IWeightable
 {
     [SerializeField] private GameObject _prefab;
 

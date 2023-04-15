@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "AchievementData", menuName = "Achievements/AchievementData")]
-public class AchievementData : ScriptableObject
+public sealed class AchievementData : ScriptableObject
 {
     [SerializeField] private string _name;
     [SerializeField] private int _requiredProgress;

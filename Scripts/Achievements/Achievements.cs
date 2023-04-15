@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Steamworks;
 using UnityEngine;
 
-public class Achievements : MonoBehaviour
+public sealed class Achievements : MonoBehaviour
 {
     [SerializeField] private List<AchievementData> _achievementsData;
 

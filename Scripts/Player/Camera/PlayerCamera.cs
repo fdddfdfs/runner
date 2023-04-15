@@ -4,7 +4,7 @@ using Cinemachine;
 using UnityEngine;
 using Quaternion = System.Numerics.Quaternion;
 
-public class PlayerCamera : IRunnable
+public sealed class PlayerCamera : IRunnable
 {
     private readonly CinemachineVirtualCamera _runCamera;
     private readonly CinemachineVirtualCamera _idleCamera;

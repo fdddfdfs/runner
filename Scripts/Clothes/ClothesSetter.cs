@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ClothesSetter : MonoBehaviour
+public sealed class ClothesSetter : MonoBehaviour
 {
     [SerializeField] private Transform _player;
     [SerializeField] private List<GameObject> _cloth;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "Language", menuName = "Languages/Language")]
-public class LanguageData : ScriptableObject
+public sealed class LanguageData : ScriptableObject
 {
     [SerializeField] private string _languageName;
     [SerializeField] private Languages.Language _language;

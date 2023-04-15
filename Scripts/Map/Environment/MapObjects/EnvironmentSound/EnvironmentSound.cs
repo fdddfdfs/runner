@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class EnvironmentSound : MonoBehaviour, ITriggerable
+public sealed class EnvironmentSound : MonoBehaviour, ITriggerable
 {
     private const int EnvironmentSoundLayer = 3;
 

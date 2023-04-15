@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 
 [Serializable]
-public class InGameTextLocalization
+public sealed class InGameTextLocalization
 {
     [JsonProperty("language")]
     public string Language { get; set; }

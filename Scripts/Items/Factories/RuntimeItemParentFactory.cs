@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-public class RuntimeItemParentFactory : AbstractFactory<RuntimeItemParent>
+public sealed class RuntimeItemParentFactory : AbstractFactory<RuntimeItemParent>
 {
     private readonly AbstractFactory<Item> _factory;
     

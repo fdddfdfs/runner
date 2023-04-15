@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using DG.Tweening;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class EnvironmentBillboard : MonoBehaviour, ITriggerable
+public sealed class EnvironmentBillboard : MonoBehaviour, ITriggerable
 {
     private const int ImageMaterialNumber = 1;
     

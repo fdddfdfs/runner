@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DefaultPlayerClothes
+public sealed class DefaultPlayerClothes
 {
     private readonly SkinnedMeshRenderer _playerMesh;
     private readonly Dictionary<ClotherType, Material> _defaultMaterials;

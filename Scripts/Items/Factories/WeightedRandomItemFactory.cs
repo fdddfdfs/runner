@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-public class WeightedRandomItemFactory<T> : ItemFactory<T> where T: Item
+public sealed class WeightedRandomItemFactory<T> : ItemFactory<T> where T: Item
 {
     private readonly WeightRandom _weightRandom;
     private readonly Factories _factories;

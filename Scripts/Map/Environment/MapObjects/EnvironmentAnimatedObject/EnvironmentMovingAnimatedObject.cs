@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
+public sealed class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
 {
     [SerializeField] private Transform _object;
     

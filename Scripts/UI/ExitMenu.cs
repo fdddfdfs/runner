@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class ExitMenu : Menu
+public sealed class ExitMenu : Menu
 {
     [SerializeField] private Button _yesButton;
     [SerializeField] private Button _noButton;

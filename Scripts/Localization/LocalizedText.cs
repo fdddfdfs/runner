@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 
-public class LocalizedText : MonoBehaviour
+public sealed class LocalizedText : MonoBehaviour
 {
     [SerializeField] private List<TMP_Text> _textsObjects;
 

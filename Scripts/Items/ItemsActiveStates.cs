@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 
-public class ItemsActiveStates
+public sealed class ItemsActiveStates
 {
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
     private readonly CancellationToken[] _linkedTokens;

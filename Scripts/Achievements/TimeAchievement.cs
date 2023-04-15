@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class TimeAchievement : MonoBehaviour
+public sealed class TimeAchievement : MonoBehaviour
 {
     private const int TriggerAchievementDelta = 1;
     

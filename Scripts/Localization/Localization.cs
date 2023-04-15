@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public class Localization
+public sealed class Localization
 {
     public const Languages.Language DefaultLanguage = Languages.Language.English;
 
