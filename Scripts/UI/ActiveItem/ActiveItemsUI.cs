@@ -68,6 +68,9 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
         while (currentTime < time)
         {
             await Task.Yield();
+            
+            if (token.IsCancellationRequested) return;
+            
             if (AsyncUtils.TimeScale == 0) continue;
 
             foreach (Image progressImage in item.ProgressImages)
@@ -76,8 +79,6 @@ public sealed class ActiveItemsUI : MonoBehaviour, IRunnable
             }
             
             currentTime += Time.deltaTime * AsyncUtils.TimeScale;
-            
-            if (token.IsCancellationRequested) return;
         }
         
         HideEffect(itemType, false);
