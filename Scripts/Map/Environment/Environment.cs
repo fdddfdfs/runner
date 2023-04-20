@@ -8,7 +8,7 @@ public sealed class Environment : MapPart<EnvironmentBlockInfo, EnvironmentBlock
     private readonly List<EnvironmentBlockInfo> _environmentBlocks;
     
     public Environment(List<EnvironmentBlockInfo> environmentBlocks, Transform player)
-        : base(environmentBlocks, player, false, NextBlockDistancePercentToHide)
+        : base(environmentBlocks, player, false, NextBlockDistancePercentToHide, 0f)
     {
         _environmentBlocks = environmentBlocks;
     }

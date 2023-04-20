@@ -5,7 +5,7 @@ public class EnvironmentAnimatedObject : MonoBehaviour, ITriggerable
 {
     private const string StartAnimationTriggerName = "Start";
     
-    [SerializeField] private Animator _objectAnimator;
+    [SerializeField] protected Animator _objectAnimator;
 
     private readonly int _startAnimationTrigger = Animator.StringToHash(StartAnimationTriggerName);
 
