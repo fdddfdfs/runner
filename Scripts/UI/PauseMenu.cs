@@ -35,7 +35,7 @@ public sealed class PauseMenu : MonoBehaviour
             {
                 _pauseController.ChangePauseState();
             
-                _run.ApplyLoseResults();
+                _run.ApplyRunResults();
                 _run.EndRun();
                 _run.StartRun();
                 
@@ -49,7 +49,7 @@ public sealed class PauseMenu : MonoBehaviour
         {
             _pauseController.ChangePauseState();
             
-            _run.ApplyLoseResults();
+            _run.ApplyRunResults();
             _run.BackToMenu(false);
         });
     }

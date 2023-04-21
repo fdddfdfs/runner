@@ -128,6 +128,23 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
             Achievements.Instance.ResetProgress(scoreAchievement);
         }
     }
+    
+    public void ChangeMenuVisible(bool visible)
+    {
+        _moneyParent.SetActive(visible);
+        _scoreParent.SetActive(visible);
+        
+        if (visible)
+        {
+            _scoreShowText.StartRun();
+            _moneyShowText.StartRun();
+        }
+        else
+        {
+            _scoreShowText.EndRun();
+            _moneyShowText.EndRun();
+        }
+    }
 
     private void Awake()
     {
@@ -153,23 +170,6 @@ public sealed class RunProgress : MonoBehaviour, IRunnable
         _scoreParent.SetActive(false);
     }
 
-    private void ChangeMenuVisible(bool visible)
-    {
-        _moneyParent.SetActive(visible);
-        _scoreParent.SetActive(visible);
-        
-        if (visible)
-        {
-            _scoreShowText.StartRun();
-            _moneyShowText.StartRun();
-        }
-        else
-        {
-            _scoreShowText.EndRun();
-            _moneyShowText.EndRun();
-        }
-    }
-    
     private static float SpeedMultiplayerFunc(float time)
     {
         float speedMultiplayer = 1 * Mathf.Log(time / 15f);

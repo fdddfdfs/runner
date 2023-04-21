@@ -16,6 +16,9 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
     private const string AcceptLoseStartCutsceneResourceName = "Cutscenes/AcceptLoseStartCutscene";
     private const string AcceptLoseEndCutsceneResourceName = "Cutscenes/AcceptLoseEndCutscene";
 
+    private const string WinEndCutsceneResourceName = "Cutscenes/WinEndCutscene";
+    private const string WinStartCutsceneResourceName = "Cutscenes/WinStartCutscene";
+
     [SerializeField] private Run _run;
     [SerializeField] private Fade _fade;
     [SerializeField] private MainMenu _mainMenu;
@@ -67,11 +70,16 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
         var acceptLoseEndCutscene =
             ResourcesLoader.InstantiateLoadComponent<AcceptLoseEndCutscene>(AcceptLoseEndCutsceneResourceName);
 
+        var winCutscene = ResourcesLoader.InstantiateLoadComponent<WinCutscene>(WinEndCutsceneResourceName);
+        var winStartCutscene = ResourcesLoader.InstantiateLoadComponent<WinStartCutscene>(WinStartCutsceneResourceName);
+
         baseStartCutscene.Init(_run, _fade);
         declineLoseStartCutscene.Init(_run, _fade, declineLoseCutsceneEnvironment, _player);
         declineLoseEndCutscene.Init(_fade, declineLoseCutsceneEnvironment, _mainMenu);
         acceptLoseStartCutscene.Init(_run, _fade, acceptLoseCutsceneEnvironment, _player);
         acceptLoseEndCutscene.Init(_fade, acceptLoseCutsceneEnvironment, _mainMenu);
+        winCutscene.Init(_player, _run, _fade);
+        winStartCutscene.Init(_run, _fade);
         
         declineLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
         acceptLoseCutsceneEnvironment.ChangeEnvironmentActive(false);
@@ -83,6 +91,8 @@ public sealed class Cutscenes : MonoBehaviour , IClothesChanger
             [typeof(DeclineLoseEndCutscene)] = declineLoseEndCutscene,
             [typeof(AcceptLoseStartCutscene)] = acceptLoseStartCutscene,
             [typeof(AcceptLoseEndCutscene)] = acceptLoseEndCutscene,
+            [typeof(WinCutscene)] = winCutscene,
+            [typeof(WinStartCutscene)] = winStartCutscene,
         };
     }
 

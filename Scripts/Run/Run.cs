@@ -7,6 +7,9 @@ using UnityEngine;
 
 public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 {
+    private const int WinRequiredScore = 50;
+    private const float FadeMultiplier = 5f;
+
     [SerializeField] private Follower _follower;
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private ThirdPersonController _player;
@@ -18,6 +21,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     [SerializeField] private MainMenu _mainMenu;
     [SerializeField] private LoseDecideMenu _loseDecideMenu;
     [SerializeField] private Cutscenes _cutscenes;
+    [SerializeField] private Fade _fade;
 
     private bool _isRun;
     private List<IRunnable> _runnables;
@@ -27,6 +31,8 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 
     private CancellationTokenSource _endRunTokenSource = new();
     private CancellationToken[] _linkedTokens;
+
+    private bool _isAlreadyWin;
 
     public void StartRun()
     {
@@ -54,6 +60,8 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 
     public void Lose()
     {
+        if (!_isRun) return;
+        
         _player.Pause();
         
         Cursor.visible = true;
@@ -64,6 +72,25 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         _pauseController.ChangeAllowingPause(false);
         
         Achievements.Instance.GetAchievement("Lose");
+    }
+
+    public void Win()
+    {
+        _fade.FadeIn(() =>
+        {
+            _cutscenes.ChangeCurrentCutscene(typeof(WinCutscene));
+            _cutscenes.PlayCurrentCutscene();
+            _fade.FadeOut(null);
+        }, FadeMultiplier);
+        
+        _map.Level?.HideBlocksBeforePositionZ(_player.transform.position.z + 1000);
+        _pauseController.ChangeAllowingPause(false);
+        _isRun = false;
+        _isAlreadyWin = true;
+        _runProgress.ChangeMenuVisible(false);
+        //_follower.FollowForTime(_player.gameObject, WinFollowerRunTime);
+
+        ApplyRunResults();
     }
 
     public void ShowLoseMenu()
@@ -95,7 +122,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         _mainMenuCutsceneType = type;
     }
 
-    public void ApplyLoseResults()
+    public void ApplyRunResults()
     {
         DataInt record = Stats.Record;
         _mainMenu.LeaderboardController.UploadResult((int)_runProgress.Score);
@@ -161,6 +188,11 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         
         _runProgress.AddScore(Time.deltaTime * AsyncUtils.TimeScale);
         _runProgress.IncreaseSpeedMultiplayerInTime(Time.deltaTime * AsyncUtils.TimeScale);
+
+        if (!_isAlreadyWin && _runProgress.Score >= WinRequiredScore)
+        {
+            Win();
+        }
     }
 
     private void Awake()

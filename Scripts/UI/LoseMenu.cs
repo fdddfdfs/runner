@@ -16,7 +16,7 @@ public sealed class LoseMenu : MonoBehaviour
 
     public void ShowLoseMenu(int score, int money)
     {
-        _run.ApplyLoseResults();
+        _run.ApplyRunResults();
         
         ChangeMenuVisible(true);
         _score.text = score.ToString();
