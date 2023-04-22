@@ -2,9 +2,9 @@
 using TMPro;
 using UnityEngine;
 
-public sealed class LocalizedText : MonoBehaviour
+public class LocalizedText : MonoBehaviour
 {
-    [SerializeField] private List<TMP_Text> _textsObjects;
+    [SerializeField] protected List<TMP_Text> _textsObjects;
 
     private List<(string baseTextLocalization, TMP_Text textObject)> _initialTexts;
     
@@ -33,7 +33,7 @@ public sealed class LocalizedText : MonoBehaviour
         LocalizeText();
     }
 
-    private void LocalizeText()
+    protected virtual void LocalizeText()
     {
         foreach ((string baseTextLocalization, TMP_Text textObject) initialText in _initialTexts)
         {

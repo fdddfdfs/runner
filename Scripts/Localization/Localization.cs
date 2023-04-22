@@ -64,12 +64,12 @@ public sealed class Localization
 
         _currentLanguage = newLanguage;
 
+        SettingsStorage.Localization.Value = (int)_currentLanguage;
+        
         if (_initialized)
         {
             OnLanguageUpdated?.Invoke();
         }
-        
-        SettingsStorage.Localization.Value = (int)_currentLanguage;
     }
 
     private static InGameTextLocalization LoadLocalization(Languages.Language language)
