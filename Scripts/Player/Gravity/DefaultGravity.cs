@@ -58,7 +58,7 @@ public sealed class DefaultGravity : IGravitable, IRollable
                 _verticalVelocity = -2f;
             }
 
-            if (_playerRunInput.IsJumpPressed && _jumpTimeoutDelta <= 0.0f)
+            if (_playerRunInput.IsJumpPressed && _jumpTimeoutDelta <= 0.0f && !_player.IsDie)
             {
                 _verticalVelocity = Mathf.Sqrt(_player.JumpHeight * -2f * _gravity);
 
