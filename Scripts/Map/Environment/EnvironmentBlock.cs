@@ -19,7 +19,6 @@ public sealed class EnvironmentBlock : Triggerable, IMapBlock
     public void EnterBlock()
     {
         Achievements.Instance.GetAchievement(_achievementData.Name);
-        Achievements.Instance.GetAchievement($"Location_{Random.Range(7, 16)}");
     }
 
     public async void HideBlock()
