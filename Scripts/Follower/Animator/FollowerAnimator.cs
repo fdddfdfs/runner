@@ -10,11 +10,18 @@ public sealed class FollowerAnimator : BaseAnimator
     {
         int speedAnimationID = Animator.StringToHash("Speed");
         int loseAnimationID = Animator.StringToHash("Lose");
+        int borderLoseAnimationID = Animator.StringToHash("LoseBorder");
         
         _animators = new Dictionary<Type, PlayerBaseAnimator>
         {
             { typeof(FollowerDefaultAnimator), 
-                new FollowerDefaultAnimator(animator, follower, RotationSmoothTime, speedAnimationID, loseAnimationID) },
+                new FollowerDefaultAnimator(
+                    animator,
+                    follower,
+                    RotationSmoothTime,
+                    speedAnimationID,
+                    loseAnimationID,
+                    borderLoseAnimationID) },
         };
 
         ChangeAnimator(typeof(FollowerDefaultAnimator));

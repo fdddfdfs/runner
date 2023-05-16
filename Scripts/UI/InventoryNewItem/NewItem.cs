@@ -30,7 +30,7 @@ public class NewItem : MonoBehaviour
 
         CancellationToken token = AsyncUtils.Instance.GetCancellationToken();
         
-        await AsyncUtils.Wait(stayTime, token);
+        await AsyncUtils.Wait(stayTime, token, true);
 
         if (token.IsCancellationRequested) return;
         

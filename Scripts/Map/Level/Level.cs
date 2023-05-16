@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using StarterAssets;
 using UnityEngine;
 
 public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
@@ -10,16 +11,19 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
     private readonly RunProgress _runProgress;
     private readonly List<LevelBlockInfo> _levelBlock;
     private readonly LevelBlockInfo _startBlock;
+    private readonly ThirdPersonController _player;
+
+    private bool _isStartBlock;
 
     public Level(
         List<LevelBlockInfo> levelBlocks,
         LevelBlockInfo startBlock,
         Factories factories,
-        Transform player,
+        ThirdPersonController player,
         RunProgress runProgress) :
         base(
             levelBlocks,
-            player,
+            player.transform,
             true,
             HideLevelDistancePercent,
             TriggerLevelDistance,
@@ -29,6 +33,7 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
         _runProgress = runProgress;
         _levelBlock = levelBlocks;
         _levelBlock.Insert(0, startBlock);
+        _player = player;
     }
 
     protected override Dictionary<int, FactoryPoolMono<LevelBlock>> InitializeBlockPools()
@@ -44,5 +49,27 @@ public sealed class Level : MapPart<LevelBlockInfo, LevelBlock>
         }
 
         return blockPools;
+    }
+
+    public override void CheckToHideBlock()
+    {
+        if (_isStartBlock && 
+            (_firstBlockPosition + _firstBlock.BlockSize) * (1 - HideLevelDistancePercent) 
+            < _player.transform.position.z)
+        {
+            _player.ChangeHorizontalMoveRestriction(
+                _player.HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+
+            _isStartBlock = false;
+        }
+        
+        base.CheckToHideBlock();
+    }
+
+    protected override void StartRunSetup()
+    {
+        _isStartBlock = true;
+        
+        base.StartRunSetup();
     }
 }

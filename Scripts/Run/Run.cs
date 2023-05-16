@@ -7,7 +7,7 @@ using UnityEngine;
 
 public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 {
-    private const int WinRequiredScore = 50;
+    private const int WinRequiredScore = 5000;
     private const float FadeMultiplier = 5f;
 
     [SerializeField] private Follower _follower;
@@ -22,6 +22,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
     [SerializeField] private LoseDecideMenu _loseDecideMenu;
     [SerializeField] private Cutscenes _cutscenes;
     [SerializeField] private Fade _fade;
+    [SerializeField] private PickupCar _pickupCar;
 
     private bool _isRun;
     private List<IRunnable> _runnables;
@@ -140,7 +141,7 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
         _player.Resurrect();
         _pauseController.ChangeAllowingPause(true);
         AsyncUtils.TimeScale = 1;
-        _map.Level.HideCurrentEnteredBlock();
+        _map.Level.HideBlocksBeforePositionZ(_player.transform.position.z + 10);
     }
 
     public void EndRun()
@@ -197,7 +198,17 @@ public sealed class Run : MonoBehaviour, IRunnable, ICancellationTokenProvider
 
     private void Awake()
     {
-        _runnables = new List<IRunnable> { _player, _map, _runProgress, _follower, _activeItemsUI, _pauseController };
+        _runnables = new List<IRunnable>
+        {
+            _player,
+            _map,
+            _runProgress,
+            _follower,
+            _activeItemsUI,
+            _pauseController,
+            _pickupCar,
+        };
+        
         SetMainMenuCutscene(typeof(BaseStartCutscene));
     }
 

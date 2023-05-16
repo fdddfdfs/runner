@@ -3,13 +3,17 @@
 public sealed class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
 {
     [SerializeField] private Transform _object;
+    [SerializeField] private bool _triggeredByTrigger;
     
     private Vector3 _startPosition;
     private Quaternion _startRotation;
-    
+
     public override void Trigger()
     {
-        
+        if (_triggeredByTrigger)
+        {
+            base.Trigger();
+        }
     }
     
     private void Start()
@@ -26,7 +30,10 @@ public sealed class EnvironmentMovingAnimatedObject : EnvironmentAnimatedObject
 
     private void OnEnable()
     {
-        base.Trigger();
+        if (!_triggeredByTrigger)
+        {
+            base.Trigger();
+        }
     }
 
     private void OnDisable()

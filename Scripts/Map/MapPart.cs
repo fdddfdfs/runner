@@ -23,10 +23,10 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     private readonly bool _isTriggerDistancePercents;
     private readonly float _viewDistance;
     
-    private TBlock _firstBlock;
+    protected TBlock _firstBlock;
+    protected float _firstBlockPosition;
     private float _lastBlockPosition;
-    private float _firstBlockPosition;
-    
+
     private TBlock _firstTriggerableBlock;
     private float _firstTriggerablePosition;
 
@@ -62,13 +62,12 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
         _viewDistance = viewDistance;
     }
     
-    public void CheckToHideBlock()
+    public virtual void CheckToHideBlock()
     {
         if (!_firstBlock) return;
             
     
-        if (_player.transform.position.z >
-            _hideBlockPosition)
+        if (_player.transform.position.z > _hideBlockPosition)
         {
             HideCurrentBlock();
         }
@@ -103,6 +102,8 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
 
         _firstTriggerableBlock = _blocksToTrigger.Dequeue();
         _triggerBlockPosition = CalculateTriggerBlockPosition();
+        
+        StartRunSetup();
     }
 
     public void EndRun()
@@ -144,6 +145,11 @@ public abstract class MapPart<TBlockInfo,TBlock> : IRunnable
     }
     
     protected abstract Dictionary<int, FactoryPoolMono<TBlock>> InitializeBlockPools();
+
+    protected virtual void StartRunSetup()
+    {
+        
+    }
 
     private void CheckToTriggerBlock()
     {

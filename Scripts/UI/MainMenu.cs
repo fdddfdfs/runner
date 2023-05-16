@@ -52,6 +52,8 @@ public sealed class MainMenu : MonoBehaviour
         inputActionMap.Enable();
         inputActionMap["StartRace"].started += (_) => _isStartPressed = true;
         inputActionMap["StartRace"].canceled += (_) => _isStartPressed = false;
+        
+        Sounds.Instance.PlaySound(2,"StartGame");
     }
 
     private void Update()

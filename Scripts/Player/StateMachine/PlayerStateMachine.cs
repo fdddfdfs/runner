@@ -14,7 +14,8 @@ public sealed class PlayerStateMachine : IRunnable
         ThirdPersonController player,
         ActiveItemsUI activeItemsUI,
         Follower follower,
-        Effects effects)
+        Effects effects,
+        PickupCar pickupCar)
     {
         _player = player;
         
@@ -23,7 +24,7 @@ public sealed class PlayerStateMachine : IRunnable
             [typeof(RunState)] = new RunState(player),
             [typeof(FlyState)] = new FlyState(player, activeItemsUI, follower, effects),
             [typeof(ImmuneState)] = new ImmuneState(player, activeItemsUI, effects),
-            [typeof(BoardState)] = new BoardState(player, activeItemsUI),
+            [typeof(BoardState)] = new BoardState(player, activeItemsUI, pickupCar),
             [typeof(IdleState)] = new IdleState(player.PlayerAnimator),
         };
         

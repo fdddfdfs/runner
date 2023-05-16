@@ -10,12 +10,14 @@ public sealed class FollowerDefaultAnimator : PlayerBaseAnimator
         Transform follower,
         float rotationSmoothTime,
         int speedID,
-        int loseID) 
+        int loseID,
+        int borderLoseID) 
         : base(followerAnimator)
     {
         _triggerAnimations = new Dictionary<AnimationType, ITriggerAnimation>
         {
             [AnimationType.Lose] = new TriggerAnimation(followerAnimator, loseID),
+            [AnimationType.DieLeft] = new TriggerAnimation(followerAnimator, borderLoseID),
         };
         
         _floatAnimations = new Dictionary<AnimationType, IFloatAnimation>

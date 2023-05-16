@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using StarterAssets;
 using UnityEngine;
 
 public sealed class Map : MonoBehaviour, IPauseable , IRunnable
@@ -12,7 +13,7 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
     [SerializeField] private List<RoadBlockInfo> _roadBlockInfos;
     [SerializeField] private List<RoadBlockDamageInfo> _roadBlockDamageInfos;
     [SerializeField] private BoxCollider _mainMenuLocationPrefab;
-    [SerializeField] private Transform _player;
+    [SerializeField] private ThirdPersonController _player;
     [SerializeField] private Factories _factories;
     [SerializeField] private RunProgress _runProgress;
     [SerializeField] private bool _needSpawnLevel;
@@ -83,9 +84,9 @@ public sealed class Map : MonoBehaviour, IPauseable , IRunnable
     private void Start()
     {
         _level = _needSpawnLevel ? new Level(_levelBlocks, _startLevelBlock, _factories, _player, _runProgress) : null;
-        _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player) : null;
-        _road = new Road(_roadBlockInfos, _player, _roadBlockDamageInfos);
-        _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player);
+        _environment = _needSpawnEnvironment? new Environment(_environmentBlockInfos, _player.transform) : null;
+        _road = new Road(_roadBlockInfos, _player.transform, _roadBlockDamageInfos);
+        _mainMenuLocation = new MainMenuLocation(_mainMenuLocationPrefab, _player.transform);
         _runnables = new List<IRunnable> { _level, _environment, _road, _mainMenuLocation };
 
         GenerateMap();

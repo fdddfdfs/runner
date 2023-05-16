@@ -12,7 +12,7 @@ public sealed class Money : Item
     private bool _isPicked;
     private Effects _effects;
 
-    public static int Weight => 20;
+    public static int Weight => 25;
     
     public void Init(
         RunProgress runProgress,

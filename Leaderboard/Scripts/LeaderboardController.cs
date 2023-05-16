@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using Steamworks;
 using TMPro;
+using UnityEngine.UI;
 
 namespace fdddfdfs.Leaderboard
 {
@@ -24,6 +25,8 @@ namespace fdddfdfs.Leaderboard
 
         private string _currentLeaderboardName;
         private bool _isInitialized;
+
+        private VerticalLayoutGroup _leaderboardParentLayoutGroup;
 
 
         private void RefreshLeaderboard(string leaderboardName)
@@ -99,6 +102,7 @@ namespace fdddfdfs.Leaderboard
             SortLeaderboardEntityData(_leaderboardEntityData);
             _sortedLeaderboardEntities = _leaderboardEntityData.ToArray();
             _entities = new List<LeaderboardEntity>();
+            _leaderboardParentLayoutGroup = _leaderboardEntitiesParent.GetComponent<VerticalLayoutGroup>();
             RecreateLeaderboardPlayer(_sortedLeaderboardEntities.Length);
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -182,9 +186,10 @@ namespace fdddfdfs.Leaderboard
 
         private void RecreateLeaderboardPlayer(int newEntitiesCount)
         {
+            float spacing = _leaderboardParentLayoutGroup.spacing;
             _leaderboardEntitiesParent.SetSizeWithCurrentAnchors(
                 RectTransform.Axis.Vertical,
-                _leaderboardEntityPrefab.RectTransform.sizeDelta.y * newEntitiesCount);
+                _leaderboardEntityPrefab.RectTransform.sizeDelta.y * newEntitiesCount + spacing * newEntitiesCount);
 
             int oldCount = _entities.Count;
             for (int i = _entities.Count; i < newEntitiesCount; i++)

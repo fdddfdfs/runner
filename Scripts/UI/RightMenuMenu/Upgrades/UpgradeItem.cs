@@ -52,7 +52,7 @@ public sealed class UpgradeItem : MonoBehaviour
             int price = CalculateUpgradePrice(level);
             if (price > Stats.Money.Value)
             {
-                Sounds.Instance.PlaySound(2, "NotEnoughMoney");
+                Sounds.Instance.PlayRandomSounds(2, "NotEnoughMoney");
                 return;
             }
 

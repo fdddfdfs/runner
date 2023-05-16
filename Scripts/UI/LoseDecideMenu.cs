@@ -1,6 +1,7 @@
 ﻿using System;
 using StarterAssets;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public sealed class LoseDecideMenu : MonoBehaviour
@@ -18,6 +19,12 @@ public sealed class LoseDecideMenu : MonoBehaviour
     public void ShowMenu()
     {
         _menu.SetActive(true);
+        Sounds.Instance.PlaySound(2,"LoseDecide");
+
+        if (Gamepad.current != null)
+        {
+            _acceptButton.Select();
+        }
     }
 
     public void BackToMainMenu()

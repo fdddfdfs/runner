@@ -60,7 +60,7 @@ public sealed class PlayerCamera : IRunnable
         while (currentTime < time)
         {
             await Task.Yield();
-            currentTime += Time.unscaledDeltaTime * AsyncUtils.TimeScale;
+            currentTime += Time.unscaledDeltaTime;
             _cinemachineBasicMultiChannelPerlin.m_AmplitudeGain =
                 Mathf.Lerp(_startAmplitude, intensity, 1 - currentTime/time);
 

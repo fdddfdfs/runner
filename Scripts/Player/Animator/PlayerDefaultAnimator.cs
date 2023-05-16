@@ -23,7 +23,7 @@ public sealed class PlayerDefaultAnimator : PlayerBaseAnimator
             { AnimationType.Resurrect, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Resurrect])},
             { AnimationType.SoftHitLeft, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitLeft])},
             { AnimationType.SoftHitRight, new TriggerAnimation(playerAnimator, animationsID[AnimationType.SoftHitRight])},
-            { AnimationType.Lose, new InstantTriggerAnimation(playerAnimator, animationsID[AnimationType.Lose])},
+            { AnimationType.Lose, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Lose])},
             { AnimationType.Reset, new TriggerAnimation(playerAnimator, animationsID[AnimationType.Reset])}
         };
 

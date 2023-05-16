@@ -2,7 +2,13 @@
 
 public sealed class BoardState : PlayerActivateState, IState
 {
-    public BoardState(ThirdPersonController player, ActiveItemsUI activeItemsUI) : base(player, activeItemsUI) { }
+    private PickupCar _pickupCar;
+
+    public BoardState(ThirdPersonController player, ActiveItemsUI activeItemsUI, PickupCar pickupCar)
+        : base(player, activeItemsUI)
+    {
+        _pickupCar = pickupCar;
+    }
 
     public void EnterState()
     {
@@ -12,6 +18,8 @@ public sealed class BoardState : PlayerActivateState, IState
         
         _player.PlayerAnimator.ChangeAnimator(typeof(PlayerBoardAnimator));
         _activeItemsUI.ShowNewItemEffect(ItemType.Board, Board.BoardDuration);
+        
+        _pickupCar.HidePickupCar();
     }
 
     public void ExitState()

@@ -24,6 +24,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private float _currentAppearTime;
 
     private Vector3 _startPosition;
+    private Vector3 _startAnimatorPosition;
 
     private CancellationTokenSource _followCancellation;
     private FollowerAnimator _followerAnimator;
@@ -32,12 +33,15 @@ public sealed class Follower : MonoBehaviour, IRunnable
     {
         gameObject.SetActive(true);
         transform.position = _startPosition;
+        _animator.transform.localPosition = _startAnimatorPosition;
     }
 
     public void EndRun()
     {
         _isFollowing = false;
         _isFollowingDelay = false;
+        _targetPositions.Clear();
+        transform.position = _startPosition;
         
         gameObject.SetActive(false);
     }
@@ -62,11 +66,12 @@ public sealed class Follower : MonoBehaviour, IRunnable
         }
     }
 
-    public void Lose(ThirdPersonController player)
+    public void Lose(ThirdPersonController player, bool isBorder)
     {
         transform.position = player.transform.position;
         transform.rotation = player.PlayerBones.rotation;
-        _followerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
+
+        _followerAnimator.ChangeAnimationTrigger(isBorder ? AnimationType.DieLeft : AnimationType.Lose);
     }
 
     private void FixedUpdate()
@@ -92,6 +97,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
     private void Awake()
     {
         _startPosition = transform.position;
+        _startAnimatorPosition = _animator.transform.localPosition;
         _followerAnimator = new FollowerAnimator(_animator, transform);
     }
 
@@ -132,7 +138,7 @@ public sealed class Follower : MonoBehaviour, IRunnable
 
     private void SetupAppear()
     {
-        var position = _target.transform.position;
+        Vector3 position = _target.transform.position;
         _appearStartPosition = position + Vector3.back * 5;
         _appearEndPosition = position;
         _appearTime = FollowDelay / _runProgress.SpeedMultiplier;

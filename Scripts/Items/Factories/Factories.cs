@@ -8,6 +8,7 @@ public sealed class Factories : MonoBehaviour
     [SerializeField] private ThirdPersonController _player;
     [SerializeField] private ActiveItemsUI _activeItemsUI;
     [SerializeField] private Run _run;
+    [SerializeField] private PickupCar _pickupCar;
     
     private Dictionary<ItemType, ItemFactory<Item>> _itemFactories;
 
@@ -62,7 +63,7 @@ public sealed class Factories : MonoBehaviour
             [ItemType.Immune] = new ImmuneItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, effects),
             [ItemType.Fly] = new FlyItemFactory<Item>(_activeItemsUI, _run, itemsActiveStates, effects),
             [ItemType.Spring] = new SpringItemFactory<Item>(_run,  effects),
-            [ItemType.Board] = new BoardItemFactory<Item>(_run, effects),
+            [ItemType.Board] = new BoardItemFactory<Item>(_run, effects, _pickupCar),
         };
         
         _itemFactories.Add(ItemType.RandomBoost, new RandomItemFactory<Item>(this));

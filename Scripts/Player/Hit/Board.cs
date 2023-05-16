@@ -70,7 +70,7 @@ public sealed class Board : IHittable
                 _cancellationTokenSource.Cancel();
                 _isRecovery = false;
                 _isActive = false;
-                _map.Level.HideCurrentEnteredBlock();
+                _map.Level.HideBlocksBeforePositionZ(_player.transform.position.z + 10);
                 _effects.ActivateEffect(
                     EffectType.Explosion,
                     _player.transform.position + EffectYOffset * Vector3.up,
@@ -83,7 +83,7 @@ public sealed class Board : IHittable
             case HitType.Hard when _isActive:
                 _cancellationTokenSource.Cancel();
                 _isActive = false;
-                _map.Level.HideCurrentEnteredBlock();
+                _map.Level.HideBlocksBeforePositionZ(_player.transform.position.z + 10);
                 _effects.ActivateEffect(
                     EffectType.Explosion,
                     _player.transform.position + EffectYOffset * Vector3.up,

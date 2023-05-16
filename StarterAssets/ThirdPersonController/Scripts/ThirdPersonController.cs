@@ -31,6 +31,7 @@ namespace StarterAssets
         [SerializeField] private CinemachineVirtualCamera _idleCamera;
         [SerializeField] private Camera _playerRunCamera;
         [SerializeField] private Transform _playerRootBone;
+        [SerializeField] private PickupCar _pickupCar;
 
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -133,7 +134,8 @@ namespace StarterAssets
 
         private PlayerClothes _playerClothes;
 
-        private float _moveBackTarget = 0f;
+        private float _moveBackTarget;
+        private bool _isDieBorder;
 
         public Effects Effects { get; private set; }
 
@@ -226,7 +228,7 @@ namespace StarterAssets
             _isFall = false;
             IsDie = false;
             ChangeHittable(_hittables[typeof(PlayerHittable)]);
-            ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(HorizontalMoveRestriction)]);
+            ChangeHorizontalMoveRestriction(HorizontalMoveRestrictions[typeof(StartMoveRestriction)]);
             _horizontalMoveRestriction.Init(0);
             ChangeGravitable(_gravitables[typeof(DefaultGravity)]);
             
@@ -281,7 +283,7 @@ namespace StarterAssets
         public void Lose()
         {
             PlayerAnimator.ChangeAnimationTrigger(AnimationType.Lose);
-            _follower.Lose(this);
+            _follower.Lose(this, _isDieBorder);
             
             Sounds.Instance.PlayRandomSounds(2, "Die");
         }
@@ -306,6 +308,7 @@ namespace StarterAssets
             {
                 { typeof(HorizontalMoveRestriction), new HorizontalMoveRestriction() },
                 { typeof(FlyHorizontalRestriction), new FlyHorizontalRestriction() },
+                { typeof(StartMoveRestriction), new StartMoveRestriction() },
             };
             
             _playerClothes = new PlayerClothes(
@@ -374,7 +377,7 @@ namespace StarterAssets
                 { typeof(ImmuneHittable), new ImmuneHittable(_map, Effects, transform) },
             };
 
-            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower, Effects);
+            PlayerStateMachine = new PlayerStateMachine(this, _activeItemsUI, _follower, Effects, _pickupCar);
         }
 
         private void FixedUpdate()
@@ -596,6 +599,8 @@ namespace StarterAssets
                 HitType hitType = Mathf.Abs(hit.normal.x) > 0.5f ? HitType.Soft : HitType.Hard;
                 bool result = _hittable.Hit(hitType);
 
+                _playerCamera.ShakeCamera(CameraShakeIntensity, CameraShakeTime);
+                
                 if (result)
                 {
                     Die(hit.normal);
@@ -605,8 +610,7 @@ namespace StarterAssets
                     _movingDestination = _previousMovingDestination;
                     _movingXDir *= -1;
                     _horizontalMoveRestriction.CheckHorizontalMoveRestriction(_movingXDir);
-                    _playerCamera.ShakeCamera(CameraShakeIntensity, CameraShakeTime);
-                    
+
                     PlayerAnimator.ChangeAnimationTrigger(
                         hit.normal.x < 0 ? AnimationType.SoftHitLeft : AnimationType.SoftHitRight);
                 }
@@ -619,7 +623,7 @@ namespace StarterAssets
 
         private void Die(Vector3 hitNormal)
         {
-            _playerCamera.StopShake();
+            //_playerCamera.StopShake();
             _run.Lose();
             StopRecover();
             AnimationType dieAnimationType = 
@@ -631,6 +635,8 @@ namespace StarterAssets
             _isFall = true;
             IsDie = true;
             _moveBackTarget = 3f;
+
+            _isDieBorder = dieAnimationType != AnimationType.Die;
         }
 
         private void MoveBack()

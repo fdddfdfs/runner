@@ -31,6 +31,11 @@ public class EnvironmentMovingObject : MonoBehaviour, ITriggerable
         _object.localPosition = _startPosition;
     }
 
+    private void OnDisable()
+    {
+        _isActive = false;
+    }
+
     public void Trigger()
     {
         _isActive = true;
